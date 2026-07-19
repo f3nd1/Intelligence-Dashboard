@@ -1,0 +1,124 @@
+{
+  "product": "UCC Intelligence Platform",
+  "version": "1.9.5",
+  "build_date": "2026-07-19",
+  "deployment_model": "one_frappe_custom_html_block_plus_independent_server_scripts",
+  "implemented": {
+    "live_dashboards": [
+      "criterion_1",
+      "criterion_2",
+      "criterion_3",
+      "criterion_4",
+      "criterion_5",
+      "criterion_6",
+      "criterion_7"
+    ],
+    "dummy_preview_dashboards": [],
+    "ask_modules": [
+      "student_journey",
+      "recruitment_agent",
+      "quality_action"
+    ],
+    "live_api_foundations": [
+      "criterion_1",
+      "criterion_2",
+      "criterion_3",
+      "criterion_6",
+      "criterion_7"
+    ],
+    "server_script_safe_source_probe": true,
+    "safe_exec_sequence_unpack_hotfix": true,
+    "universal_management_questions": true,
+    "persistent_single_row_submenus": false,
+    "criterion_switch_scroll_to_top": true,
+    "provider_rating_fallback_resolution": true,
+    "expanded_live_visuals": true,
+    "universal_visual_hover_menus": true,
+    "source_mapping_diagnostics": true,
+    "invalid_svg_guard": true,
+    "exact_subcriterion_visual_catalogue": true,
+    "scoped_source_mapping_dialog": true,
+    "confirmed_ucc_doctype_mappings": true
+  },
+  "planned_not_implemented": {
+    "ask_modules": [
+      "admissions",
+      "fees_payments",
+      "academic_operations",
+      "hr",
+      "finance",
+      "enquiries",
+      "orders",
+      "quality_compliance"
+    ]
+  },
+  "policy_grounded_previews": {},
+  "diagram_counts": {
+    "criterion_1": 84,
+    "criterion_2": 99,
+    "criterion_3": 90,
+    "criterion_4": 84,
+    "criterion_5": 94,
+    "criterion_6": 96,
+    "criterion_7": 80
+  },
+  "server_scripts": {
+    "ucc_analytics_bootstrap": "1.9.5",
+    "ucc_analytics_criterion_catalogue": "1.9.5",
+    "ucc_analytics_criterion_4": "1.9.5",
+    "ucc_analytics_criterion_5": "1.9.5",
+    "ucc_analytics_placeholder_preview": "1.8.4",
+    "ucc_analytics_criterion_3": "1.9.5",
+    "ucc_analytics_criterion_6": "1.9.5",
+    "ucc_analytics_criterion_1": "1.9.5",
+    "ucc_analytics_criterion_2": "1.9.5",
+    "ucc_analytics_criterion_7": "1.9.5"
+  },
+  "generated_at_utc": "2026-07-19T15:00:00+00:00",
+  "notes": "Fixed scoped Source Mapping Report styling, exact visual catalogue ownership and counts, slow-load blank detection, and confirmed UCC DocType mappings.",
+  "policy_registries": {
+    "criterion_1": [
+      "PPD-SGL-CG-1.1.1 v2.2",
+      "PPD-SGL-SQ-1.2.1 v1.2"
+    ],
+    "criterion_2": [
+      "PPD-OEE-HR-2.1.1 v2.2",
+      "PPD-OEE-HR-2.1.2 v1.2",
+      "PPD-SES-MG-2.2.1 v1.2",
+      "PPD-OEE-IT-2.3.1 v1.2",
+      "PPD-OE-IT-2.3.2 v1.2",
+      "PPD-SGL-SQ-2.4.1 v2.3",
+      "PPD-SGL-SQ-2.4.2 v2.2",
+      "PPD-SGL-SQ-2.4.3 v2.2"
+    ],
+    "criterion_3": [
+      "PPD-SES-SL-3.1.1 v1.2",
+      "PPD-SES-SL-3.2.1 v1.2"
+    ],
+    "criterion_6": [
+      "PPD-SGL-SQ-6.1.1 v1.2",
+      "PPD-SGL-SQ-6.2.1 v1.3",
+      "PPD-SGL-SQ-6.3.1 v1.2",
+      "PPD-OE-FN-6.4.1 v1.2",
+      "PPD-SGL-SQ-6.5.3 v1.2"
+    ],
+    "criterion_7": [
+      "PPD-SGL-SQ-7.1.1 v1.2"
+    ]
+  },
+  "validation": {
+    "static_checks_passed": 100,
+    "static_checks_total": 100,
+    "headless_browser_smoke_test": "passed",
+    "live_frappe_uat_required": true
+  },
+  "visual_targets": {
+    "criterion_1": 84,
+    "criterion_2": 99,
+    "criterion_3": 90,
+    "criterion_4": 84,
+    "criterion_5": 94,
+    "criterion_6": 96,
+    "criterion_7": 80
+  }
+}

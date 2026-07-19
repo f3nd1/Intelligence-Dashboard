@@ -1,0 +1,388 @@
+"Bulk Edit Fields"
+"Is System Generated","Label","Type","Name","Non Negative","Mandatory","Unique","Is Virtual","In List View","In Standard Filter","In Global Search","In Preview","Bold","No Copy","Allow in Quick Entry","Translatable","Link Filters","Default","Precision","Length","Options","Sort Options","Fetch From","Fetch on Save if Empty","Show Dashboard","Depends On","Perm Level","Hidden","Read Only","Collapsible","Allow Bulk Edit","Collapsible Depends On","Ignore User Permissions","Allow on Submit","Report Hide","Remember Last Selected Value","Hide Border","Ignore XSS Filter","Mandatory Depends On","Read Only Depends On","In Filter","Hide Seconds","Hide Days","Description","Placeholder","Print Hide","Print Hide If No Value","Print Width","Columns","Width","Is Custom Field"
+"is_system_generated","label","fieldtype","fieldname","non_negative","reqd","unique","is_virtual","in_list_view","in_standard_filter","in_global_search","in_preview","bold","no_copy","allow_in_quick_entry","translatable","link_filters","default","precision","length","options","sort_options","fetch_from","fetch_if_empty","show_dashboard","depends_on","permlevel","hidden","read_only","collapsible","allow_bulk_edit","collapsible_depends_on","ignore_user_permissions","allow_on_submit","report_hide","remember_last_selected_value","hide_border","ignore_xss_filter","mandatory_depends_on","read_only_depends_on","in_filter","hide_seconds","hide_days","description","placeholder","print_hide","print_hide_if_no_value","print_width","columns","width","is_custom_field"
+" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","Set non-standard precision for a Float or Currency field "," ","For Links, enter the DocType as range.
+For Select, enter list of Options, each on a new line. "," "," ","If unchecked, the value will always be re-fetched on save. "," ","This field will appear only if the fieldname defined here has value OR the rules are true (examples):
+myfield
+eval:doc.myfield=='My Value'
+eval:doc.age>18 "," "," "," "," "," "," "," "," "," "," "," ","Don't encode HTML tags like <script> or just characters like < or >, as they could be intentionally used in this field "," "," "," "," "," "," "," "," "," ","Print Width of the field, if the field is a column in a table ","Number of columns for a field in a Grid (Total Columns in a grid should be less than 11) "," "," "
+"The CSV format is case sensitive"
+"Do not edit headers which are preset in the template"
+"------"
+"","📋 Overview","Tab Break","custom__overview","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","quality_action_ui","HTML","custom_quality_action_ui","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","","Section Break","custom_section_break_uhjgr","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Naming series","Select","naming_series","","","","","","","","","","","",1,"","","","","UCC-QAC-.YY.####
+UCC-QAC-.25.####
+UCC-QAC-.24.####","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Quality Action Overview","Section Break","custom_quality_action_overview","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","Provides a summary of the action, including its purpose, scope, and goals, outlining the strategic approach to enhancing organizational quality.","","","","","","",1
+"","","Column Break","cb_00","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""
+"","","HTML","custom_custom_html2","","","","","","","","","","","","","","","","","Instructions
+The Quality Action DocType is designed to streamline the management of quality improvement processes within the institution, focusing on problem resolution, performance monitoring, and continual improvement. This system facilitates the documentation, tracking, and analysis of actions taken to enhance operational excellence and compliance.
+
+
+    
+        Tab Name
+        Description
+    
+    
+        🎯 Resolution
+        Focuses on identifying and documenting problems and actions taken, detailing responsibilities and tracking the status of each action for clear accountability.
+    
+    
+        🚀 Performance and Evaluation
+        Includes monitoring of performance indicators and evaluation criteria to assess the impact and effectiveness of actions taken, guiding future quality improvements.
+    
+    
+        🚧 Risk and Resources
+        Details the identification of potential risks and opportunities, and outlines the resources required to support quality initiatives, ensuring preparedness and strategic resource allocation.
+    
+    
+        👾 Documentation
+        Manages the storage and retrieval of all documentation related to quality actions, facilitating easy access to historical data and compliance records.
+    
+
+
+Utilize this DocType to enhance your quality management processes, ensuring robust documentation, effective resolution, and continual organizational improvement.
+","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","","Column Break","custom_column_break_m0vin","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Updates","Select","custom_status_updates","","","","",1,"","","","","","",1,"","","","","
+Open
+In Progress
+Planned
+Completed
+Inactive","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Status (Not in used)","Select","status","","","","","","","","","","","","","","Open","","","Open
+Completed","","","","","","",1,1,"","","","","","","","","","","","","","","","","","","","","",""
+"","Corrective/Preventive","Select","corrective_preventive","",1,"","",1,"","","","","","","","","Corrective","","","Corrective
+Preventive","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""
+"","Date","Date","date","","","","","","","","","","","","","","Today","","","","","","","","","",1,1,"","","","","","","","","","","","","","","","","","","","","",""
+"","Posting Date","Date","custom_proposed_date","","","","","","","","","","","","","","Today","","","","","","","","","","","","","","","","","","","","","","","","","","Indicate when this Quality Action is posted","","","","","","",1
+"","Completed Date","Date","custom_completed_date","","","","","","","","","","","","","","Today","","","","","","","","","","","","","","","","","","","","","","","","","","Indicate when this Quality Action has been completed","","","","","","",1
+"","Type of Innovation","Select","custom_type_of_innovation","","","","","","","","","","","",1,"","","","","Disruptive
+Radical
+Incremental
+Architectural","","","","","eval:doc.custom_innovation != 0","","","","","","","","","","","","","","","","","","Specifies the category of innovation, such as Radical, which involves significant changes that impact markets or create new ones.","","","","","","",1
+"","Innovation Category","Select","custom_innovation_category","","","","","","","","","","","",1,"","","","","Architectural
+Business Model
+Organisational
+Process
+Service
+Technology","","","","","eval:doc.custom_innovation != 0","","","","","","","","","","","","","","","","","","Specifies the category as Innovation, referring to new or improved initiatives that enhance effectiveness or efficiency.","","","","","","",1
+"","Innovation","Check","custom_innovation","","","","","","","","","","","","","","0","","","","","","","","","","","","","","","","","","","","","","","","","","Marks an entry related to new ideas or methods being introduced.","","","","","","",1
+"","Continuous Improvement","Check","custom_continuous_improvement","","","","","","","","","","","","","","","","","Innovation
+Continuous Improvement","","","","","","","","","","","","","","","","","","","","","","","Indicates ongoing efforts to enhance existing processes, products, or services.","","","","","","",1
+"","Subject","Data","custom_subject","","","","",1,1,1,"","","","",1,"","","","","","","","","","","","","","","","","","","","","","","","","","","","A brief description of the topic or focus of the action or project.","","","","","","",1
+"","","HTML","custom_instruction","","","","","","","","","","","","","","","","","➡️ Find out more about Innovation and Continuous Improvement here
+","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","","Section Break","custom_section_break_8p3vu","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Quality Goal","Link","goal","","","","",1,1,"","","","","","","","","","","Quality Goal","","review.goal","","","","","","","","","","","","","","","","","","","","","Select the Quality Goals that the action aims to achieve.","","","","","","",""
+"","Quality Goal Justification","Text Editor","custom_quality_goal_justification","","","","","","","","","","","",1,"","","","","","",".","","","","","","","","","","","","","","","","","","","","","Identify which KPI being mapped and explain reason this Quality Action aligns with the selected Quality Goal.","","","","","","",1
+"","","Column Break","custom_column_break_qbs5f","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Review","Link","review","","","","",1,"","","","","","","","","","","","Quality Review","","","","","","","","","","","","","","","","","","","","","","","Referring to Quality Review: Space to document evaluations or assessments of the quality action’s effectiveness or outcomes.","","","","","","",""
+"","Procedure","Link","procedure","","","","","","","","","","","","","","","","","Quality Procedure","","","","","","","","","","","","","","","","","","","","","","","Referring to Quality Procedure: Details the standardized steps, policies, or methods to be followed in executing the quality action.","","","","","","",""
+"","Feedback","Link","feedback","","","","","","","","","","","","","","","","","Quality Feedback","","","","","","","","","","","","","","","","","","","","","","","Referring to Quality Feedback: Field for gathering insights, critiques, or suggestions from stakeholders or participants regarding quality aspects.","","","","","","",""
+"","Quality Meeting","Link","custom_quality_meeting","","","","","","","","","","","","","","","","","Quality Meeting","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Overall Closure Verification","Section Break","custom_overall_closure_verification","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Sign-off Records","Table","custom_signoff_records","","","","","","","","","","","","","","","","","Quality Meeting Attendance Childtable","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","🎯 Resolution","Tab Break","custom__resolution","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Resolution Management Metadata","Section Break","custom_resolution_management_metadata","","","","","","","","","","","","","","","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","",1
+"","Resolutions","Table","resolutions","","","","","","","","","","","","","","","","","Quality Action Resolution","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","",""
+"","Resolution Management","Section Break","sb_00","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","Details the specific quality issues addressed, the solutions proposed, and the actions taken to resolve them, tracking progress and alignment with quality objectives.","","","","","","",""
+"","QAR Inline Editor","HTML","custom_qar_inline_editor","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","","Section Break","custom_section_break_p5k2p","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","compliance_tracking_html_label","HTML","custom_compliance_tracking_html_label","","","","","","","","","","","","","","","","","
+  
+    ℹ️
+  
+  
+    
+      The Compliance Tracking child table below is auto-generated and linked to the relevant 
+      Quality Action. If no entries appear, you may perform a bulk update of the 
+      custom_quality_action fields using the 'Report View'.
+    
+  
+
+
+","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Compliance Tracking","Table","custom_compliance_tracking","","","","","","","","","","","","","","","","","Quality Action Compliance Tracking","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","","Section Break","custom_section_break_7xw4r","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Project","Link","custom_project","","","","","","","","","","","","","","","","","Project","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","","Column Break","custom_column_break_hszzs","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Task","Link","custom_task","","","","","","","","","","","","","","","","","Task","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Value Quality Policy Module Alignment","Section Break","custom_value_quality_policy_module_alignment","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","Describe how the survey aligns with the organization's quality standards and value policies.","","","","","","",1
+"","","Table","custom_value_quality_policy_module_alignment_childtable2","","","","","","","","","","","","","","","","","Value Quality Policy Module Alignment Childtable","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","🚀 Performance and Evaluation","Tab Break","custom__performance_and_evaluation","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Performance Indicators","Section Break","custom_performance_indicators","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","Measures the impact of quality actions using specific metrics and data, quantitatively assessing improvements in operational efficiency and quality outcomes.
+
+","","","","","","",1
+"","Quantitative Performance Review","Table","custom_performance","","","","","","","","","","","","","","","","","Quality Action Performance Indicators Childtable","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","",1
+"","","Section Break","custom_section_break_ei2sy","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Quality & Innovation Performance Index (QIPI)","Data","custom_aggregated_performance_index_api","","","","",1,"","","","","","","","","","","","","","","","","","","",1,"","","","","","","","","","","","","","","Quality & Innovation Performance (QIPI) = Sum of Normalised Change Outcomes (%) ÷ Number of Indicators","","","","","","",1
+"","TACEI","Data","custom_timeadjusted_cost_efficiency_index_tacei","","","","","","","","","","","","","","","","","","","","","","","",1,1,"","","","","",1,"","","","","","","","","Time-Adjusted Cost Efficiency Index (TACEI) = Aggregated Performance Index (API) ÷ (Actual Budget × Implementation Time)","","","","","","",1
+"","","Column Break","custom_column_break_5bwrm","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Implementation Duration (Day)","Data","custom_implementation_duration","","","","","","","","","","","","","","","","","","","","","","","","",1,"","","","","","","","","","","","","","","Start of Project - Completion Date Project
+","","","","","","",1
+"","CEI","Data","custom_cost_efficiency_index_cei","","","","","","","","","","","","","","","","","","","","","","","",1,1,"","","","","",1,"","","","","","","","","Cost Efficiency Index (CEI) = Aggregated Performance Index (API) / Actual Budget x (1 + Spending Difference %)","","","","","","",1
+"","QIPI Legend","Section Break","custom_section_break_yjidr","","","","","","","","","","","","","","","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","",1
+"","Legend","HTML","custom_legend","","","","","","","","","","","","","","","","","Quality & Innovation Performance Index (QIPI)
+Definition: A composite score representing the average normalised change across all performance indicators—i.e., your combined measure of quality actions and innovation impact. 
+ 
+Formula: Quality & Innovation Performance (QIPI) = Sum of Normalised Change Outcomes (%) ÷ Number of Indicators
+ 
+How to Read It: 
+
+    Higher QIPI: Greater overall performance improvement in both quality and innovation.
+    Lower QIPI: Smaller or less impactful changes.
+
+ 
+Description
+
+    Perspective: Represents the high-level category or area being assessed (e.g., Internal Processes, Financial, CSR Impact). This groups performance indicators into overarching themes for easier interpretation.
+    BSC Criteria: Indicates the specific metric or focus area being evaluated within the perspective (e.g., Resource Allocation, Process Innovation). These criteria align with broader organisational goals.
+    UOM (Unit of Measure): The unit used to measure the indicator (e.g., minutes, percentage, numbers). It specifies how the before and after values are quantified.
+    Before:  The baseline value recorded before the quality action or initiative was implemented. This serves as a reference point for comparison.
+    After: The value recorded after the quality action or initiative was implemented. This indicates the result or impact of the initiative.
+    Min Value: The smallest possible or relevant value for this indicator within the current context. Used as part of the normalisation process to standardise values across different scales.
+    Max Value: The largest possible or relevant value for this indicator within the current context. Also used in the normalisation process to ensure consistency.
+    Diff (%) (Automatically Calculated)
+        
+            Formula: ((After - Before) / Before) × 100
+            Positive Number: Indicates an increase in the value from before to after. Whether this is favourable or unfavourable depends on the context (e.g., higher revenue is good, but higher error rates are bad).
+            Negative Number: Indicates a decrease in the value from before to after. Similarly, the desirability depends on the context (e.g., lower processing time is good, but lower customer satisfaction is bad).
+            Interpreting Smaller vs Bigger: Smaller values are better when reducing inefficiencies (e.g., processing time), while bigger values are better when achieving growth or positive improvements (e.g., satisfaction scores).
+        
+    
+    Norm Diff (%) (Full Name: Normalised Difference)
+        
+            Formula: |((After - Before) / (Max Value - Min Value)) × 100|
+            The value is always converted to positive (absolute) because the aim is to compare the magnitude of the impact, regardless of the direction.
+            Why Positive? This ensures consistency in aggregating results, as some improvements naturally result in negative changes (e.g., reduced time) while others result in positive changes (e.g., increased revenue).
+            Interpreting Smaller vs Bigger: A bigger value represents a larger impact relative to the defined range (Min Value to Max Value). Smaller values indicate less significant change or improvement.
+        
+    
+
+ 
+Summary of Reading the Table:
+
+    Use the Diff (%) to understand directional change (positive or negative).
+    Refer to Norm Diff (%) to assess the scale of the impact across all indicators in a standardised way.
+    Context matters: Always consider whether the performance indicator benefits from an increase or decrease. For example:
+            Time savings → Smaller is better (e.g., reduced processing time).
+            Revenue growth → Bigger is better (e.g., increased earnings).
+        
+    
+
+ 
+For more information refer to: Quality & Innovation Performance Index","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Index Explanation","HTML","custom_index_explanation","","","","","","","","","","","","","","","","","
+Aggregated Performance Index (API):
+
+    Definition:
+        
+            A composite score representing the average normalised change across all performance indicators.
+            Formula:API = Sum of Normalised Change Outcomes (%) ÷ Number of Indicators
+        
+    
+    How to Read API:
+        
+            Higher API: Indicates significant improvements across performance indicators. Bigger is better, as it reflects higher performance improvements.
+            Lower API: Suggests minimal changes or less impactful actions.
+        
+    
+    Use Case:
+        
+            Provides a general overview of performance improvements.
+            Helps identify whether quality actions are leading to meaningful and measurable changes.
+        
+    
+","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Cost Saving Details","Section Break","custom_cost_saving_section","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","","Table","custom_cost_saving_table","","","","","","","","","","","","","","","","","Quality Action Cost Saving Childtable","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","","Section Break","custom_cost_saving_details_section","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Total Savings","Data","custom_cost_saving_data","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","People Calculator","Section Break","custom_cost_time_saving_section","","","","","","","","","","","","","","","","","","","","","","","","","",1,"","","","","","",1,"","","","","","","Calculator to calculate People (Man hour)","","","","","","",1
+"","","Column Break","custom_before_cost_column","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","People Cost Before(SGD)","Data","custom_before_cost","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","","","","","","","","","Operating cost before the improvement","","","","","","",1
+"","Cycle per Month","Data","custom_cycle_per_month","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","","","","","","","","","Specifies how many times this activity occurs in one month, used to estimate the frequency of cost or time savings.","","","","","","",1
+"","","Column Break","custom_before_time_column","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Before Time (Man-Day)","Data","custom_before_time","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","","","","","","","","","Time taken before improvement (1 man-day = 8 working hours)","","","","","","",1
+"","Total Cycles per Year","Data","custom_total_cycles_per_year","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","","","","","","","","","Automatically calculates the annual frequency by multiplying Cycle per Month by 12 to support yearly performance reporting.","","","","","","",1
+"","","Column Break","custom_after_cost_column","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Man-Day Rate (SGD)","Data","custom_manday_rate","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","","","","","","","","","Standardised staff cost per man-day (e.g. 280)","","","","","","",1
+"","Annual People Cost (Before)","Data","custom_annual_people_cost_before","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","","","","","","","","","Represents the total annual operating cost before improvement, calculated as People Cost Before per cycle multiplied by Total Cycles per Year.","","","","","","",1
+"","","Column Break","custom_after_time_column","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","After Time (Man-Day)","Data","custom_after_time","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","","","","","","","","","Time taken after improvement (1 man-day = 8 working hours)","","","","","","",1
+"","Annual People Cost (After)","Data","custom_annual_people_cost_after","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","","","","","","","","","Represents the total annual operating cost after improvement, calculated as People Cost After per cycle multiplied by Total Cycles per Year.","","","","","","",1
+"","","Column Break","custom_ctei_savings_column","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","People Cost After(SGD)","Data","custom_after_cost","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","","","","","","","","","Operating cost after the improvement","","","","","","",1
+"","Annual People Savings (CTEI)","Data","custom_annual_people_savings_ctei","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","","","","","","","","","Represents the total annualised cost-time efficiency gain, calculated as Annual People Cost Before minus Annual People Cost After.","","","","","","",1
+"","","Column Break","custom_column_break_lvtu4","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","People Savings (SGD)","Data","custom_ctei_savings","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","","","","","","","","","Auto-calculated efficiency gain in dollars","","","","","","",1
+"","","Section Break","custom_section_break_d1fmn","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","People Calculator Display","HTML","custom_people_calculator_display","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","","Section Break","custom_section_break_lzmlq","","","","","","","","","","","","","","","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","",1
+"","Note","Text Editor","custom_note_ctei","","","","","","","","","","","",1,"","
+  CTEI Supporting Narrative – Instructions for Completion
+
+
+
+  Please complete this section to justify and contextualise the cost-time savings reported in the CTEI index. Your response should be factual, concise, and verifiable. Using the suggested structure below:
+
+
+
+  
+    Reason for Cost/Time Change
+    • Describe what operational or procurement change led to the reduction in cost or time
+    • Confirm that no costs were offloaded to another department, phase, or hidden line item
+    • Mention whether the change was initiated by staff feedback, audit finding, or strategic plan
+  
+  
+    Recurrence
+    • Clarify if the saving is a one-time gain, a recurring monthly/quarterly/annual benefit, or part of a phased implementation
+    • If phased, indicate expected cumulative value over time
+    • State whether the saving applies to all future cohorts, processes, or just this instance
+  
+  
+    Quality Impact Check
+    • Confirm whether service quality, compliance, or learner satisfaction was preserved or improved
+    • Include any related student/staff feedback, turnaround time, error reduction, or KPI movement
+    • Mention any controls or monitoring in place to ensure quality isn’t compromised in future
+  
+  
+    Evidence on File
+    • List supporting documents: invoice numbers, budget approvals, quotations, contract changes, meeting minutes
+    • Confirm where evidence is stored (ERPNext, Drive, File Manager, physical folder, etc.)
+    • Optional: note who verified the data (e.g. Finance, Procurement, QA)
+  
+  
+    Risks or Assumptions (Optional)
+    • Disclose any risks, such as reliance on external vendors, variable exchange rates, or short-term discounts
+    • Mention any assumptions used in the calculation (e.g. fixed man-day rate, full utilisation)
+    • Flag if there are dependencies (e.g. training must be completed before time saving is realised)
+  
+  
+    Additional Notes (Optional)
+    • Use this to add clarification, disclaimers, or future plans (e.g. “A follow-up review will be done in 3 months”)
+    • Any relevant internal reference codes or project IDs
+  
+
+","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","CTEI Legend Section","Section Break","custom_ctei_legend_section","","","","","","","","","","","","","","","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","",1
+"","CTEI html","HTML","custom_ctei_html","","","","","","","","","","","","","","","","","
+    CTEI – Cost-Time Efficiency Index
+    CTEI measures the financial value of efficiency improvements achieved through operational changes, digitalisation, or innovation initiatives by converting time savings (expressed in man-days, where 1 man-day = 8 working hours) and cost reductions into Singapore dollar value (SGD).
+
+
+     
+
+
+    Formula:
+    CTEI Savings = ((Before Time − After Time) × Man-Day Rate) + (Before Cost − After Cost)
+     
+
+
+    Definitions:
+
+
+    
+        Before Cost (SGD): Operating cost before improvement
+    
+    
+        Before Time (Man-Day): Time taken before the improvement, expressed in man-days (1 man-day = 8 working hours)
+    
+    
+        After Cost (SGD): Operating cost after the improvement
+    
+    
+        After Time (Man-Day): Time taken after the improvement, in man-days (1 man-day = 8 working hours)
+    
+    
+        Man-Day Rate: Fixed staff cost per man-day (e.g. SGD 280/day)
+    
+    
+        CTEI Savings (SGD): Total cost-time efficiency gain in Singapore dollars
+    
+
+
+     
+
+
+    Output Unit:
+    SGD ($) – Total quantified value of cost/time efficiency gained.
+
+
+     
+
+
+    Compliance Relevance:
+    Aligns with EduTrust 6.3.1 Innovation and Continual Improvement /7.23 Operational Outcomes and ISO 9001:2015 (Clauses 8.5.1, 9.1.3, 10.3) by providing auditable evidence of continual improvement, strategic investment, and resource optimisation.
+","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","","Section Break","custom_section_break_d5cyn","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Qualitative Performance Review","Text Editor","custom_notes","","","","","","","","","","","",1,"","When filling out the performance indicators' notes, focus on qualitative impacts rather than quantitative details, as quantitative metrics are already provided in the performance indicator table above. Please include the following aspects in your feedback:
+
+    Contextual Impact: Describe how the changes have influenced daily operations and decision-making within the organization.
+    Cultural Shifts: Highlight any shifts in organizational culture, such as improved collaboration or openness to innovation.
+    Strategic Alignment: Discuss how the improvements align with broader organizational goals and compliance standards.
+    Employee Engagement: Reflect on changes in employee engagement or satisfaction due to the implemented actions.
+     
+
+Use the following criteria to justify and assess the Qualitative ROE (Return on Expectations):
+
+    Stakeholder Satisfaction: Enhances stakeholder experiences through improved satisfaction scores, streamlined service delivery, or positive feedback.
+    Ease of Use: Simplifies processes, tools, or workflows, reducing friction for users and improving efficiency.
+    Risk Mitigation: Reduces compliance risks, operational disruptions, or reputational threats, ensuring resilience and regulatory alignment.
+    Process Improvement: Streamlines workflows, reduces errors, and increases transparency for better operational outcomes.
+    Innovation Enablement: Supports scalability, introduces new features, and facilitates growth, enhancing adaptability and competitiveness.
+    Alignment with Strategic Goals: Contributes directly to institutional goals, such as operational excellence, knowledge management, or strategic growth.
+    Learning and Development: Enhances staff skills and competencies, fostering continuous improvement and professional growth.
+    Cultural Alignment: Reinforces organisational values and vision, aligning actions with strategic objectives.
+    Sustainability Impact: Advances environmental goals through initiatives like waste reduction, energy efficiency, or sustainability practices.
+    Community Engagement: Strengthens societal impact through CSR activities, improved educational accessibility, or community partnerships.
+    Governance and Compliance: Strengthens governance frameworks and enhances compliance with standards, accreditations, and legal requirements.
+    Employee Engagement: Boosts morale, satisfaction, and retention, creating a motivated and collaborative workforce.
+","","","","","","","","","","","","","","","","","","","","","","","","","","
+  Provide a detailed qualitative assessment (ROE – Return on  Expectations) of how each performance indicator has influenced broader organizational practices and culture.
+
+","","","","","","",1
+"","Project Execution Evaluation Criteria","Section Break","custom_section_break_te0kz","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","Outlines the standards and benchmarks used to evaluate the process and outcomes of quality actions, crucial for determining their success and guiding improvements.","","","","","","",1
+"","Urgency","Rating","custom_urgency","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","Scale of 1-5, (1 = Not Urgent, 5 = Super Urgent)","","","","","","",1
+"","Impact","Rating","custom_impact","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","Scale of 1-5, (1 = Minimal Impact, 5 = Major Impact)","","","","","","",1
+"","Time Required","Rating","custom_time_required","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","Scale of 1-5, (1 = Longest, 5 = Shortest)","","","","","","",1
+"","Priority Score","Data","custom_priority_score","","","","",1,"","","","","","","","","","","","","","","","","","","",1,"","","","","","","","","","","","","","","Total Average Priority Score","","","","","","",1
+"","","Column Break","custom_column_break_udavg","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Complexity","Rating","custom_complexity","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","Scale of 1-5, (1 = Most Complex, 5 = Least Complex)","","","","","","",1
+"","Resources","Rating","custom_resources","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","Scale of 1-5, (1 = Most, 5 = Least)","","","","","","",1
+"","RPN","Rating","custom_rpn","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","Risk Priority Number, scale of 1-5 (1 = Low, 5 = High)","","","","","","",1
+"","🚧 Risk and Resources","Tab Break","custom__risk_and_resources","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Resource Management","Section Break","custom_project_support_details","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","Collates essential support information such as required resources, and other crucials for the project’s planning and success.
+
+","","","","","","",1
+"","","Table","custom_resource_management_childtable","","","","","","","","","","","","","","","","","Resource Management childtable","","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","",1
+"","Additional Notes","Text Editor","custom_resource_needed","","","","","","","","","","","",1,"","
+    People: Specify the team or roles needed, such as project managers, analysts, or technical support.
+    Infrastructure: Detail the physical or technological tools required, like software, computers, or other equipment.
+    Environment: Mention any environmental or spatial needs, such as office space, remote capabilities, or particular settings necessary for the project.
+","","","","","","","","","",1,"","","","","","","","","","","","","","","","Specifies the People, Technology, and Infrastructure needed to effectively execute the quality action.","","","","","","",1
+"","Budget Management","Section Break","custom_budget_management2","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","Select budget type, detail proposed actions, input expected and actual expenses, and update status to manage proposed quality actions efficiently.","","","","","","",1
+"","","Table","custom_reegege","","","","","","","","","","","","","","","","","Resource Budget Management Childtable","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","","Section Break","custom_section_break_gahvd","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Total Budget Fee (SGD)","Currency","custom_total_budget_fee","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","","Column Break","custom_column_break_tok1g","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Total Actual Spending (SGD)","Currency","custom_total_actual_spending","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","","Column Break","custom_column_break_twn3j","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Spending Difference (%)","Data","custom_spending_difference","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Risk Management and Mitigation","Section Break","custom_risk_management_and_mitigation2","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","Identify TWO (2) high risk and outline strategies to mitigate risks related to this Quality Action.","","","","","","",1
+"","Risk Assessment","Table","custom_risk_identification_table","","","","","","","","","","","","","","","","","Risk Identification Childtable","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Risk Mitigation","Table","custom_risk_mitigation","","","","","","","","","","","","","","","","","Risk Justification Childtable","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Additional Notes","Text Editor","custom_risk_and_opportunities_identified","","","","","","","","","","","",1,"","
+    Risk: Describe potential challenges or obstacles that could arise during the project.
+    Opportunities: List potential positive outcomes or benefits that the project could capitalize on.
+","","","","","","","","","",1,"","","","","","","","","","","","","","","","Outlines necessary personnel, technology, and infrastructure for the action.","","","","","","",1
+"","👾 Documentation","Tab Break","custom__documentation","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Documentation","Section Break","custom_documentation","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","Maintains a comprehensive record of all documents related to quality actions, ensuring traceability and compliance with audit standards.","","","","","","",1
+"","Quality Record","Table","custom_quality_record","","","","","","","","","","","","","","","","","Oversight Framework File Childtable","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","Documentation Evidence","Table","custom_documentation_evidence","","","","","","","","","","","","","","","","","Quality Action Documentation Childtable","","","","","","",1,"","","","","","","","","","","","","","","","","","","","","","",1
+"","Evidences","Table","custom_evidences","","","","","","","","","","","","","","","","","Evidence Collection Childtable","","","","","","",1,"","","","","","","","","","","","","","","","","","","","","","",1
+"","","Section Break","custom_section_break_xbvbg","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1
+"","General Notes","Text Editor","custom_general_notes","","","","","","","","","","","",1,"","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",1

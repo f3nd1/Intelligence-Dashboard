@@ -1,0 +1,69 @@
+{
+  "version": "1.8.4",
+  "design_reference": "Criterion 5",
+  "shared_components": [
+    {
+      "name": "criterion hero",
+      "class": "ucc-shared-hero",
+      "contract": "Same structure, spacing, typography and responsive behaviour across Criteria 1–7."
+    },
+    {
+      "name": "criterion action card",
+      "class": "ucc-shared-action-card",
+      "contract": "Refresh, exports, diagnostics and View tools share the Criterion 5 layout."
+    },
+    {
+      "name": "View tools popover",
+      "trigger": "data-ucc-tools-trigger",
+      "menu": "data-ucc-tools-menu",
+      "contract": "Explicit JS-controlled popover; supports export current table, export exceptions and copy filtered link."
+    },
+    {
+      "name": "filters",
+      "class": "ucc-shared-controls"
+    },
+    {
+      "name": "tabs",
+      "class": "ucc-shared-tabs"
+    },
+    {
+      "name": "panels",
+      "class": "ucc-shared-panel"
+    },
+    {
+      "name": "KPI cards",
+      "class": "ucc-shared-kpis"
+    },
+    {
+      "name": "readiness strip"
+    },
+    {
+      "name": "diagram/table toggle"
+    },
+    {
+      "name": "record drill-down"
+    },
+    {
+      "name": "CSV export"
+    },
+    {
+      "name": "diagnostics"
+    },
+    {
+      "name": "source registry"
+    },
+    {
+      "name": "data-quality page"
+    }
+  ],
+  "criterion_specific_only": [
+    "policy labels",
+    "subcriterion registry",
+    "metric registry",
+    "question registry",
+    "source registry",
+    "exception registry",
+    "diagram definitions"
+  ],
+  "future_rule": "New criteria must use the shared Criterion 5 framework instead of adding criterion-specific hero, action-card or toolbar CSS."
+}

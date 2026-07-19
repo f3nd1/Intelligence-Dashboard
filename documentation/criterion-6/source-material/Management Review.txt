@@ -1,0 +1,625 @@
+
+
+DocType
+Management Review
+Module:
+Educ Sg
+Grid Page Length:
+50
+Track Changes:
+Allow Rename:
+Max Attachments:
+0
+Default Sort Field:
+modified
+Default Sort Order:
+DESC
+Make "name" searchable in Global Search:
+No	Role	Read	Write	Create	Delete	Report	Export	Share	Print	Email
+1	
+System Manager
+No	Title	Color
+1	
+Scheduled
+Blue
+2	
+Completed
+Green
+3	
+Postponed
+Red
+Index Web Pages for Search:
+Database Engine:
+InnoDB
+None:
+d1816c3f59dd1dbefc1e9f9be6a12ba2
+No	Label	Type	Name	Options	Default	Fetch From	Hidden	Allow in Quick Entry	Collapsible	In List View	In List Filter	Allow Bulk Edit	Description
+1	
+Section Break
+section_break_enoz
+2	
+HTML
+html_eexb
+Management Review Instructions
+The Management Review DocType is designed for conducting structured Management Reviews, integrating key QMS aspects to support strategic and operational goals.
+
+Tab Name	Description
+🎯 Tactical Strategy	Aligns governance and verifies policies, ensuring strategic and policy coherence with management review processes.
+💼 Harmonizing Resources	Evaluates the adequacy of all organizational resources including financial metrics, and manages asset infrastructure to robustly support and enhance QMS operational effectiveness.
+📈 Evaluating Performance	Evaluates KPIs, process adherence, audits, and external provider performance, identifying areas for QMS improvement.
+🔒 Securing Compliance	Reviews nonconformance actions and risks, ensuring QMS compliance and strategic adaptability to internal and external changes.
+🛡️ Implementing Resilience	Focuses on business continuity, change management and social responsibility strategies to enhance organizational resilience and QMS alignment.
+💡 Sustaining Progression	Uses stakeholder feedback to identify and implement improvement opportunities, enhancing QMS effectiveness and customer satisfaction.
+
+Utilize this DocType to guide Management Reviews, ensuring comprehensive coverage and alignment with our commitment to quality and customer satisfaction.
+
+3	
+Column Break
+column_break_topz
+4	
+Review Date
+Date
+review_date
+5	
+Review Period
+Select
+review_period
+
+Quarterly
+Semi-Annualy
+Annually
+6	
+Review Type
+Select
+review_type
+
+Initial
+Scheduled
+Adhoc
+7	
+Review Status
+Select
+review_status
+
+Scheduled
+In Progress
+Completed
+Postponed
+8	
+Chairperson
+Link
+chairperson
+User
+9	
+Chairperson (Full Name)
+Data
+chairperson_full_name
+chairperson.full_name
+10	
+Minutes of Meeting
+Link
+minutes_of_meeting
+Meeting Minutes
+11	
+Next Review Date
+Date
+next_review_date
+12	
+Section Break
+section_break_ilhv
+13	
+Executive Summary
+Text Editor
+executive_summary
+14	
+🎯 Strategy
+Tab Break
+strategy_tab
+15	
+Leadership and Corporate Governance
+Section Break
+leadership_and_corporate_governance_section
+Aligns institutional leadership and oversight with QMS direction, stakeholder accountability, and financial governance. (ISO9001 & 27001 5.1 Leadership Commitment / GD4 1.1.1 – Leadership & governance)
+16	
+List of Essential Information
+Table
+essential_information
+Strategic Planning Essential Information
+For more info refer to Essential Information DocType
+17	
+Notes
+Text Editor
+leaderhip_note
+18	
+Policies and Procedures
+Section Break
+policy_and_procedure_section
+Ensures policies are documented, implemented, and reviewed to maintain institutional integrity and support decision-making. (ISO9001 & 27001 4.2 Needs / 7.5 Documentation / GD4 1.1.1 – Leadership & governance)
+19	
+List of Policies and Procedures
+Table
+policy_procedure
+Strategic Planning Policy and Procedure
+For more info refer to Quality Procedure DocType
+20	
+Notes
+Text Editor
+ppd__note
+21	
+Current State Baseline
+Section Break
+current_state_baseline_section
+Establishes a factual baseline of the institution’s current operating context, performance outcomes, capabilities, constraints, and compliance status to inform evidence-based strategic planning and decision-making. (ISO 9001:2015 4.1 Organisational Context, 9.1 Performance Evaluation / GD4 1.2.1 – Strategic planning)
+22	
+Note
+Text Editor
+note_current_state
+Current State Baseline (Where we are now)
+
+Purpose: Establish a factual starting point before setting strategy.
+
+Required elements:
+
+Institutional status summary (size, scope, delivery modes)
+Current course portfolio and status (active, new, phased out)
+Student profile snapshot (numbers, mix, progression trends)
+Staffing profile snapshot (FT/PT, academic/non-academic)
+Key operational strengths
+Key operational constraints
+Current compliance status (SSG, ISO, ISMS, BizSafe if applicable)
+Financial position at high level (stable, constrained, growth-capable)
+Key risks currently active
+Key performance outcomes from the previous cycle
+Known capability gaps
+Known system or process limitations
+Output format:
+
+Short narrative or structured table
+Time-stamped for the planning cycle
+23	
+Strategic Direction Narrative
+Section Break
+direction_section
+Defines the institution’s strategic intent, priorities, and directional focus in alignment with its Vision, Mission, Values, and Quality Policy, providing clear governance-led guidance beyond operational KPIs. (ISO 9001:2015 5.1 Leadership, 6.2 Quality Objectives / GD4 1.2.1 – Strategic planning)
+24	
+Note
+Text Editor
+note_direction
+Strategic Direction Narrative (Where we are heading)
+
+Purpose: Define intent beyond KPIs.
+
+Required elements:
+
+Strategic focus areas (2–5 only)
+Rationale for each focus area
+Alignment to VMVQ
+Alignment to regulatory expectations
+Alignment to student outcomes
+Directional intent (strengthen, stabilise, expand, optimise)
+Explicit statement of institutional priorities
+Explicit acknowledgement of constraints
+Must avoid:
+
+Numbers only
+KPI restatement
+Output format:
+
+Plain language narrative
+Board-facing, non-technical
+25	
+Planning Horizon Clarity
+Section Break
+horizon__section
+Differentiates short-term, medium-term, and long-term planning horizons to ensure appropriate sequencing of initiatives, clarity of authority, and alignment between strategic intent and operational execution. (ISO 9001:2015 6.2 Planning, 9.3 Management Review / GD4 1.2.1 – Strategic planning)
+26	
+Note
+Text Editor
+note_horizon
+Planning Horizon Structure (When things happen)
+
+Purpose: Separate short-term execution from longer-term direction.
+
+Required elements:
+
+Definition of short-term horizon (operational)
+Definition of medium-term horizon (strategic initiatives)
+Definition of longer-term horizon (directional intent)
+Examples of what belongs in each horizon
+Relationship between horizons
+Review cadence per horizon
+Authority level per horizon (departmental vs management)
+Output format:
+
+Simple table or bullet structure
+27	
+Strategic Assumptions
+Section Break
+assumptions__section
+Documents key regulatory, market, resource, and risk assumptions underpinning strategic plans to ensure transparency, auditability, and timely reassessment when conditions change. (ISO 9001:2015 6.1 Risk-Based Thinking, 9.1 Monitoring and Review / GD4 1.2.1 – Strategic planning)
+28	
+Note
+Text Editor
+note_assumption
+Strategic Assumptions (What we assume to be true)
+
+Purpose: Make planning logic auditable.
+
+Required elements:
+
+Regulatory assumptions
+Market assumptions
+Student demand assumptions
+Staffing assumptions
+Financial assumptions
+Technology or system assumptions
+External dependency assumptions
+Risk tolerance assumptions
+Assumption validity period
+Trigger points for reassessment
+Important:
+
+Assumptions are not guarantees
+Must be reviewable
+Output format:
+
+Assumption register or list
+29	
+Strategic Prioritisation and Exclusions
+Section Break
+prio__section
+Strategic Choices and Exclusions (What we choose and what we don’t)
+
+Purpose: Demonstrate prioritisation.
+
+Required elements:
+
+Options considered
+Criteria used to evaluate options
+Selected strategic priorities
+Deferred initiatives
+Explicitly excluded initiatives
+Reasons for exclusion or deferral
+Resource impact considerations
+Risk considerations
+Review trigger for excluded items
+Output format:
+
+Decision log or summary table
+Demonstrates governance-led prioritisation by recording strategic choices, deferred initiatives, and explicit exclusions, including rationale, resource implications, and review triggers. (ISO 9001:2015 6.2 Objectives, 9.3 Management Review / GD4 1.2.1 – Strategic planning)
+30	
+Note
+Text Editor
+note_strategic_prio
+31	
+Boundary Between Strategic Planning and Performance Review
+Section Break
+boundary__section
+Defines the separation and interaction between strategic planning and performance review to prevent role confusion, ensuring that strategy sets direction while performance evaluation informs review and continual improvement. (ISO 9001:2015 6.2 Planning, 9.1 Performance Evaluation, 9.3 Management Review / GD4 1.2.1 – Strategic planning)
+32	
+Note
+Text Editor
+note_boundary
+Boundary Between Strategic Planning and Performance Review
+
+Purpose: Prevent role confusion.
+
+Required elements:
+
+Definition of Strategic Planning scope
+Definition of Performance Review scope
+Inputs into Strategic Planning
+Outputs of Strategic Planning
+Inputs into Management Review
+Outputs of Management Review
+Clear ownership for each
+Escalation logic between planning and review
+Reference to supporting PPDs
+Output format:
+
+Short explanatory paragraph plus reference mapping
+33	
+💼 Resources
+Tab Break
+resources_tab
+34	
+Resource Management
+Section Break
+resource_management_section
+Plans for people, infrastructure, and environments to support operational delivery and quality objectives. (ISO 9001 7.1 Resources, 7.1.3 Infrastructure / ISO27001: 7.1 Resources / GD4 1.2.1 – Strategic planning)
+35	
+List of Resource Management
+Table
+table_bhwb
+Strategic Planning Business Continuity Plans
+For more info refer to Business Impact Analysis DocType (Resource Management) / Resource Management Report.
+36	
+List of Training Events
+Table
+training_event
+Management Review Training Event Childtable
+For more info refer to Training Events DocType.
+37	
+Notes
+Text Editor
+resource_note
+38	
+Asset Management
+Section Break
+aseets_management_section
+Manages digital and physical assets, ensuring traceability and operational relevance. (ISO 9001 7.1 Infrastructure, 7.5 Documentation / ISO 27001 7.1 Resources, 7.5 Documented Information/ GD4 1.2.1 – Strategic planning)
+39	
+List of Data Asset Inventory
+Table
+data_asset_inventory
+Strategic Planning Business Continuity Plans
+For more info refer to Data Assets Inventory Report.
+40	
+Hardware and Software Assets
+Table
+hardware_and_software_assets
+Strategic Planning Asset Childtable
+For more info refer to Asset Category DocType.
+41	
+Notes
+Text Editor
+notes
+42	
+Financial and Budget Management
+Section Break
+financial_metrics_and_management_practices_section
+Aligns budgeting and financial planning with resource utilisation and institutional strategies. (ISO 9001 7.1.1 Financial Resources/ ISO 27001 7.1 Resources / GD4 1.2.1 – Strategic planning)
+43	
+Table
+table_pbnt
+Strategic Planning Financial Metrics and Management Practices
+44	
+Notes
+Text Editor
+finace_note
+45	
+📈 Performance
+Tab Break
+performance_tab
+46	
+Quality Goal
+Section Break
+quality_objective_section
+Assesses performance against quality objectives linked to strategy and student outcomes. (ISO 9001 6.2 Objectives / ISO 27001 6.2 Information security objectives and planning / GD4 7.1 – Outcome measurement)
+47	
+Table
+quality_objective
+Quality Procedure Quality Objective Childtable
+For more info refer to Quality Goal DocType.
+48	
+Notes
+Text Editor
+quality_obectives_note
+49	
+Process Performance, Conformity, and Audit Compliance
+Section Break
+process_performance_and_conformity_section
+Evaluates conformity to process plans and service delivery via audits and controls. (ISO 9001 4.4 Process Approach, 8.6 Product Conformity, 8.7 NC Output / GD4 7.1 – Outcome measurement)
+50	
+Table
+process_performace_conformity
+Strategic Planning Process Performance and Conformity
+For more info refer to Oversight Framework DocType.
+51	
+Notes
+Text Editor
+process_performance_note
+52	
+Audit Results
+Section Break
+audit_results_section
+Discuss audit findings to identify improvements and ensure QMS integrity as guided by ISO 9.2.
+53	
+HTML
+label_here
+Discuss audit findings to identify improvements and ensure QMS integrity as guided by ISO 9.2.
+54	
+Table
+table_efwt
+Strategic Planning Audit Results
+55	
+Notes
+Text Editor
+audit__note
+56	
+APSR Review Summary (Approach, Process, System, Review)
+Section Break
+apsr_review
+
+Evaluates institutional approaches, processes, systems, and review mechanisms using the APSR framework to ensure effective outcome measurement, management oversight, and continual improvement in line with EduTrust GD4 requirements. (EduTrust GD4 7.1 – Outcome Measurement and Review)
+
+57	
+Table
+table_lnhy
+Strategic Planning QMR
+For more information refer to Quality Monitoring Record
+Doctype
+58	
+Notes
+Text Editor
+apsr_note
+59	
+Performance of External Providers
+Section Break
+performance_of_external_providers_section
+Monitors provider performance against quality benchmarks and contract expectations. (ISO 9001 8.4 External Providers / GD4 7.1 – Outcome measurement)
+60	
+HTML
+label_here_copy
+Evaluate external provider performance against QMS standards, as mandated by ISO 8.4.
+61	
+List of Providers
+Table
+table_kenc
+Strategic Planning Performance of External Providers
+For more info refer to Provider Rating DocType.
+62	
+Notes
+Text Editor
+provider_note
+63	
+🔒 Compliance
+Tab Break
+compliance_tab
+64	
+Nonconformities and Corrective Actions
+Section Break
+nonconformities_and_corrective_actions_section
+Identifies and rectifies process gaps using structured root-cause and action tracking. (ISO 9001 10.2 Corrective Action/ ISO 27001 10.1 Nonconformity and corrective action / GD4 6.1.1 – Internal assessment)
+65	
+List of Compliance Tracking
+Table
+nonconformities_corrective_actions
+Strategic Planning Nonconformities and Corrective Actions
+For more info refer to Compliance Tracking DocType.
+66	
+Notes
+Text Editor
+nonconformities_note
+67	
+Risks and Opportunities
+Section Break
+risk_and_opportunities_section
+Manages risks and leverages opportunities to strengthen institutional performance. (ISO 9001 & 27001 6.1 Risk Planning / GD4 1.2.1 – Strategic planning)
+68	
+List of Risk Category
+Table
+risk_opportunities
+Strategic Planning Risk and Opportunities
+For more info refer to Risk Governance and Assessment
+DocType.
+69	
+Notes
+Text Editor
+risk_note
+70	
+Market Positioning and Competitive Analysis
+Section Break
+external_and_internal_factors_section
+Monitors external shifts to guide adaptive strategy and operational relevance. (ISO 9001 & 27001 4.1 Organisational Context / GD4 1.2.1 – Strategic planning)
+71	
+PESTEL Analysis
+Table
+pestel_analysis
+Strategic Planning PESTEL Analysis
+For more info refer to PESTEL Analysis DocType.
+72	
+SWOT Analysis
+Table
+swot_analysis
+Strategic Planning SWOT Analysis
+73	
+Porter's Five Forces
+Table
+porters_five_forces
+Strategic Planning Porter Five Forces Analysis
+74	
+Other Documents
+Table
+other_documents
+Strategic Planning External and Internal Factors Documents
+75	
+Notes
+Text Editor
+external_internal_note
+76	
+🛡️ Resilience
+Tab Break
+resilience_tab
+77	
+Business Continuity Plans
+Section Break
+business_continuity_plans_section
+Develops and tests contingency plans to ensure resilience during disruptions. (ISO 9001 & 27001 6.1 Risk Planning / GD4 1.2.1 – Strategic planning)
+78	
+List of BC/DR
+Table
+business_continuity
+Strategic Planning Business Continuity Plans
+For more info refer to Business Impact Analysis DocType. (BC/DR)
+79	
+Notes
+Text Editor
+bcp__note
+80	
+Change Management Strategy
+Section Break
+change_management_strategy_section
+Oversees institutional changes to ensure controlled implementation and minimal risk. (ISO 9001 6.3 Change Planning / GD4 1.2.1 – Strategic planning)
+81	
+Change Execution Framework
+Text Editor
+change_execution_framework
+Please complete the following sections to document the change execution framework:
+
+Planning and Assessment: Describe the change, its purpose, and anticipated impacts.
+Resource Allocation: List the resources required and outline steps to acquire them.
+Responsibilities: Assign roles and responsibilities for managing the change.
+Review of Effectiveness: Define success criteria and review processes post-implementation.
+82	
+Change Risk and Communication Management
+Text Editor
+change_risk_and_communication_management
+Please complete the following sections to document the change risk and communication management:
+
+Risk Management: Identify and detail risk mitigation strategies for the change.
+Continuity Protection: Ensure measures are in place to maintain business continuity.
+Communication Plan: Develop a communication strategy detailing channels and timelines.
+83	
+Environmental, Social, and Governance (ESG) Sustainability
+Section Break
+social_responsibility_initiatives_section
+Aligns social contributions with institutional goals and stakeholder engagement. (ISO 9001 & 27001 4.1 Context, 5.1 Leadership / GD4 1.2.1 – Strategic planning)
+84	
+List of ESG Initiatives
+Table
+table_ttgw
+Strategic Planning ESG Childtable
+For more info refer to ESG Impact Tracker DocType.
+85	
+Notes
+Text Editor
+social_responsibility_note
+86	
+💡 Progression
+Tab Break
+enhancement_tab
+87	
+Performance Outcomes
+Section Break
+customer_satisfaction_and_feedback_section
+Uses performance trends and benchmarking to evaluate and improve institutional quality. (ISO 9001 & 27001 9.1 Monitoring, measurement, analysis and evaluation / GD4 7.1 – Outcome measurement)
+88	
+List of Performance Outcomes
+Table
+table_tznr
+Strategic Planning Cust Satisfaction n Feedback Childtable
+For more info refer to Quality Performance Outcomes DocType.
+89	
+Notes
+Text Editor
+cust_satisfaction_note
+90	
+Opportunities for Improvement
+Section Break
+opportunities_for_improvement_section
+Identifies process and strategic gaps based on performance data and stakeholder feedback. (ISO 9001 & 27001 10.1 Continual Improvement / GD4 7.1 – Outcome measurement)
+91	
+List of Quality Actions
+Table
+table_qzdd
+Management Review Strategic Planning Innovation Childtable
+For more info refer to Quality Action DocType.
+92	
+Notes
+Text Editor
+opportunities_note
+Row Format:
+Dynamic
+Rows Threshold for Grid Search:
+0

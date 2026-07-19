@@ -1,0 +1,21 @@
+{
+  "package_version": "1.8.4",
+  "documentation_revision": "criterion-5-source-inventory-1",
+  "generated_at_utc": "2026-07-19T05:40:03.311645+00:00",
+  "runtime_changed": false,
+  "custom_html_block_changed": false,
+  "server_script_logic_changed": false,
+  "api_method": "ucc_analytics_criterion_5",
+  "status": "live_frontend_with_server_migration_foundation",
+  "server_actions": [
+    "base",
+    "overview",
+    "c511_summary",
+    "c511_proposals",
+    "c511_modules",
+    "c511_reviews",
+    "c511_gaps"
+  ],
+  "source_count": 19,
+  "visual_count": 94
+}

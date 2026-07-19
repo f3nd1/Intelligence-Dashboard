@@ -1,0 +1,14 @@
+{
+  "package_version": "1.8.7",
+  "documentation_revision": "criterion-1-live-foundation-1",
+  "generated_at_utc": "2026-07-19T06:46:49.681429+00:00",
+  "api_method": "ucc_analytics_criterion_1",
+  "frontend_connected": true,
+  "status": "live_foundation",
+  "policies": [
+    "PPD-SGL-CG-1.1.1 v2.2",
+    "PPD-SGL-SQ-1.2.1 v1.2"
+  ],
+  "dashboard_status": "live_foundation",
+  "dummy_values_active": false
+}

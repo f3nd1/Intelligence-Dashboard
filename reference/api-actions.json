@@ -1,0 +1,127 @@
+{
+  "analytics": {
+    "ucc_analytics_bootstrap": {
+      "actions": [
+        "bootstrap"
+      ],
+      "status": "ready"
+    },
+    "ucc_analytics_criterion_5": {
+      "actions": [
+        "base",
+        "overview",
+        "c511_summary",
+        "c511_proposals",
+        "c511_modules",
+        "c511_reviews",
+        "c511_gaps"
+      ],
+      "status": "migration_foundation_with_live_frontend"
+    },
+    "ucc_analytics_drilldown": {
+      "datasets": [
+        "course_proposals",
+        "modules",
+        "courses",
+        "course_reviews",
+        "assessment_plans",
+        "assessment_results",
+        "quality_actions"
+      ],
+      "status": "ready"
+    },
+    "ucc_analytics_criterion_1": {
+      "actions": [
+        "summary",
+        "source_status",
+        "policy_registry",
+        "drilldown"
+      ],
+      "status": "live_foundation"
+    },
+    "ucc_analytics_criterion_2": {
+      "actions": [
+        "summary",
+        "source_status",
+        "policy_registry",
+        "drilldown"
+      ],
+      "status": "live_foundation"
+    },
+    "ucc_analytics_criterion_3": {
+      "actions": [
+        "summary",
+        "source_status",
+        "policy_registry",
+        "drilldown"
+      ],
+      "status": "live_foundation"
+    },
+    "ucc_analytics_criterion_4": {
+      "actions": [
+        "summary",
+        "source_status",
+        "policy_registry",
+        "drilldown"
+      ],
+      "status": "live"
+    },
+    "ucc_analytics_criterion_6": {
+      "actions": [
+        "summary",
+        "source_status",
+        "policy_registry",
+        "drilldown"
+      ],
+      "status": "live_foundation"
+    },
+    "ucc_analytics_criterion_7": {
+      "actions": [
+        "summary",
+        "source_status",
+        "policy_registry",
+        "drilldown"
+      ],
+      "status": "live_foundation"
+    },
+    "ucc_analytics_criterion_catalogue": {
+      "actions": [
+        "catalogue"
+      ],
+      "status": "ready"
+    },
+    "ucc_analytics_placeholder_preview": {
+      "actions": [
+        "preview"
+      ],
+      "status": "legacy_not_used_by_active_dashboards"
+    }
+  },
+  "ask_ucc": {
+    "ucc_ask_student_journey": {
+      "status": "active",
+      "request_style": "v17.0.12_compatible"
+    },
+    "ucc_ask_recruitment_agent": {
+      "status": "active",
+      "request_style": "v17.0.12_compatible"
+    },
+    "ucc_ask_quality_action": {
+      "status": "active",
+      "request_style": "v17.0.12_compatible"
+    }
+  },
+  "shared": {
+    "ucc_shared_record_search": {
+      "entities": [
+        "student",
+        "recruitment_agent",
+        "quality_action"
+      ],
+      "status": "ready"
+    },
+    "ucc_shared_diagnostics": {
+      "status": "ready"
+    }
+  }
+}

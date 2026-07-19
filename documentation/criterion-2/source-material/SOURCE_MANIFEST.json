@@ -1,0 +1,36 @@
+{
+  "files": {
+    "PPD-OEE-HR-2.1.1_Staff Selection and Management_2.2_clean.docx": {
+      "sha256": "82167c50d2e2310583649cb659afcc6d34786263c2afe07c025c5a0efd61703f",
+      "bytes": 4645867
+    },
+    "PPD-OEE-HR-2.1.2_Staff Training and Development_1.2_clean.docx": {
+      "sha256": "6afe8648166d373e0fad321871c54cbe2c8743b77fdd942c43e571055e1f6feb",
+      "bytes": 100388
+    },
+    "PPD-SES-MG-2.2.1 Internal and External Communication_1.2_clean.docx": {
+      "sha256": "52aae3fc6c4d2f9baac4aed211a9015f021cb08ad16eb821b3a666ac99579bd4",
+      "bytes": 98603
+    },
+    "PPD-OEE-IT-2.3.1_Data and Information Management_1.2_clean.docx": {
+      "sha256": "f7215b3cbaf119050010001ac11f9c6e661559df20452f1d652ddd12c281a3b6",
+      "bytes": 112322
+    },
+    "PPD-OE-IT-2.3.2_Knowledge Management_1.2_clean.docx": {
+      "sha256": "32ffe9ceefd50a1e15ed674109c56efe655c41a98366c8c7e5c316f69c638b7f",
+      "bytes": 198050
+    },
+    "PPD-SGL-SQ-2.4.1_Feedback Management_2.3_clean.docx": {
+      "sha256": "f81563a73a47eaa20c112836ffc17b852235f1399d58bbb5bc700a63224a6346",
+      "bytes": 93967
+    },
+    "PPD-SGL-SQ-2.4.2 Student Satisfaction Survey_2.2_clean.docx": {
+      "sha256": "d735583903f547561acaff168d1f02058d52e7f0d1ba2bb654f2695e881fb62f",
+      "bytes": 95888
+    },
+    "PPD-SGL-SQ-2.4.3 Staff Satisfaction Survey_2.2_clean.docx": {
+      "sha256": "9ecd9772ab04092fe107eb1ad7b152611e1748068fe77c05eb403cde5de224c2",
+      "bytes": 93064
+    }
+  }
+}

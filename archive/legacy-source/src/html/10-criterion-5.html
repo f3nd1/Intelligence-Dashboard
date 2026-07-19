@@ -1,0 +1,1662 @@
+<div class="ucc-c5-v41 ucc-criterion-dashboard" data-dashboard-panel="criterion_5" data-active-tab="overview" data-mode="core" data-build-id="UCC-C5-5.6.1-20260718">
+  <div class="loading-overlay hidden" data-loading-overlay>
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <strong data-loading-title>Loading dashboard data</strong>
+      <div class="progress-track"><div class="progress-fill" data-progress-fill></div></div>
+      <div class="progress-text"><span data-progress-value>0%</span> · <span data-progress-task>Preparing…</span></div>
+    </div>
+  </div>
+
+  <header class="hero">
+    <div class="hero-copy">
+      <span class="ucc-criterion-kicker">EDUTRUST CRITERION 5</span>
+      <h1>Criterion 5 · Academic Systems &amp; Processes</h1>
+      <p>Live, permission-aware ERPNext/Frappe analytics for EduTrust Criterion 5.1–5.5.</p>
+    </div>
+
+    <div class="hero-action-card" aria-label="Analytics actions">
+      <button type="button" data-action="refresh" class="primary-btn">Refresh</button>
+      <button type="button" data-action="export-answers">Export Q&amp;A CSV</button>
+      <button type="button" data-action="export-exceptions">Export Exceptions CSV</button>
+      <button type="button" data-action="show-diagnostics">
+        Diagnostics Log (<span data-log-count>0</span>)
+      </button>
+      <details class="ucc-hero-tools">
+        <summary>View tools</summary>
+        <div class="ucc-hero-tools-menu">
+          <button type="button" data-universal-action="export-table">Export current table</button>
+          <button type="button" data-universal-action="export-exceptions">Export exception list</button>
+          <button type="button" data-universal-action="copy-link">Copy filtered link</button>
+        </div>
+      </details>
+    </div>
+  </header>
+
+  <div class="sticky-navigation">
+<section class="controls">
+    <div class="control-grid">
+      <div>
+        <label>Academic Year</label>
+        <select data-filter="academic_year"><option value="">All Academic Years</option></select>
+      </div>
+      <div>
+        <label>Module Class Details</label>
+        <select data-filter="student_group"><option value="">All Module Classes</option></select>
+      </div>
+      <div>
+        <label>Course</label>
+        <select data-filter="program"><option value="">All Courses</option></select>
+      </div>
+      <div>
+        <label>Month</label>
+        <input type="month" data-filter="month">
+      </div>
+    </div>
+</section>
+<nav class="tabs">
+    <button type="button" data-tab="overview" class="active">Overview</button>
+    <button type="button" data-tab="c51">5.1 Design &amp; Review</button>
+    <button type="button" data-tab="c52">5.2 Planning &amp; Delivery</button>
+    <button type="button" data-tab="c53">5.3 Partnerships</button>
+    <button type="button" data-tab="c54">5.4 Student Learning</button>
+    <button type="button" data-tab="c55">5.5 Assessment</button>
+    <button type="button" data-tab="quality">Data Quality</button>
+    <button type="button" data-tab="sources">Sources</button>
+  </nav>
+
+
+
+  <nav class="subtabs hidden" data-subnav></nav>
+</div>
+
+  <div class="ucc-criterion-notice" data-c5-source-notice data-status="loading">
+    <div class="ucc-criterion-notice-copy">
+      <strong>Loading Criterion 5 analytics…</strong>
+      <span>Current-user permissions and the selected section are being checked.</span>
+    </div>
+    <button type="button" class="ucc-notice-dismiss" data-notice-dismiss aria-label="Dismiss notification" title="Dismiss">×</button>
+  </div>
+
+  <section class="kpis">
+    <article><span data-kpi-label="one">Courses in selected scope</span><strong data-kpi="one">-</strong><small data-kpi-note="one">Course/class-aware</small></article>
+    <article><span data-kpi-label="two">Module readiness</span><strong data-kpi="two">-</strong><small data-kpi-note="two">Topics + criteria</small></article>
+    <article><span data-kpi-label="three">Loaded data</span><strong data-kpi="three">-</strong><small data-kpi-note="three">Current tab only</small></article>
+    <article><span data-kpi-label="four">Available sources</span><strong data-kpi="four">-</strong><small data-kpi-note="four">Permission-aware</small></article>
+    <article><span data-kpi-label="five">Questions answered</span><strong data-kpi="five">-</strong><small data-kpi-note="five">Criterion-specific</small></article>
+    <article><span data-kpi-label="six">Open exceptions</span><strong data-kpi="six">-</strong><small data-kpi-note="six">Requires follow-up</small></article>
+  </section>
+
+  <section data-panel="overview" class="panel-view">
+    <div class="grid2">
+      <article class="panel"><h2>Target Gap Summary</h2><div data-chart="target-gaps" class="chart"></div></article>
+      <article class="panel"><h2>Source Availability</h2><div data-source-status></div></article>
+    </div>
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Management Questions and Data-Based Answers</h2>
+        <label class="qa-filter-label">Criterion
+          <select data-qa-filter>
+            <option value="">All criteria</option>
+            <option value="5.1">5.1 Design &amp; Review</option>
+            <option value="5.1.1">5.1.1 Course Design &amp; Development</option>
+            <option value="5.1.2">5.1.2 Course Review</option>
+            <option value="5.2">5.2 Planning &amp; Delivery</option>
+            <option value="5.2.1">5.2.1 Course Planning</option>
+            <option value="5.2.2">5.2.2 Course Delivery</option>
+            <option value="5.3">5.3 Partnerships</option>
+            <option value="5.3.1">5.3.1 Partnership Management</option>
+            <option value="5.4">5.4 Student Learning</option>
+            <option value="5.5">5.5 Assessment</option>
+          </select>
+        </label>
+      </div>
+      <div class="table-wrap">
+        <table class="management-qa"><thead><tr><th>Criterion</th><th>Question</th><th>Answer from current data</th><th>Source / logic</th><th>Confidence</th></tr></thead>
+        <tbody data-table="overview-qa"></tbody></table>
+      </div>
+    </article>
+  </section>
+
+  <section data-panel="c51" class="panel-view hidden">
+    <div class="grid2">
+      <article class="panel"><h2>Course-Course Mapping</h2><div data-chart="program-course" class="chart"></div><button type="button" data-drill="program-course">View underlying records</button></article>
+      <article class="panel"><h2>Course Configuration Readiness</h2><div data-chart="course-readiness" class="chart"></div><button type="button" data-drill="course-readiness">View underlying records</button></article>
+    </div>
+    <article class="panel"><h2>5.1 Management Questions and Data-Based Answers</h2><div class="table-wrap"><table class="qa-table"><thead><tr><th>Criterion</th><th>Question</th><th>Answer</th><th>Source / calculation</th><th>Status</th></tr></thead><tbody data-table="qa-c51"></tbody></table></div></article>
+  </section>
+
+  
+  
+<section data-panel="c511" class="panel-view hidden">
+  <div class="section-heading sci-fi-heading">
+    <div>
+      <div class="section-code">5.1.1</div>
+      <h2>Course Design &amp; Development Command Centre</h2>
+      <p>UCC terms: Program = Course, Course = Module.</p>
+    </div>
+    <button type="button" data-action="export-511">Export Evidence Gaps</button>
+  </div>
+
+  <nav class="c511-tabs" data-c511-tabs>
+    <button type="button" class="active" data-c511-tab="summary">Summary</button>
+    <button type="button" data-c511-tab="proposal">Proposal</button>
+    <button type="button" data-c511-tab="module">Module Design</button>
+    <button type="button" data-c511-tab="review">Course Review</button>
+    <button type="button" data-c511-tab="gaps">Evidence Gaps</button>
+    <button type="button" data-c511-tab="legend">Legend &amp; Definitions</button>
+  </nav>
+
+  <section data-c511-panel="summary">
+    <div class="c511-kpis">
+      <article><span>Proposal approval</span><strong data-c511-kpi="proposal-approval">-</strong><small data-c511-note="proposal-approval">Approved / total</small></article>
+      <article><span>Module completeness</span><strong data-c511-kpi="module-completeness">-</strong><small data-c511-note="module-completeness">5 evidence areas</small></article>
+      <article><span>Review approval</span><strong data-c511-kpi="review-approval">-</strong><small data-c511-note="review-approval">Approved / total</small></article>
+      <article><span>SSG coverage</span><strong data-c511-kpi="ssg-coverage">-</strong><small data-c511-note="ssg-coverage">Approval date present</small></article>
+      <article><span>Zero-evidence modules</span><strong data-c511-kpi="zero-modules">-</strong><small data-c511-note="zero-modules">All 5 areas empty</small></article>
+      <article><span>Overdue reviews</span><strong data-c511-kpi="overdue-reviews">-</strong><small data-c511-note="overdue-reviews">Next review date passed</small></article>
+    </div>
+
+    <div class="grid2">
+      <article class="panel sci-panel">
+        <div class="panel-head"><h2>Overall Evidence Radar</h2></div>
+        <div data-chart="c511-radar" class="chart chart-lg"></div>
+      </article>
+      <article class="panel sci-panel">
+        <div class="panel-head"><h2>Immediate Attention</h2></div>
+        <div data-c511-attention class="attention-list"></div>
+      </article>
+    </div>
+
+    <div class="grid2">
+      <article class="panel sci-panel">
+        <div class="panel-head"><h2>Evidence Coverage Matrix</h2></div>
+        <div data-chart="c511-heatmap" class="chart chart-lg"></div>
+      </article>
+      <article class="panel sci-panel">
+        <div class="panel-head"><h2>Course → Module Network</h2>
+          <div class="mini-toggle" data-card-toggle="network">
+            <button type="button" class="active" data-card-view="diagram">Diagram</button>
+            <button type="button" data-card-view="table">Table</button>
+          </div>
+        </div>
+        <div data-card-panel="network-diagram">
+          <div class="visual-legend" aria-label="Course to Module network legend">
+            <span><i class="legend-dot legend-course"></i>Course (ERPNext Program)</span>
+            <span><i class="legend-dot legend-module"></i>Module (ERPNext Course)</span>
+            <span>Lines show Course-to-Module membership.</span>
+            <span>Click a Course node to focus its Modules. Scroll to zoom, drag to pan.</span>
+          </div>
+          <div data-chart="c511-network" class="chart chart-lg"></div>
+        </div>
+        <div data-card-panel="network-table" class="hidden">
+          <div class="table-wrap"><table>
+            <thead><tr><th>Course</th><th>Module</th><th>Open Course</th><th>Open Module</th></tr></thead>
+            <tbody data-table="c511-network"></tbody>
+          </table></div>
+        </div>
+      </article>
+    </div>
+
+    <article class="panel sci-panel">
+      <h2>5.1.1 Questions and Data-Based Answers</h2>
+      <div class="table-wrap"><table class="qa-table">
+        <colgroup><col class="qa-no"><col class="qa-question"><col class="qa-answer"><col class="qa-source"><col class="qa-status"></colgroup>
+        <thead><tr><th>No.</th><th>Question</th><th>Answer and evidence details</th><th>Exact DocType / fields</th><th>Status</th></tr></thead>
+        <tbody data-table="c511-qa"></tbody>
+      </table></div>
+    </article>
+  </section>
+
+  <section data-c511-panel="proposal" class="hidden">
+    <div class="c511-kpis compact">
+      <article><span>Total proposals</span><strong data-c511-kpi="proposal-total">-</strong></article>
+      <article><span>Approved</span><strong data-c511-kpi="proposal-approved">-</strong></article>
+      <article><span>Pending / other</span><strong data-c511-kpi="proposal-pending">-</strong></article>
+      <article><span>Avg decision time</span><strong data-c511-kpi="decision-time">-</strong></article>
+      <article><span>SSG coverage</span><strong data-c511-kpi="proposal-ssg">-</strong></article>
+    </div>
+    <div class="grid2">
+      <article class="panel sci-panel">
+      <div class="panel-head"><h2>Proposal Status Orbit</h2>
+        <div class="mini-toggle" data-card-toggle="proposal-status">
+          <button type="button" data-card-view="table">Table</button>
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+        </div>
+      </div>
+      <div data-card-panel="proposal-status-diagram"><div data-chart="c511-proposal-donut" class="chart chart-lg"></div></div>
+      <div data-card-panel="proposal-status-table" class="hidden"><div class="table-wrap"><table>
+        <thead><tr><th>Proposal</th><th>Status</th><th>Decision date</th><th>Open</th></tr></thead>
+        <tbody data-table="c511-proposal-status"></tbody>
+      </table></div></div>
+    </article>
+      <article class="panel sci-panel"><div class="panel-head"><h2>Decision Time by Year</h2>
+        <div class="mini-toggle" data-card-toggle="decision-time">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div></div>
+        <div data-card-panel="decision-time-diagram"><div data-chart="c511-decision-time" class="chart chart-lg"></div></div>
+        <div data-card-panel="decision-time-table" class="hidden"><div class="table-wrap"><table>
+          <thead><tr><th>Year</th><th>Proposal count</th><th>Average decision days</th></tr></thead>
+          <tbody data-table="c511-decision-time"></tbody>
+        </table></div></div></article>
+    </div>
+    <article class="panel sci-panel">
+      <div class="panel-head"><h2>Proposal Evidence</h2><div class="mini-toggle" data-card-toggle="proposal"><button type="button" data-card-view="table">Table</button><button type="button" class="active" data-card-view="diagram">Diagram</button></div></div>
+      <div data-card-panel="proposal-diagram"><div data-chart="c511-proposal-bars" class="chart chart-lg"></div></div>
+      <div data-card-panel="proposal-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Proposal</th><th>Overview</th><th>Strategic basis</th><th>Learner profile</th><th>Pedagogy</th><th>Curriculum</th><th>Assessment</th><th>Risk/resources</th><th>Approval</th></tr></thead><tbody data-table="c511-proposals"></tbody></table></div></div>
+    </article>
+  </section>
+
+  <section data-c511-panel="module" class="hidden">
+    <div class="c511-kpis compact">
+      <article><span>Modules</span><strong data-c511-kpi="module-total">-</strong></article>
+      <article><span>Complete modules</span><strong data-c511-kpi="module-complete">-</strong></article>
+      <article><span>Zero evidence</span><strong data-c511-kpi="module-zero">-</strong></article>
+      <article><span>Learning outcomes</span><strong data-c511-kpi="module-lo">-</strong></article>
+      <article><span>Lesson plans</span><strong data-c511-kpi="module-lessons">-</strong></article>
+      <article><span>Assessment</span><strong data-c511-kpi="module-assessment">-</strong></article>
+    </div>
+    <div class="grid2">
+      <article class="panel sci-panel">
+        <div class="panel-head"><h2>Module Evidence Constellation</h2>
+          <div class="mini-toggle" data-card-toggle="module-constellation">
+            <button type="button" class="active" data-card-view="diagram">Diagram</button>
+            <button type="button" data-card-view="table">Table</button>
+          </div>
+        </div>
+        <div data-card-panel="module-constellation-diagram">
+          <div class="visual-legend" aria-label="Module evidence constellation legend">
+            <span><i class="legend-gradient"></i>Light = lower evidence coverage; dark = higher coverage</span>
+            <span>Bubble size = number of populated evidence areas/rows</span>
+            <span>Each bubble = one Module (ERPNext Course)</span>
+          </div>
+          <div data-chart="c511-module-bubbles" class="chart chart-xl"></div>
+        </div>
+        <div data-card-panel="module-constellation-table" class="hidden">
+          <div class="table-wrap"><table>
+            <thead><tr><th>Module</th><th>Learning outcomes</th><th>Lesson plans</th><th>Teaching</th><th>Assessment</th><th>Resources</th><th>Coverage</th><th>Open</th></tr></thead>
+            <tbody data-table="c511-module-constellation"></tbody>
+          </table></div>
+        </div>
+      </article>
+      <article class="panel sci-panel"><div class="panel-head"><h2>Evidence Coverage</h2>
+        <div class="mini-toggle" data-card-toggle="module-coverage">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div></div>
+        <div data-card-panel="module-coverage-diagram"><div data-chart="c511-module-radial" class="chart chart-xl"></div></div>
+        <div data-card-panel="module-coverage-table" class="hidden"><div class="table-wrap"><table>
+          <thead><tr><th>Evidence area</th><th>Modules with evidence</th><th>Total modules</th><th>Coverage</th></tr></thead>
+          <tbody data-table="c511-module-coverage"></tbody>
+        </table></div></div></article>
+    </div>
+    <article class="panel sci-panel">
+      <div class="panel-head"><h2>Module Design Evidence</h2><div class="mini-toggle" data-card-toggle="module"><button type="button" data-card-view="table">Table</button><button type="button" class="active" data-card-view="diagram">Diagram</button></div></div>
+      <div data-card-panel="module-diagram"><div data-chart="c511-module-stream" class="chart chart-lg"></div></div>
+      <div data-card-panel="module-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Module</th><th>Learning outcomes</th><th>Lesson plans</th><th>Teaching approach</th><th>Assessment</th><th>Resources</th></tr></thead><tbody data-table="c511-design"></tbody></table></div></div>
+    </article>
+  </section>
+
+  <section data-c511-panel="review" class="hidden">
+    <div class="c511-kpis compact">
+      <article><span>Reviews</span><strong data-c511-kpi="review-total">-</strong></article>
+      <article><span>Approved</span><strong data-c511-kpi="review-approved">-</strong></article>
+      <article><span>Pending</span><strong data-c511-kpi="review-pending">-</strong></article>
+      <article><span>Overdue</span><strong data-c511-kpi="review-overdue">-</strong></article>
+      <article><span>Avg actions</span><strong data-c511-kpi="review-actions">-</strong></article>
+      <article><span>No action plan</span><strong data-c511-kpi="review-no-actions">-</strong></article>
+    </div>
+    <div class="grid2">
+      <article class="panel sci-panel">
+      <div class="panel-head"><h2>Review Status Ring</h2>
+        <div class="mini-toggle" data-card-toggle="review-status">
+          <button type="button" data-card-view="table">Table</button>
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+        </div>
+      </div>
+      <div data-card-panel="review-status-diagram"><div data-chart="c511-review-donut" class="chart chart-lg"></div></div>
+      <div data-card-panel="review-status-table" class="hidden"><div class="table-wrap"><table>
+        <thead><tr><th>Review</th><th>Status</th><th>Review date</th><th>Open</th></tr></thead>
+        <tbody data-table="c511-review-status"></tbody>
+      </table></div></div>
+    </article>
+      <article class="panel sci-panel"><div class="panel-head"><h2>Review Timeline</h2>
+        <div class="mini-toggle" data-card-toggle="review-timeline">
+          <button type="button" data-card-view="table">Table</button>
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+        </div></div>
+        <div data-card-panel="review-timeline-diagram"><div data-chart="c511-review-timeline" class="chart chart-lg"></div></div>
+        <div data-card-panel="review-timeline-table" class="hidden"><div class="table-wrap"><table>
+          <thead><tr><th>Review</th><th>Course</th><th>Review date</th><th>Status</th><th>Next review date</th><th>Open</th></tr></thead>
+          <tbody data-table="c511-review-timeline"></tbody>
+        </table></div></div></article>
+    </div>
+    <article class="panel sci-panel">
+      <div class="panel-head"><h2>Course Review Evidence</h2><div class="mini-toggle" data-card-toggle="review"><button type="button" data-card-view="table">Table</button><button type="button" class="active" data-card-view="diagram">Diagram</button></div></div>
+      <div data-card-panel="review-diagram"><div data-chart="c511-review-actions" class="chart chart-lg"></div></div>
+      <div data-card-panel="review-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Review</th><th>Course</th><th>Review date</th><th>Review status</th><th>Recommendations</th><th>Action plan</th></tr></thead><tbody data-table="c511-reviews"></tbody></table></div></div>
+    </article>
+  </section>
+
+  <section data-c511-panel="gaps" class="hidden">
+    <div class="gap-filter">
+      <button type="button" class="active" data-gap-filter="all">All</button>
+      <button type="button" data-gap-filter="proposal">Proposals</button>
+      <button type="button" data-gap-filter="module">Modules</button>
+      <button type="button" data-gap-filter="review">Reviews</button>
+    </div>
+    <div class="grid2">
+      <article class="panel sci-panel"><div class="panel-head"><h2>Gap Severity</h2><div class="mini-toggle" data-card-toggle="gap-severity-card"><button type="button" class="active" data-card-view="diagram">Diagram</button><button type="button" data-card-view="table">Table</button></div></div><div data-card-panel="gap-severity-card-diagram"><div data-chart="c511-gap-funnel" class="chart chart-lg"></div></div><div data-card-panel="gap-severity-card-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Severity</th><th>Gap count</th></tr></thead><tbody data-table="c511-gap-severity"></tbody></table></div></div></article>
+      <article class="panel sci-panel"><div class="panel-head"><h2>Gap Distribution by Record Type</h2><div class="mini-toggle" data-card-toggle="gap-type-card"><button type="button" class="active" data-card-view="diagram">Diagram</button><button type="button" data-card-view="table">Table</button></div></div><div data-card-panel="gap-type-card-diagram"><div data-chart="c511-gap-sunburst" class="chart chart-lg"></div></div><div data-card-panel="gap-type-card-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Record type</th><th>Gap count</th></tr></thead><tbody data-table="c511-gap-types"></tbody></table></div></div></article>
+    </div>
+    <article class="panel sci-panel"><h2>Evidence Gap Records</h2><div class="table-wrap"><table><thead><tr><th>Record</th><th>Type</th><th>Area</th><th>Issue</th><th>Severity</th></tr></thead><tbody data-table="c511-gaps"></tbody></table></div></article>
+  </section>
+
+  <section data-c511-panel="legend" class="hidden">
+    <div class="grid2">
+      <article class="panel sci-panel definition-card">
+        <h2>How to read 5.1.1</h2>
+        <p>This dashboard checks whether UCC can demonstrate that each Course and Module was designed, approved, delivered with documented evidence, and periodically reviewed.</p>
+        <dl class="definition-list">
+          <dt>Course</dt><dd>UCC display term for ERPNext <strong>Program</strong>.</dd>
+          <dt>Module</dt><dd>UCC display term for ERPNext <strong>Course</strong>.</dd>
+          <dt>Evidence</dt><dd>A populated field, child table, approval, review record, or linked document that supports an EduTrust requirement.</dd>
+          <dt>Evidence gap</dt><dd>A required or expected evidence item that is empty, missing, overdue, or cannot be confirmed from an available DocType.</dd>
+        </dl>
+      </article>
+      <article class="panel sci-panel definition-card">
+        <h2>Status meanings</h2>
+        <dl class="definition-list">
+          <dt><span class="badge good">Good</span></dt><dd>The check met the configured rule for the selected scope.</dd>
+          <dt><span class="badge warn">Warning</span></dt><dd>Evidence exists but is incomplete, pending, or needs manual confirmation.</dd>
+          <dt><span class="badge risk">Risk</span></dt><dd>Evidence is missing, overdue, or falls below the configured rule.</dd>
+          <dt>Unavailable</dt><dd>The dashboard could not confirm a readable source. This is not the same as zero records.</dd>
+        </dl>
+      </article>
+    </div>
+
+    <div class="grid2">
+      <article class="panel sci-panel definition-card">
+        <h2>Subpage definitions</h2>
+        <dl class="definition-list">
+          <dt>Proposal</dt><dd>Checks Course Proposal rationale, learner profile, pedagogy, curriculum, assessment, risks/resources, approvals, decision dates, and SSG approval date.</dd>
+          <dt>Module Design</dt><dd>Checks Module learning outcomes, lesson plans, teaching approach, assessment criteria, and resources.</dd>
+          <dt>Course Review</dt><dd>Checks review status, review dates, recommendations, next review date, and action-plan progress.</dd>
+          <dt>Evidence Gaps</dt><dd>Combines missing or incomplete proposal, module-design, and review evidence into one follow-up list.</dd>
+        </dl>
+      </article>
+      <article class="panel sci-panel definition-card">
+        <h2>How to verify a result</h2>
+        <ol class="verification-steps">
+          <li>Open the relevant Q&amp;A row.</li>
+          <li>Use the DocType link in the Source column.</li>
+          <li>Apply the same Course, Module, Academic Year, or date filters shown at the top.</li>
+          <li>Open individual records from the dashboard tables or affected-record dialog.</li>
+          <li>Confirm the exact fields listed in the source description.</li>
+        </ol>
+        <p><strong>Important:</strong> dashboard labels use UCC terminology, but source links retain the original ERPNext DocType names.</p>
+      </article>
+    </div>
+
+    <article class="panel sci-panel">
+      <h2>Primary source DocTypes</h2>
+      <div class="doctype-link-grid">
+        <a href="/app/program" target="_blank" rel="noopener">Program list ↗<small>UCC Course</small></a>
+        <a href="/app/course" target="_blank" rel="noopener">Course list ↗<small>UCC Module</small></a>
+        <a href="/app/course-proposal" target="_blank" rel="noopener">Course Proposal list ↗</a>
+        <a href="/app/course-review" target="_blank" rel="noopener">Course Review list ↗</a>
+        <a href="/app/assessment-plan" target="_blank" rel="noopener">Assessment Plan list ↗</a>
+        <a href="/app/academic-year" target="_blank" rel="noopener">Academic Year list ↗</a>
+      </div>
+    </article>
+  </section>
+
+</section>
+
+
+<section data-panel="c512" class="panel-view hidden">
+  <div class="section-heading sci-fi-heading">
+    <div><div class="section-code">5.1.2</div><h2>Course Review Command Centre</h2><p>Module and Course Review coverage, status, evidence and improvement follow-up.</p></div>
+  </div>
+  <nav class="c511-tabs section-local-tabs" data-local-tabs="c512">
+    <button type="button" class="active" data-local-tab="summary">Summary</button>
+    <button type="button" data-local-tab="status">Review Status</button>
+    <button type="button" data-local-tab="records">Records</button>
+    <button type="button" data-local-tab="questions">Questions</button>
+    <button type="button" data-local-tab="legend">Legend &amp; Definitions</button>
+  </nav>
+
+  <section data-local-panel="summary">
+    <div class="kpis"><article><span>Module reviews</span><strong data-new-kpi="mr-total">-</strong></article><article><span>Approved module reviews</span><strong data-new-kpi="mr-approved">-</strong></article><article><span>Course reviews</span><strong data-new-kpi="cr-total">-</strong></article><article><span>Overdue course reviews</span><strong data-new-kpi="cr-overdue">-</strong></article></div>
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Review Level Coverage</h2>
+        <div class="mini-toggle" data-card-toggle="c512-review-level-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c512-review-level-card-diagram"><div data-chart="c512-review-level" class="chart"></div></div>
+      <div data-card-panel="c512-review-level-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Review level</th><th>Records</th></tr></thead><tbody data-table="c512-review-level"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>Next Review Schedule</h2>
+        <div class="mini-toggle" data-card-toggle="c512-schedule-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c512-schedule-card-diagram"><div data-chart="c512-schedule" class="chart"></div></div>
+      <div data-card-panel="c512-schedule-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Schedule state</th><th>Records</th></tr></thead><tbody data-table="c512-schedule"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section data-local-panel="status" class="hidden">
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Module Review Status</h2>
+        <div class="mini-toggle" data-card-toggle="c512-module-status-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c512-module-status-card-diagram"><div data-chart="c512-module-status" class="chart"></div></div>
+      <div data-card-panel="c512-module-status-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Status</th><th>Records</th></tr></thead><tbody data-table="c512-module-status"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>Course Review Status</h2>
+        <div class="mini-toggle" data-card-toggle="c512-course-status-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c512-course-status-card-diagram"><div data-chart="c512-course-status" class="chart"></div></div>
+      <div data-card-panel="c512-course-status-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Status</th><th>Records</th></tr></thead><tbody data-table="c512-course-status"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Review Type</h2>
+        <div class="mini-toggle" data-card-toggle="c512-review-type-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c512-review-type-card-diagram"><div data-chart="c512-review-type" class="chart"></div></div>
+      <div data-card-panel="c512-review-type-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Review type</th><th>Records</th></tr></thead><tbody data-table="c512-review-type"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>Action Plan Status</h2>
+        <div class="mini-toggle" data-card-toggle="c512-actions-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c512-actions-card-diagram"><div data-chart="c512-actions" class="chart"></div></div>
+      <div data-card-panel="c512-actions-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Status</th><th>Actions</th></tr></thead><tbody data-table="c512-actions"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Previous Recommendation Implementation</h2>
+        <div class="mini-toggle" data-card-toggle="c512-recommendation-status-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c512-recommendation-status-card-diagram"><div data-chart="c512-recommendation-status" class="chart"></div></div>
+      <div data-card-panel="c512-recommendation-status-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Implementation status</th><th>Records</th></tr></thead><tbody data-table="c512-recommendation-status"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>Module Review Evidence Completeness</h2>
+        <div class="mini-toggle" data-card-toggle="c512-evidence-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c512-evidence-card-diagram"><div data-chart="c512-evidence" class="chart"></div></div>
+      <div data-card-panel="c512-evidence-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Evidence state</th><th>Records</th></tr></thead><tbody data-table="c512-evidence"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section data-local-panel="records" class="hidden">
+    <article class="panel"><h2>Review Records</h2><div class="table-wrap"><table><thead><tr><th>Record</th><th>Level</th><th>Course</th><th>Module</th><th>Date</th><th>Status</th><th>Open</th></tr></thead><tbody data-table="c512-records"></tbody></table></div></article>
+  </section>
+
+  <section data-local-panel="questions" class="hidden">
+    <article class="panel">
+  <h2>Management Questions and Data-Based Answers</h2>
+  <div class="table-wrap">
+    <table class="qa-table"><thead><tr><th>Criterion</th><th>Question</th><th>Answer</th><th>Source / calculation</th><th>Status</th></tr></thead>
+      <tbody data-table="qa-c512"></tbody>
+    </table>
+  </div>
+</article>
+  </section>
+
+  
+
+<section class="ucc-v110-expansion" data-v110-expansion="c512">
+  <div class="section-heading ucc-v110-heading">
+    <div><div class="section-code">5.1.2</div>
+    <h2>Expanded Course Review analytics</h2><p>Expanded operational checks in platform v1.7.0. Click chart values to inspect underlying records.</p></div>
+  </div>
+  <div class="grid2">
+    <article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Review-cycle status</h2>
+    <div class="mini-toggle" data-card-toggle="c512-cycle-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Upcoming, due, overdue, completed, and missing-next-date review records.</p>
+  <div data-card-panel="c512-cycle-v110-diagram"><div data-chart="c512-cycle-v110" class="chart"></div></div>
+  <div data-card-panel="c512-cycle-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c512-cycle-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Module Review to Course Review coverage</h2>
+    <div class="mini-toggle" data-card-toggle="c512-coverage-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Compares reviewed modules with available course-level reviews.</p>
+  <div data-card-panel="c512-coverage-v110-diagram"><div data-chart="c512-coverage-v110" class="chart"></div></div>
+  <div data-card-panel="c512-coverage-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c512-coverage-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Action-plan aging</h2>
+    <div class="mini-toggle" data-card-toggle="c512-action-aging-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Groups open actions by age where an action date or deadline exists.</p>
+  <div data-card-panel="c512-action-aging-v110-diagram"><div data-chart="c512-action-aging-v110" class="chart"></div></div>
+  <div data-card-panel="c512-action-aging-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c512-action-aging-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Completed versus pending actions</h2>
+    <div class="mini-toggle" data-card-toggle="c512-actions-completion-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Uses action-plan status values from Course Review records.</p>
+  <div data-card-panel="c512-actions-completion-v110-diagram"><div data-chart="c512-actions-completion-v110" class="chart"></div></div>
+  <div data-card-panel="c512-actions-completion-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c512-actions-completion-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Missing review evidence</h2>
+    <div class="mini-toggle" data-card-toggle="c512-missing-evidence-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Shows reviews missing next date, stakeholder feedback, or benchmarking evidence.</p>
+  <div data-card-panel="c512-missing-evidence-v110-diagram"><div data-chart="c512-missing-evidence-v110" class="chart"></div></div>
+  <div data-card-panel="c512-missing-evidence-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c512-missing-evidence-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Implementation follow-up trend</h2>
+    <div class="mini-toggle" data-card-toggle="c512-followup-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Groups implementation outcomes by review month.</p>
+  <div data-card-panel="c512-followup-v110-diagram"><div data-chart="c512-followup-v110" class="chart"></div></div>
+  <div data-card-panel="c512-followup-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c512-followup-v110"></tbody></table></div></div>
+</article>
+  </div>
+</section>
+<section data-local-panel="legend" class="hidden">
+    <div class="grid2">
+      <article class="panel sci-panel definition-card">
+        <h2>How to read 5.1.2</h2>
+        <p>This dashboard checks whether UCC can demonstrate that Module Reviews and Course Reviews are completed, supported by evidence, approved where required, and followed through with documented improvement actions.</p>
+        <dl class="definition-list"><dt>Course</dt><dd>UCC display term for ERPNext <strong>Program</strong>.</dd><dt>Module</dt><dd>UCC display term for ERPNext <strong>Course</strong>.</dd><dt>Module Review</dt><dd>Operational review of one delivered Module, including teaching, assessment, attendance, results, observations, risks, resources, surveys, interventions and recommendations.</dd><dt>Course Review</dt><dd>Course-level review consolidating Module Reviews, stakeholder feedback, recommendations and action plans.</dd><dt>Evidence gap</dt><dd>A required review input, date, recommendation, action or supporting record that is missing, overdue or cannot be confirmed.</dd></dl>
+      </article>
+      <article class="panel sci-panel definition-card">
+        <h2>Status meanings</h2>
+        <dl class="definition-list"><dt><span class="badge good">Good</span></dt><dd>The check met the configured rule for the selected scope.</dd>
+          <dt><span class="badge warn">Warning</span></dt><dd>Evidence exists but is incomplete, pending or needs manual confirmation.</dd>
+          <dt><span class="badge risk">Risk</span></dt><dd>Evidence is missing, overdue or falls below the configured rule.</dd>
+          <dt>Unavailable</dt><dd>The dashboard could not confirm a readable source. This is not the same as zero records.</dd></dl>
+      </article>
+    </div>
+
+    <div class="grid2">
+      <article class="panel sci-panel definition-card">
+        <h2>Subpage definitions</h2>
+        <dl class="definition-list"><dt>Summary</dt><dd>Shows review coverage, overall record counts and the next-review schedule.</dd><dt>Review Status</dt><dd>Shows review status, action-plan progress, recommendation implementation and evidence completeness.</dd><dt>Records</dt><dd>Lists the underlying Module Review and Course Review documents.</dd><dt>Questions</dt><dd>Answers management questions using the selected review records.</dd></dl>
+      </article>
+      <article class="panel sci-panel definition-card">
+        <h2>How to verify a result</h2>
+        <ol class="verification-steps"><li>Open the relevant Q&A row, chart Table view or record list.</li><li>Use the DocType link in the Source column.</li><li>Apply the same Course, Module, Academic Year or date filters.</li><li>Open individual records and confirm the fields named in the source description.</li></ol>
+        <p><strong>Important:</strong> dashboard labels use UCC terminology, while source links retain ERPNext DocType names.</p>
+      </article>
+    </div>
+
+    <article class="panel sci-panel">
+      <h2>Primary source DocTypes</h2>
+      <div class="doctype-link-grid"><a href="/app/program" target="_blank" rel="noopener">Program list ↗<small>UCC Course</small></a><a href="/app/course" target="_blank" rel="noopener">Course list ↗<small>UCC Module</small></a><a href="/app/module-review" target="_blank" rel="noopener">Module Review list ↗</a><a href="/app/course-review" target="_blank" rel="noopener">Course Review list ↗</a><a href="/app/academic-year" target="_blank" rel="noopener">Academic Year list ↗</a></div>
+    </article>
+  </section>
+</section>
+
+<section data-panel="c52" class="panel-view hidden">
+    <div class="grid2">
+      <article class="panel"><h2>Scheduled Classes by Course</h2><div data-chart="schedule" class="chart"></div><button type="button" data-drill="schedule">View underlying records</button></article>
+      <article class="panel"><div class="panel-head"><h2>Delivery Controls</h2>
+      <div class="mini-toggle" data-card-toggle="delivery-controls-card">
+        <button type="button" class="active" data-card-view="diagram">Diagram</button>
+        <button type="button" data-card-view="table">Table</button>
+      </div></div>
+      <div data-card-panel="delivery-controls-card-diagram"><div data-chart="delivery-controls" class="chart"></div></div>
+      <div data-card-panel="delivery-controls-card-table" class="hidden"><div class="table-wrap"><table>
+        <thead><tr><th>Control</th><th>Value</th></tr></thead>
+        <tbody data-table="delivery-controls"></tbody>
+      </table></div></div></article>
+    </div>
+    <div class="grid2">
+      <article class="panel"><h2>Attendance Status</h2><div data-chart="attendance-status" class="chart"></div></article>
+      <article class="panel"><h2>Enrollment by Course</h2><div data-chart="enrollment" class="chart"></div><small class="caveat">When a module class is selected, enrollment remains a programme/course proxy because Course Enrollment has no student_group field.</small></article>
+    </div>
+    <article class="panel"><h2>5.2 Management Questions and Data-Based Answers</h2><div class="table-wrap"><table class="qa-table"><thead><tr><th>Criterion</th><th>Question</th><th>Answer</th><th>Source / calculation</th><th>Status</th></tr></thead><tbody data-table="qa-c52"></tbody></table></div></article>
+  </section>
+
+  
+<section data-panel="c521" class="panel-view hidden">
+  <div class="section-heading sci-fi-heading">
+    <div><div class="section-code">5.2.1</div><h2>Course Planning Command Centre</h2><p>Intake, module-class, timetable, Teacher and admission readiness.</p></div>
+  </div>
+  <nav class="c511-tabs section-local-tabs" data-local-tabs="c521">
+    <button type="button" class="active" data-local-tab="summary">Summary</button>
+    <button type="button" data-local-tab="readiness">Readiness</button>
+    <button type="button" data-local-tab="exceptions">Exceptions</button>
+    <button type="button" data-local-tab="questions">Questions</button>
+    <button type="button" data-local-tab="legend">Legend &amp; Definitions</button>
+  </nav>
+
+  <section data-local-panel="summary">
+    <div class="kpis"><article><span>Intakes</span><strong data-new-kpi="intakes">-</strong></article><article><span>Module classes</span><strong data-new-kpi="classes">-</strong></article><article><span>Scheduled sessions</span><strong data-new-kpi="sessions">-</strong></article><article><span>Shortlisted applicants</span><strong data-new-kpi="applicants">-</strong></article></div>
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Intake Readiness</h2>
+        <div class="mini-toggle" data-card-toggle="c521-intakes-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c521-intakes-card-diagram"><div data-chart="c521-intakes" class="chart"></div></div>
+      <div data-card-panel="c521-intakes-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Readiness</th><th>Records</th></tr></thead><tbody data-table="c521-intakes"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>Planning Flow Coverage</h2>
+        <div class="mini-toggle" data-card-toggle="c521-flow-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c521-flow-card-diagram"><div data-chart="c521-flow" class="chart"></div></div>
+      <div data-card-panel="c521-flow-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Planning stage</th><th>Records</th></tr></thead><tbody data-table="c521-flow"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section data-local-panel="readiness" class="hidden">
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Module Class Status</h2>
+        <div class="mini-toggle" data-card-toggle="c521-class-status-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c521-class-status-card-diagram"><div data-chart="c521-class-status" class="chart"></div></div>
+      <div data-card-panel="c521-class-status-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Status</th><th>Records</th></tr></thead><tbody data-table="c521-class-status"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>Schedule Coverage</h2>
+        <div class="mini-toggle" data-card-toggle="c521-schedule-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c521-schedule-card-diagram"><div data-chart="c521-schedule" class="chart"></div></div>
+      <div data-card-panel="c521-schedule-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Measure</th><th>Records</th></tr></thead><tbody data-table="c521-schedule"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Admission Status</h2>
+        <div class="mini-toggle" data-card-toggle="c521-admission-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c521-admission-card-diagram"><div data-chart="c521-admission" class="chart"></div></div>
+      <div data-card-panel="c521-admission-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Status</th><th>Records</th></tr></thead><tbody data-table="c521-admission"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>Teacher Assignment</h2>
+        <div class="mini-toggle" data-card-toggle="c521-teacher-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c521-teacher-card-diagram"><div data-chart="c521-teacher" class="chart"></div></div>
+      <div data-card-panel="c521-teacher-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Assignment state</th><th>Records</th></tr></thead><tbody data-table="c521-teacher"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Room and Timing Readiness</h2>
+        <div class="mini-toggle" data-card-toggle="c521-session-readiness-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c521-session-readiness-card-diagram"><div data-chart="c521-session-readiness" class="chart"></div></div>
+      <div data-card-panel="c521-session-readiness-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Session state</th><th>Records</th></tr></thead><tbody data-table="c521-session-readiness"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>Contract Date Completeness</h2>
+        <div class="mini-toggle" data-card-toggle="c521-contracts-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c521-contracts-card-diagram"><div data-chart="c521-contracts" class="chart"></div></div>
+      <div data-card-panel="c521-contracts-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Contract state</th><th>Records</th></tr></thead><tbody data-table="c521-contracts"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section data-local-panel="exceptions" class="hidden">
+    <article class="panel"><h2>Planning Exceptions</h2><div class="table-wrap"><table><thead><tr><th>Record</th><th>Source</th><th>Issue</th><th>Open</th></tr></thead><tbody data-table="c521-exceptions"></tbody></table></div></article>
+  </section>
+
+  <section data-local-panel="questions" class="hidden">
+    <article class="panel">
+  <h2>Management Questions and Data-Based Answers</h2>
+  <div class="table-wrap">
+    <table class="qa-table"><thead><tr><th>Criterion</th><th>Question</th><th>Answer</th><th>Source / calculation</th><th>Status</th></tr></thead>
+      <tbody data-table="qa-c521"></tbody>
+    </table>
+  </div>
+</article>
+  </section>
+
+  
+
+<section class="ucc-v110-expansion" data-v110-expansion="c521">
+  <div class="section-heading ucc-v110-heading">
+    <div><div class="section-code">5.2.1</div>
+    <h2>Expanded Course Planning analytics</h2><p>Expanded operational checks in platform v1.7.0. Click chart values to inspect underlying records.</p></div>
+  </div>
+  <div class="grid2">
+    <article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Intake date completeness</h2>
+    <div class="mini-toggle" data-card-toggle="c521-date-completeness-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Checks intake start and end dates.</p>
+  <div data-card-panel="c521-date-completeness-v110-diagram"><div data-chart="c521-date-completeness-v110" class="chart"></div></div>
+  <div data-card-panel="c521-date-completeness-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c521-date-completeness-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Module classes without schedules</h2>
+    <div class="mini-toggle" data-card-toggle="c521-unscheduled-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Compares Module Class Details against Course Schedule.</p>
+  <div data-card-panel="c521-unscheduled-v110-diagram"><div data-chart="c521-unscheduled-v110" class="chart"></div></div>
+  <div data-card-panel="c521-unscheduled-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c521-unscheduled-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Schedule completeness</h2>
+    <div class="mini-toggle" data-card-toggle="c521-schedule-completeness-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Checks Teacher, room, start time, and end time.</p>
+  <div data-card-panel="c521-schedule-completeness-v110-diagram"><div data-chart="c521-schedule-completeness-v110" class="chart"></div></div>
+  <div data-card-panel="c521-schedule-completeness-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c521-schedule-completeness-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Room and time clashes</h2>
+    <div class="mini-toggle" data-card-toggle="c521-room-clashes-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Finds overlapping sessions in the same room.</p>
+  <div data-card-panel="c521-room-clashes-v110-diagram"><div data-chart="c521-room-clashes-v110" class="chart"></div></div>
+  <div data-card-panel="c521-room-clashes-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c521-room-clashes-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Teacher timetable clashes</h2>
+    <div class="mini-toggle" data-card-toggle="c521-teacher-clashes-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Finds overlapping sessions assigned to the same Teacher.</p>
+  <div data-card-panel="c521-teacher-clashes-v110-diagram"><div data-chart="c521-teacher-clashes-v110" class="chart"></div></div>
+  <div data-card-panel="c521-teacher-clashes-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c521-teacher-clashes-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Contract versus commencement</h2>
+    <div class="mini-toggle" data-card-toggle="c521-contract-vs-start-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Compares contract dates with the linked intake or commencement date.</p>
+  <div data-card-panel="c521-contract-vs-start-v110-diagram"><div data-chart="c521-contract-vs-start-v110" class="chart"></div></div>
+  <div data-card-panel="c521-contract-vs-start-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c521-contract-vs-start-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Unsigned or unsent contracts</h2>
+    <div class="mini-toggle" data-card-toggle="c521-contract-exceptions-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Uses available signature and sent-status fields; reports unsupported fields clearly.</p>
+  <div data-card-panel="c521-contract-exceptions-v110-diagram"><div data-chart="c521-contract-exceptions-v110" class="chart"></div></div>
+  <div data-card-panel="c521-contract-exceptions-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c521-contract-exceptions-v110"></tbody></table></div></div>
+</article>
+  </div>
+</section>
+<section data-local-panel="legend" class="hidden">
+    <div class="grid2">
+      <article class="panel sci-panel definition-card">
+        <h2>How to read 5.2.1</h2>
+        <p>This dashboard checks whether UCC can demonstrate that each Intake No, Module Class, timetable, Teacher assignment, room, contract and commencement plan is prepared before delivery begins.</p>
+        <dl class="definition-list"><dt>Course</dt><dd>UCC display term for ERPNext <strong>Program</strong>.</dd><dt>Module</dt><dd>UCC display term for ERPNext <strong>Course</strong>.</dd><dt>Module Class</dt><dd>Operational class record connecting Course, Module, Intake No, Teacher, schedule and readiness evidence.</dd><dt>Module Schedule</dt><dd>UCC display term for the ERPNext <strong>Course Schedule</strong> DocType.</dd><dt>Planning gap</dt><dd>A missing or unconfirmed date, Teacher assignment, room, timetable, contract or readable source.</dd></dl>
+      </article>
+      <article class="panel sci-panel definition-card">
+        <h2>Status meanings</h2>
+        <dl class="definition-list"><dt><span class="badge good">Good</span></dt><dd>The check met the configured rule for the selected scope.</dd>
+          <dt><span class="badge warn">Warning</span></dt><dd>Evidence exists but is incomplete, pending or needs manual confirmation.</dd>
+          <dt><span class="badge risk">Risk</span></dt><dd>Evidence is missing, overdue or falls below the configured rule.</dd>
+          <dt>Unavailable</dt><dd>The dashboard could not confirm a readable source. This is not the same as zero records.</dd></dl>
+      </article>
+    </div>
+
+    <div class="grid2">
+      <article class="panel sci-panel definition-card">
+        <h2>Subpage definitions</h2>
+        <dl class="definition-list"><dt>Summary</dt><dd>Shows Intake No, Module Class, schedule and admissions readiness at a high level.</dd><dt>Readiness</dt><dd>Checks Teacher assignment, session timing, room, timetable and contract completeness.</dd><dt>Exceptions</dt><dd>Lists planning records that are incomplete, unavailable or need follow-up.</dd><dt>Questions</dt><dd>Answers management questions using current planning data.</dd></dl>
+      </article>
+      <article class="panel sci-panel definition-card">
+        <h2>How to verify a result</h2>
+        <ol class="verification-steps"><li>Open the relevant question, chart Table view or exception.</li><li>Use the DocType link in the Source column.</li><li>Apply the same Course, Module Class, Academic Year or date filters.</li><li>Confirm the schedule and readiness fields in the linked ERPNext record.</li></ol>
+        <p><strong>Important:</strong> dashboard labels use UCC terminology, while source links retain ERPNext DocType names.</p>
+      </article>
+    </div>
+
+    <article class="panel sci-panel">
+      <h2>Primary source DocTypes</h2>
+      <div class="doctype-link-grid"><a href="/app/program" target="_blank" rel="noopener">Program list ↗<small>UCC Course</small></a><a href="/app/course" target="_blank" rel="noopener">Course list ↗<small>UCC Module</small></a><a href="/app/student-group" target="_blank" rel="noopener">Student Group list ↗<small>UCC Module Class Details</small></a><a href="/app/course-schedule" target="_blank" rel="noopener">Course Schedule list ↗<small>UCC Module Schedule</small></a><a href="/app/student-admission-ucc" target="_blank" rel="noopener">Student Admission UCC list ↗<small>Shortlisted Applicants</small></a><a href="/app/academic-year" target="_blank" rel="noopener">Academic Year list ↗</a></div>
+    </article>
+  </section>
+</section>
+
+<section data-panel="c522" class="panel-view hidden">
+  <div class="section-heading sci-fi-heading">
+    <div><div class="section-code">5.2.2</div><h2>Course Delivery Command Centre</h2><p>Classroom observation, delivery quality, Teacher performance and learner feedback.</p></div>
+  </div>
+  <nav class="c511-tabs section-local-tabs" data-local-tabs="c522">
+    <button type="button" class="active" data-local-tab="summary">Summary</button>
+    <button type="button" data-local-tab="quality">Delivery Quality</button>
+    <button type="button" data-local-tab="records">Records</button>
+    <button type="button" data-local-tab="questions">Questions</button>
+    <button type="button" data-local-tab="legend">Legend &amp; Definitions</button>
+  </nav>
+
+  <section data-local-panel="summary">
+    <div class="kpis"><article><span>Observations</span><strong data-new-kpi="observations">-</strong></article><article><span>Average observation score</span><strong data-new-kpi="observation-score">-</strong></article><article><span>Survey responses</span><strong data-new-kpi="surveys">-</strong></article><article><span>Classes without observation</span><strong data-new-kpi="unobserved">-</strong></article></div>
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Observation Coverage</h2>
+        <div class="mini-toggle" data-card-toggle="c522-coverage-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c522-coverage-card-diagram"><div data-chart="c522-coverage" class="chart"></div></div>
+      <div data-card-panel="c522-coverage-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Coverage state</th><th>Module classes</th></tr></thead><tbody data-table="c522-coverage"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>Observation Type</h2>
+        <div class="mini-toggle" data-card-toggle="c522-observation-type-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c522-observation-type-card-diagram"><div data-chart="c522-observation-type" class="chart"></div></div>
+      <div data-card-panel="c522-observation-type-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Type</th><th>Records</th></tr></thead><tbody data-table="c522-observation-type"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section data-local-panel="quality" class="hidden">
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Delivery Platform</h2>
+        <div class="mini-toggle" data-card-toggle="c522-platform-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c522-platform-card-diagram"><div data-chart="c522-platform" class="chart"></div></div>
+      <div data-card-panel="c522-platform-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Platform</th><th>Records</th></tr></thead><tbody data-table="c522-platform"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>Observation Rating Areas</h2>
+        <div class="mini-toggle" data-card-toggle="c522-ratings-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c522-ratings-card-diagram"><div data-chart="c522-ratings" class="chart"></div></div>
+      <div data-card-panel="c522-ratings-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Area</th><th>Average score</th></tr></thead><tbody data-table="c522-ratings"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Survey Response Categories</h2>
+        <div class="mini-toggle" data-card-toggle="c522-survey-categories-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c522-survey-categories-card-diagram"><div data-chart="c522-survey-categories" class="chart"></div></div>
+      <div data-card-panel="c522-survey-categories-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Category</th><th>Responses</th></tr></thead><tbody data-table="c522-survey-categories"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>Prior Notice</h2>
+        <div class="mini-toggle" data-card-toggle="c522-notice-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c522-notice-card-diagram"><div data-chart="c522-notice" class="chart"></div></div>
+      <div data-card-panel="c522-notice-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Notice state</th><th>Records</th></tr></thead><tbody data-table="c522-notice"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Observation Sign-off</h2>
+        <div class="mini-toggle" data-card-toggle="c522-signoff-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c522-signoff-card-diagram"><div data-chart="c522-signoff" class="chart"></div></div>
+      <div data-card-panel="c522-signoff-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Sign-off state</th><th>Records</th></tr></thead><tbody data-table="c522-signoff"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>Delivery Concerns</h2>
+        <div class="mini-toggle" data-card-toggle="c522-concerns-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c522-concerns-card-diagram"><div data-chart="c522-concerns" class="chart"></div></div>
+      <div data-card-panel="c522-concerns-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Concern state</th><th>Records</th></tr></thead><tbody data-table="c522-concerns"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section data-local-panel="records" class="hidden">
+    <article class="panel"><h2>Delivery Evidence Records</h2><div class="table-wrap"><table><thead><tr><th>Record</th><th>Source</th><th>Course</th><th>Module</th><th>Date</th><th>Open</th></tr></thead><tbody data-table="c522-records"></tbody></table></div></article>
+  </section>
+
+  <section data-local-panel="questions" class="hidden">
+    <article class="panel">
+  <h2>Management Questions and Data-Based Answers</h2>
+  <div class="table-wrap">
+    <table class="qa-table"><thead><tr><th>Criterion</th><th>Question</th><th>Answer</th><th>Source / calculation</th><th>Status</th></tr></thead>
+      <tbody data-table="qa-c522"></tbody>
+    </table>
+  </div>
+</article>
+  </section>
+
+  
+
+<section class="ucc-v110-expansion" data-v110-expansion="c522">
+  <div class="section-heading ucc-v110-heading">
+    <div><div class="section-code">5.2.2</div>
+    <h2>Expanded Course Delivery analytics</h2><p>Expanded operational checks in platform v1.7.0. Click chart values to inspect underlying records.</p></div>
+  </div>
+  <div class="grid2">
+    <article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Planned versus delivered sessions</h2>
+    <div class="mini-toggle" data-card-toggle="c522-planned-delivered-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Uses scheduled sessions and linked attendance/delivery evidence.</p>
+  <div data-card-panel="c522-planned-delivered-v110-diagram"><div data-chart="c522-planned-delivered-v110" class="chart"></div></div>
+  <div data-card-panel="c522-planned-delivered-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c522-planned-delivered-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Observation coverage by Teacher</h2>
+    <div class="mini-toggle" data-card-toggle="c522-teacher-coverage-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Groups observed and unobserved Teachers.</p>
+  <div data-card-panel="c522-teacher-coverage-v110-diagram"><div data-chart="c522-teacher-coverage-v110" class="chart"></div></div>
+  <div data-card-panel="c522-teacher-coverage-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c522-teacher-coverage-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Observation coverage by Module</h2>
+    <div class="mini-toggle" data-card-toggle="c522-module-coverage-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Groups observation records by module.</p>
+  <div data-card-panel="c522-module-coverage-v110-diagram"><div data-chart="c522-module-coverage-v110" class="chart"></div></div>
+  <div data-card-panel="c522-module-coverage-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c522-module-coverage-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Scheduled versus ad-hoc observations</h2>
+    <div class="mini-toggle" data-card-toggle="c522-observation-mode-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Uses observation type and schedule-link evidence.</p>
+  <div data-card-panel="c522-observation-mode-v110-diagram"><div data-chart="c522-observation-mode-v110" class="chart"></div></div>
+  <div data-card-panel="c522-observation-mode-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c522-observation-mode-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Observation sign-off aging</h2>
+    <div class="mini-toggle" data-card-toggle="c522-signoff-aging-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Ages observations that are not fully signed.</p>
+  <div data-card-panel="c522-signoff-aging-v110-diagram"><div data-chart="c522-signoff-aging-v110" class="chart"></div></div>
+  <div data-card-panel="c522-signoff-aging-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c522-signoff-aging-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Observation rating distribution</h2>
+    <div class="mini-toggle" data-card-toggle="c522-rating-distribution-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Groups calculated observation averages into rating bands.</p>
+  <div data-card-panel="c522-rating-distribution-v110-diagram"><div data-chart="c522-rating-distribution-v110" class="chart"></div></div>
+  <div data-card-panel="c522-rating-distribution-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c522-rating-distribution-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Common strengths</h2>
+    <div class="mini-toggle" data-card-toggle="c522-strengths-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Summarises populated strength text fields.</p>
+  <div data-card-panel="c522-strengths-v110-diagram"><div data-chart="c522-strengths-v110" class="chart"></div></div>
+  <div data-card-panel="c522-strengths-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c522-strengths-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Common improvement areas</h2>
+    <div class="mini-toggle" data-card-toggle="c522-improvements-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Summarises populated improvement text fields.</p>
+  <div data-card-panel="c522-improvements-v110-diagram"><div data-chart="c522-improvements-v110" class="chart"></div></div>
+  <div data-card-panel="c522-improvements-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c522-improvements-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Survey response volume</h2>
+    <div class="mini-toggle" data-card-toggle="c522-survey-volume-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Groups survey response volume by month.</p>
+  <div data-card-panel="c522-survey-volume-v110-diagram"><div data-chart="c522-survey-volume-v110" class="chart"></div></div>
+  <div data-card-panel="c522-survey-volume-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c522-survey-volume-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Delivery exception queue</h2>
+    <div class="mini-toggle" data-card-toggle="c522-delivery-exceptions-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Combines missing observation, sign-off, rating, and survey issues.</p>
+  <div data-card-panel="c522-delivery-exceptions-v110-diagram"><div data-chart="c522-delivery-exceptions-v110" class="chart"></div></div>
+  <div data-card-panel="c522-delivery-exceptions-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c522-delivery-exceptions-v110"></tbody></table></div></div>
+</article>
+  </div>
+</section>
+<section data-local-panel="legend" class="hidden">
+    <div class="grid2">
+      <article class="panel sci-panel definition-card">
+        <h2>How to read 5.2.2</h2>
+        <p>This dashboard checks whether planned Module delivery occurred with attendance, observation, Teacher acknowledgement, survey feedback and documented follow-up evidence.</p>
+        <dl class="definition-list"><dt>Course</dt><dd>UCC display term for ERPNext <strong>Program</strong>.</dd><dt>Module</dt><dd>UCC display term for ERPNext <strong>Course</strong>.</dd><dt>Delivery evidence</dt><dd>A scheduled session, attendance record, classroom observation, Teacher sign-off, survey response, intervention or linked operational record.</dd><dt>Observation coverage</dt><dd>Compares Module Class records with linked Classroom Observation records.</dd><dt>Delivery gap</dt><dd>A planned delivery item that lacks attendance, observation, acknowledgement, survey evidence or a readable source.</dd></dl>
+      </article>
+      <article class="panel sci-panel definition-card">
+        <h2>Status meanings</h2>
+        <dl class="definition-list"><dt><span class="badge good">Good</span></dt><dd>The check met the configured rule for the selected scope.</dd>
+          <dt><span class="badge warn">Warning</span></dt><dd>Evidence exists but is incomplete, pending or needs manual confirmation.</dd>
+          <dt><span class="badge risk">Risk</span></dt><dd>Evidence is missing, overdue or falls below the configured rule.</dd>
+          <dt>Unavailable</dt><dd>The dashboard could not confirm a readable source. This is not the same as zero records.</dd></dl>
+      </article>
+    </div>
+
+    <div class="grid2">
+      <article class="panel sci-panel definition-card">
+        <h2>Subpage definitions</h2>
+        <dl class="definition-list"><dt>Summary</dt><dd>Shows delivery volume, attendance, observations and survey coverage.</dd><dt>Observation</dt><dd>Checks observation type, ratings, concerns, signatures and acknowledgement.</dd><dt>Feedback</dt><dd>Shows Survey Response coverage and question-level response evidence.</dd><dt>Questions</dt><dd>Answers management questions using current delivery and feedback records.</dd></dl>
+      </article>
+      <article class="panel sci-panel definition-card">
+        <h2>How to verify a result</h2>
+        <ol class="verification-steps"><li>Open the relevant question, chart Table view or underlying record.</li><li>Use the DocType link in the Source column.</li><li>Apply the same Course, Module Class, Teacher or date filters.</li><li>Confirm the attendance, observation or survey fields named in the source description.</li></ol>
+        <p><strong>Important:</strong> dashboard labels use UCC terminology, while source links retain ERPNext DocType names.</p>
+      </article>
+    </div>
+
+    <article class="panel sci-panel">
+      <h2>Primary source DocTypes</h2>
+      <div class="doctype-link-grid"><a href="/app/program" target="_blank" rel="noopener">Program list ↗<small>UCC Course</small></a><a href="/app/course" target="_blank" rel="noopener">Course list ↗<small>UCC Module</small></a><a href="/app/student-group" target="_blank" rel="noopener">Student Group list ↗<small>UCC Module Class Details</small></a><a href="/app/course-schedule" target="_blank" rel="noopener">Course Schedule list ↗<small>UCC Module Schedule</small></a><a href="/app/student-attendance" target="_blank" rel="noopener">Student Attendance list ↗</a><a href="/app/classroom-observation" target="_blank" rel="noopener">Classroom Observation list ↗</a><a href="/app/survey-response" target="_blank" rel="noopener">Survey Response list ↗</a></div>
+    </article>
+  </section>
+</section>
+
+<section data-panel="c53" class="panel-view hidden">
+    <article class="panel">
+      <h2>5.3 Partnerships</h2>
+      <div class="source-callout">
+        Confirmed source: <strong>Partnership Agreement</strong>.
+        <a href="/app/partnership-agreement" target="_blank" rel="noopener">Open Partnership Agreement list ↗</a>
+        Strategic monitoring and evaluation records are read separately from <strong>Partnerships Agreement Management</strong>.
+      </div>
+    </article>
+    <article class="panel">
+      <h2>5.3 Management Questions and Data-Based Answers</h2>
+      <div class="table-wrap">
+        <table class="qa-table"><thead><tr><th>Criterion</th><th>Question</th><th>Answer</th><th>Source / calculation</th><th>Status</th></tr></thead>
+        <tbody data-table="qa-c53"></tbody></table>
+      </div>
+    </article>
+  </section>
+
+  
+<section data-panel="c531" class="panel-view hidden">
+  <div class="section-heading sci-fi-heading">
+    <div><div class="section-code">5.3.1</div><h2>Partnerships Command Centre</h2><p>Agreement lifecycle, partner identification, monitoring, risk and evaluation.</p></div>
+  </div>
+  <nav class="c511-tabs section-local-tabs" data-local-tabs="c531">
+    <button type="button" class="active" data-local-tab="summary">Summary</button>
+    <button type="button" data-local-tab="monitoring">Monitoring &amp; Evaluation</button>
+    <button type="button" data-local-tab="records">Records</button>
+    <button type="button" data-local-tab="questions">Questions</button>
+    <button type="button" data-local-tab="legend">Legend &amp; Definitions</button>
+  </nav>
+
+  <section data-local-panel="summary">
+    <div class="kpis"><article><span>Signed agreements</span><strong data-new-kpi="partners">-</strong></article><article><span>Active</span><strong data-new-kpi="partners-active">-</strong></article><article><span>Monitoring entries</span><strong data-new-kpi="monitoring">-</strong></article><article><span>Evaluations</span><strong data-new-kpi="evaluations">-</strong></article></div>
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Partnership Status</h2>
+        <div class="mini-toggle" data-card-toggle="c531-status-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c531-status-card-diagram"><div data-chart="c531-status" class="chart"></div></div>
+      <div data-card-panel="c531-status-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Status</th><th>Records</th></tr></thead><tbody data-table="c531-status"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>Agreement Type</h2>
+        <div class="mini-toggle" data-card-toggle="c531-type-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c531-type-card-diagram"><div data-chart="c531-type" class="chart"></div></div>
+      <div data-card-panel="c531-type-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Type</th><th>Records</th></tr></thead><tbody data-table="c531-type"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Agreement Expiry Window</h2>
+        <div class="mini-toggle" data-card-toggle="c531-expiry-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c531-expiry-card-diagram"><div data-chart="c531-expiry" class="chart"></div></div>
+      <div data-card-panel="c531-expiry-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Expiry state</th><th>Records</th></tr></thead><tbody data-table="c531-expiry"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>NDA Completion</h2>
+        <div class="mini-toggle" data-card-toggle="c531-nda-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c531-nda-card-diagram"><div data-chart="c531-nda" class="chart"></div></div>
+      <div data-card-panel="c531-nda-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>NDA state</th><th>Records</th></tr></thead><tbody data-table="c531-nda"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section data-local-panel="monitoring" class="hidden">
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Monitoring Method</h2>
+        <div class="mini-toggle" data-card-toggle="c531-monitoring-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c531-monitoring-card-diagram"><div data-chart="c531-monitoring" class="chart"></div></div>
+      <div data-card-panel="c531-monitoring-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Method</th><th>Entries</th></tr></thead><tbody data-table="c531-monitoring"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>Monitoring Type</h2>
+        <div class="mini-toggle" data-card-toggle="c531-monitoring-type-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c531-monitoring-type-card-diagram"><div data-chart="c531-monitoring-type" class="chart"></div></div>
+      <div data-card-panel="c531-monitoring-type-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Type</th><th>Entries</th></tr></thead><tbody data-table="c531-monitoring-type"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Evaluation Outcome</h2>
+        <div class="mini-toggle" data-card-toggle="c531-evaluation-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c531-evaluation-card-diagram"><div data-chart="c531-evaluation" class="chart"></div></div>
+      <div data-card-panel="c531-evaluation-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Outcome</th><th>Entries</th></tr></thead><tbody data-table="c531-evaluation"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>Identification Scores</h2>
+        <div class="mini-toggle" data-card-toggle="c531-scores-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c531-scores-card-diagram"><div data-chart="c531-scores" class="chart"></div></div>
+      <div data-card-panel="c531-scores-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Partnership</th><th>Score</th></tr></thead><tbody data-table="c531-scores"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+    <div class="grid2">
+      <article class="panel">
+      <div class="panel-head"><h2>Provider Rating Stage</h2>
+        <div class="mini-toggle" data-card-toggle="c531-rating-stage-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c531-rating-stage-card-diagram"><div data-chart="c531-rating-stage" class="chart"></div></div>
+      <div data-card-panel="c531-rating-stage-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Stage</th><th>Records</th></tr></thead><tbody data-table="c531-rating-stage"></tbody></table></div>
+      </div>
+    </article>
+      <article class="panel">
+      <div class="panel-head"><h2>Selection Threshold</h2>
+        <div class="mini-toggle" data-card-toggle="c531-threshold-card">
+          <button type="button" class="active" data-card-view="diagram">Diagram</button>
+          <button type="button" data-card-view="table">Table</button>
+        </div>
+      </div>
+      <div data-card-panel="c531-threshold-card-diagram"><div data-chart="c531-threshold" class="chart"></div></div>
+      <div data-card-panel="c531-threshold-card-table" class="hidden">
+        <div class="table-wrap"><table><thead><tr><th>Threshold state</th><th>Records</th></tr></thead><tbody data-table="c531-threshold"></tbody></table></div>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section data-local-panel="records" class="hidden">
+    <article class="panel"><h2>Partnership Records</h2><div class="table-wrap"><table><thead><tr><th>Agreement</th><th>Party</th><th>Type</th><th>Status</th><th>Agreement date</th><th>Expiry</th><th>Open</th></tr></thead><tbody data-table="c531-records"></tbody></table></div></article>
+  </section>
+
+  <section data-local-panel="questions" class="hidden">
+    <article class="panel">
+  <h2>Management Questions and Data-Based Answers</h2>
+  <div class="table-wrap">
+    <table class="qa-table"><thead><tr><th>Criterion</th><th>Question</th><th>Answer</th><th>Source / calculation</th><th>Status</th></tr></thead>
+      <tbody data-table="qa-c531"></tbody>
+    </table>
+  </div>
+</article>
+  </section>
+
+  
+
+<section class="ucc-v110-expansion" data-v110-expansion="c531">
+  <div class="section-heading ucc-v110-heading">
+    <div><div class="section-code">5.3.1</div>
+    <h2>Expanded Partnership analytics</h2><p>Expanded operational checks in platform v1.7.0. Click chart values to inspect underlying records.</p></div>
+  </div>
+  <div class="grid2">
+    <article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Agreement lifecycle</h2>
+    <div class="mini-toggle" data-card-toggle="c531-lifecycle-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Active, expiring, expired, terminated, upcoming, and missing-date agreements.</p>
+  <div data-card-panel="c531-lifecycle-v110-diagram"><div data-chart="c531-lifecycle-v110" class="chart"></div></div>
+  <div data-card-panel="c531-lifecycle-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c531-lifecycle-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Signature completion</h2>
+    <div class="mini-toggle" data-card-toggle="c531-signature-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Checks available party and UCC signature evidence.</p>
+  <div data-card-panel="c531-signature-v110-diagram"><div data-chart="c531-signature-v110" class="chart"></div></div>
+  <div data-card-panel="c531-signature-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c531-signature-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Partnership risk distribution</h2>
+    <div class="mini-toggle" data-card-toggle="c531-risk-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Uses available risk or score fields; unsupported mappings are shown explicitly.</p>
+  <div data-card-panel="c531-risk-v110-diagram"><div data-chart="c531-risk-v110" class="chart"></div></div>
+  <div data-card-panel="c531-risk-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c531-risk-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Monitoring frequency and recency</h2>
+    <div class="mini-toggle" data-card-toggle="c531-monitoring-recency-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Shows recent, stale, and missing monitoring.</p>
+  <div data-card-panel="c531-monitoring-recency-v110-diagram"><div data-chart="c531-monitoring-recency-v110" class="chart"></div></div>
+  <div data-card-panel="c531-monitoring-recency-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c531-monitoring-recency-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Continuation decisions</h2>
+    <div class="mini-toggle" data-card-toggle="c531-decisions-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Groups continue, modify, and terminate outcomes.</p>
+  <div data-card-panel="c531-decisions-v110-diagram"><div data-chart="c531-decisions-v110" class="chart"></div></div>
+  <div data-card-panel="c531-decisions-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c531-decisions-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Missing monitoring or evaluation</h2>
+    <div class="mini-toggle" data-card-toggle="c531-missing-controls-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Identifies partnerships without monitoring and/or evaluation.</p>
+  <div data-card-panel="c531-missing-controls-v110-diagram"><div data-chart="c531-missing-controls-v110" class="chart"></div></div>
+  <div data-card-panel="c531-missing-controls-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c531-missing-controls-v110"></tbody></table></div></div>
+</article><article class="panel ucc-v110-card">
+  <div class="panel-head">
+    <h2>Quality-record completeness</h2>
+    <div class="mini-toggle" data-card-toggle="c531-quality-completeness-v110">
+      <button type="button" class="active" data-card-view="diagram">Diagram</button>
+      <button type="button" data-card-view="table">Table</button>
+    </div>
+  </div>
+  <p class="ucc-metric-help">Checks agreement, identification, monitoring, evaluation, and rating evidence.</p>
+  <div data-card-panel="c531-quality-completeness-v110-diagram"><div data-chart="c531-quality-completeness-v110" class="chart"></div></div>
+  <div data-card-panel="c531-quality-completeness-v110-table" class="hidden"><div class="table-wrap"><table><thead><tr><th>Status / result</th><th>Count</th></tr></thead><tbody data-table="c531-quality-completeness-v110"></tbody></table></div></div>
+</article>
+  </div>
+</section>
+<section data-local-panel="legend" class="hidden">
+    <div class="grid2">
+      <article class="panel sci-panel definition-card">
+        <h2>How to read 5.3.1</h2>
+        <p>This dashboard checks whether UCC can demonstrate that partnerships are selected, documented, signed, monitored, evaluated, risk-assessed and followed through with continuation, modification or termination decisions.</p>
+        <dl class="definition-list"><dt>Partnership Agreement</dt><dd>Signed contractual register for agreement type, partner, dates, signatures, NDA linkage and responsibilities.</dd><dt>Partnerships Agreement Management</dt><dd>Strategic management record for identification criteria, risks, monitoring, evaluation and quality records.</dd><dt>Provider Rating</dt><dd>Provider evaluation source resolved at runtime from the available technical DocType.</dd><dt>Partnership evidence</dt><dd>A signed agreement, NDA, selection rating, risk record, monitoring row, evaluation row or provider assessment.</dd><dt>Partnership gap</dt><dd>A missing signature, date, selection score, risk assessment, monitoring activity, evaluation decision or readable source.</dd></dl>
+      </article>
+      <article class="panel sci-panel definition-card">
+        <h2>Status meanings</h2>
+        <dl class="definition-list"><dt><span class="badge good">Good</span></dt><dd>The check met the configured rule for the selected scope.</dd>
+          <dt><span class="badge warn">Warning</span></dt><dd>Evidence exists but is incomplete, pending or needs manual confirmation.</dd>
+          <dt><span class="badge risk">Risk</span></dt><dd>Evidence is missing, overdue or falls below the configured rule.</dd>
+          <dt>Unavailable</dt><dd>The dashboard could not confirm a readable source. This is not the same as zero records.</dd></dl>
+      </article>
+    </div>
+
+    <div class="grid2">
+      <article class="panel sci-panel definition-card">
+        <h2>Subpage definitions</h2>
+        <dl class="definition-list"><dt>Summary</dt><dd>Shows agreement volume, lifecycle, NDA and signature completion.</dd><dt>Selection & Risk</dt><dd>Checks partner-identification ratings, total score, risks and supporting justification.</dd><dt>Monitoring & Evaluation</dt><dd>Shows monitoring recency, methods, scores, outcomes and follow-up decisions.</dd><dt>Questions</dt><dd>Answers management questions using confirmed partnership sources.</dd></dl>
+      </article>
+      <article class="panel sci-panel definition-card">
+        <h2>How to verify a result</h2>
+        <ol class="verification-steps"><li>Open the relevant question, chart Table view or agreement record.</li><li>Use the DocType link in the Source column.</li><li>Apply the same partner, agreement type or date filters.</li><li>Confirm signatures, dates, ratings, risks and evaluation fields in the source records.</li></ol>
+        <p><strong>Important:</strong> dashboard labels use UCC terminology, while source links retain ERPNext DocType names.</p>
+      </article>
+    </div>
+
+    <article class="panel sci-panel">
+      <h2>Primary source DocTypes</h2>
+      <div class="doctype-link-grid"><a href="/app/partnership-agreement" target="_blank" rel="noopener">Partnership Agreement list ↗</a><a href="/app/partnerships-agreement-management" target="_blank" rel="noopener">Partnerships Agreement Management list ↗</a><a href="/app/supplier-rating" target="_blank" rel="noopener">Supplier Rating list ↗<small>Provider Rating source</small></a></div>
+    </article>
+  </section>
+</section>
+
+<section data-panel="c54" class="panel-view hidden">
+    <section class="survey-subfilters">
+      <div><label>Survey Type</label><select data-survey-filter="type">
+        <option value="">All Survey Types</option>
+        <option value="End of Module">End of Module</option>
+        <option value="End of Course">End of Course</option>
+        <option value="Graduate Survey">Graduate Survey</option>
+        <option value="Other / Unclassified">Other / Unclassified</option>
+      </select></div>
+      <div><label>Survey Module</label><select data-survey-filter="module"><option value="">All Survey Modules</option></select></div>
+      <button type="button" data-action="clear-survey-filters">Clear Survey Filters</button>
+    </section>
+    <div class="grid2">
+      <article class="panel">
+        <h2>Survey Score by Module</h2>
+        <div class="panel-subtitle">Average score parsed from numeric or recognised Likert responses in Survey Response child rows.</div>
+        <div data-chart="survey-module-score" class="chart"></div>
+      </article>
+      <article class="panel">
+        <h2>Survey Coverage by Type</h2>
+        <div class="panel-subtitle">End of Module, End of Course and Graduate Survey classification based on survey title/category text.</div>
+        <div data-chart="survey-type-count" class="chart"></div>
+      </article>
+    </div>
+
+    <div class="grid2">
+      <article class="panel">
+        <h2>Question-Level Survey Scores</h2>
+        <div class="panel-subtitle">Average score for each scored question in the selected scope.</div>
+        <div data-chart="survey-question-score" class="chart"></div>
+      </article>
+      <article class="panel">
+        <h2>Open-Ended Responses</h2>
+        <div class="panel-subtitle">Comments and non-numeric responses from End of Module, End of Course and Graduate Survey records.</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Survey Type</th><th>Module</th><th>Category</th><th>Question</th><th>Response</th><th>Date</th></tr></thead>
+            <tbody data-table="survey-comments"></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="grid2">
+      <article class="panel">
+        <h2>Learning Interventions</h2>
+        <div data-chart="learning-support" class="chart"></div>
+      </article>
+      <article class="panel">
+        <h2>At-Risk Indicators</h2>
+        <div data-chart="learning-risk" class="chart"></div>
+      </article>
+    </div>
+
+    <article class="panel">
+      <h2>5.4 Management Questions and Data-Based Answers</h2>
+      <div class="table-wrap">
+        <table class="qa-table"><thead><tr><th>Criterion</th><th>Question</th><th>Answer</th><th>Source / calculation</th><th>Status</th></tr></thead>
+        <tbody data-table="qa-c54"></tbody></table>
+      </div>
+    </article>
+  </section>
+
+  <section data-panel="c55" class="panel-view hidden">
+    <div class="grid2">
+      <article class="panel"><h2>Assessment Plans by Month</h2><div data-chart="assessment-trend" class="chart"></div></article>
+      <article class="panel"><h2>Grade Distribution</h2><div data-chart="grade" class="chart"></div></article>
+    </div>
+    <div class="grid2">
+      <article class="panel"><h2>Assessment Controls</h2><div data-chart="assessment-controls" class="chart"></div></article>
+      <article class="panel"><h2>Assessment Data Quality</h2><div data-chart="assessment-quality" class="chart"></div></article>
+    </div>
+    <article class="panel"><h2>5.5 Management Questions and Data-Based Answers</h2><div class="table-wrap"><table class="qa-table"><thead><tr><th>Criterion</th><th>Question</th><th>Answer</th><th>Source / calculation</th><th>Status</th></tr></thead><tbody data-table="qa-c55"></tbody></table></div></article>
+  </section>
+
+  <section data-panel="quality" class="panel-view hidden">
+    <article class="panel"><h2>Data Quality Checks</h2><div class="table-wrap"><table><thead><tr><th>Check</th><th>Count</th><th>Source</th><th>Status</th></tr></thead><tbody data-table="quality"></tbody></table></div></article>
+  </section>
+
+  <section data-panel="sources" class="panel-view hidden">
+    <article class="panel"><h2>Source Registry</h2><div class="table-wrap"><table><thead><tr><th>DocType</th><th>Status</th><th>Purpose</th></tr></thead><tbody data-table="sources"></tbody></table></div></article>
+  </section>
+
+  <dialog data-dialog class="records-dialog">
+    <header><h3 data-dialog-title>Records</h3><button type="button" data-dialog-close>×</button></header>
+    <div class="table-wrap"><table><thead data-dialog-head></thead><tbody data-dialog-body></tbody></table></div>
+  </dialog>
+
+  <dialog data-diagnostics-dialog class="diagnostics-dialog">
+    <header><div><h3>Frontend Diagnostics Log</h3><p>Build UCC-C5-5.6.1-20260718 · captures source resolution, requests, fallbacks, rendering, interactions, warnings and errors.</p></div><button type="button" data-diagnostics-close>×</button></header>
+    <div class="diagnostic-toolbar">
+      <select data-log-filter-level><option value="">All levels</option><option>INFO</option><option>WARN</option><option>ERROR</option></select>
+      <select data-log-filter-category><option value="">All categories</option><option>lifecycle</option><option>request</option><option>source</option><option>interaction</option><option>diagnostics</option><option>window</option></select>
+      <input data-log-search type="search" placeholder="Search log">
+      <button type="button" data-action="export-log-csv">Export CSV</button>
+      <button type="button" data-action="export-log-json">Export JSON</button>
+      <button type="button" data-action="clear-log">Clear log</button>
+    </div>
+    <div class="diagnostic-summary">
+      <strong>Send the exported CSV or JSON together with a screenshot of the affected card.</strong>
+      The export includes build ID, source candidates, resolved DocTypes, request duration, filters, row counts and exact errors. Sensitive-looking keys are redacted.
+    </div>
+    <div class="table-wrap diagnostic-table-wrap"><table><thead><tr><th>#</th><th>Timestamp</th><th>Level</th><th>Category</th><th>Event</th><th>Details</th></tr></thead><tbody data-table="diagnostic-log"></tbody></table></div>
+  </dialog>
+
+  <dialog data-changelog-dialog class="changelog-dialog">
+    <header><h3>UCC Intelligence Platform Change Log</h3><button type="button" data-changelog-close>×</button></header>
+    <div class="table-wrap"><table><thead><tr><th>Version</th><th>Stage</th><th>Changes</th></tr></thead><tbody data-table="changelog"></tbody></table></div>
+  </dialog>
+</div>
+
+    

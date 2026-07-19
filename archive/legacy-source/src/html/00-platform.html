@@ -1,0 +1,50 @@
+<div class="ucc-platform ucc-embed-safe" id="uccIntelligencePlatform" data-platform-version="1.7.0">
+  <header class="ucc-platform-shell">
+    <div class="ucc-platform-brand">
+      <div class="ucc-platform-mark" aria-hidden="true">UCC</div>
+      <div class="ucc-platform-brand-copy">
+        <div class="ucc-platform-brand-title">
+          <strong>UCC Intelligence Platform</strong>
+          <button type="button"
+                  class="ucc-platform-version"
+                  data-action="show-changelog"
+                  aria-label="View version 1.7.0 changelog"
+                  title="View changes in v1.7.0">v1.7.0</button>
+        </div>
+        <small>Analytics, evidence and guided answers</small>
+      </div>
+    </div>
+
+    <nav class="ucc-platform-workspaces" aria-label="Platform workspaces">
+      <button type="button" class="is-active" data-ucc-workspace="analytics" aria-pressed="true">
+        Analytics Hub
+      </button>
+      <button type="button" data-ucc-workspace="ask" aria-pressed="false">
+        Ask UCC
+      </button>
+    </nav>
+
+    <div class="ucc-platform-dashboard-control" data-ucc-dashboard-control>
+      <label for="uccDashboardSelect">Dashboard</label>
+      <select id="uccDashboardSelect">
+        <option value="criterion_1" disabled>Criterion 1 · Planned</option>
+        <option value="criterion_2" disabled>Criterion 2 · Planned</option>
+        <option value="criterion_3" disabled>Criterion 3 · Planned</option>
+        <option value="criterion_4">Criterion 4 · Student Support &amp; Services</option>
+        <option value="criterion_5" selected>Criterion 5 · Academic Systems &amp; Processes</option>
+        <option value="criterion_6" disabled>Criterion 6 · Planned</option>
+        <option value="criterion_7" disabled>Criterion 7 · Planned</option>
+      </select>
+    </div>
+
+    <button type="button" class="ucc-shell-compact-toggle" data-shell-toggle
+            aria-label="Expand or collapse navigation" title="Expand navigation">UCC</button>
+  </header>
+
+  <div class="ucc-platform-status" role="status" aria-live="polite" data-ucc-platform-status>
+    Criterion 5 is active. Criterion 4 is now available. Ask UCC remains optional.
+  </div>
+
+  <main class="ucc-platform-main">
+    <section class="ucc-platform-workspace" data-ucc-workspace-panel="analytics">
+

@@ -1,0 +1,21 @@
+/* Shared UCC design tokens for Criteria 1–7.
+   Build order keeps the existing deployable CSS unchanged in v1.7.0.
+   New criterion modules should consume these variables instead of adding literals. */
+:root {
+  --ucc-blue: #26345B;
+  --ucc-blue-dark: #1F2A49;
+  --ucc-blue-mid: #35456F;
+  --ucc-blue-soft: #EEF1F7;
+  --ucc-gold: #CE9E5D;
+  --ucc-gold-dark: #A9783B;
+  --ucc-gold-soft: #FBF5EC;
+  --ucc-canvas: #F6F7FB;
+  --ucc-surface: #FFFFFF;
+  --ucc-text: #182033;
+  --ucc-muted: #5F687A;
+  --ucc-line: #DFE3EC;
+  --ucc-radius-sm: 10px;
+  --ucc-radius-md: 16px;
+  --ucc-radius-lg: 20px;
+  --ucc-shadow: 0 18px 48px rgba(38,52,91,.12);
+}

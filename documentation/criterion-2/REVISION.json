@@ -1,0 +1,20 @@
+{
+  "package_version": "1.8.7",
+  "documentation_revision": "criterion-2-live-foundation-1",
+  "generated_at_utc": "2026-07-19T06:46:49.681429+00:00",
+  "api_method": "ucc_analytics_criterion_2",
+  "frontend_connected": true,
+  "status": "live_foundation",
+  "policies": [
+    "PPD-OEE-HR-2.1.1 v2.2",
+    "PPD-OEE-HR-2.1.2 v1.2",
+    "PPD-SES-MG-2.2.1 v1.2",
+    "PPD-OEE-IT-2.3.1 v1.2",
+    "PPD-OE-IT-2.3.2 v1.2",
+    "PPD-SGL-SQ-2.4.1 v2.3",
+    "PPD-SGL-SQ-2.4.2 v2.2",
+    "PPD-SGL-SQ-2.4.3 v2.2"
+  ],
+  "dashboard_status": "live_foundation",
+  "dummy_values_active": false
+}

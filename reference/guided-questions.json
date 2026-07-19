@@ -1,0 +1,314 @@
+{
+  "student_journey": {
+    "profile": [
+      {
+        "label": "Student profile",
+        "question": "Show this student's profile"
+      },
+      {
+        "label": "Course",
+        "question": "What course is this student in?"
+      },
+      {
+        "label": "Nationality",
+        "question": "What is this student's nationality?"
+      },
+      {
+        "label": "Commencement",
+        "question": "When did this student start?"
+      },
+      {
+        "label": "Completion",
+        "question": "When is this student completing the course?"
+      }
+    ],
+    "journey": [
+      {
+        "label": "Full timeline",
+        "question": "Show this student's journey"
+      },
+      {
+        "label": "Current module",
+        "question": "Which module is this student in right now?"
+      },
+      {
+        "label": "Class and group",
+        "question": "Show this student's class and student group"
+      },
+      {
+        "label": "Current leave",
+        "question": "Is this student on leave now?"
+      }
+    ],
+    "academic": [
+      {
+        "label": "All results",
+        "question": "Show all this student's results and grades"
+      },
+      {
+        "label": "Module completion",
+        "question": "Has this student finished all modules?"
+      },
+      {
+        "label": "Graduation status",
+        "question": "Has this student graduated?"
+      },
+      {
+        "label": "Results and grades",
+        "question": "Show all this student's results and grades"
+      }
+    ],
+    "attendance": [
+      {
+        "label": "Attendance summary",
+        "question": "Show this student's attendance"
+      },
+      {
+        "label": "Current leave",
+        "question": "Is this student on leave now?"
+      },
+      {
+        "label": "Leave history",
+        "question": "Show this student's leave records"
+      }
+    ],
+    "finance": [
+      {
+        "label": "Payment status",
+        "question": "Show this student's fee and payment status"
+      },
+      {
+        "label": "Outstanding fees",
+        "question": "Does this student have outstanding fees?"
+      },
+      {
+        "label": "Invoices",
+        "question": "Show this student's invoices"
+      },
+      {
+        "label": "FPS status",
+        "question": "What is this student's FPS status?"
+      }
+    ],
+    "graduation": [
+      {
+        "label": "Readiness",
+        "question": "Is this student ready to graduate?"
+      },
+      {
+        "label": "Risk summary",
+        "question": "Show this student's risk summary"
+      },
+      {
+        "label": "Follow-up actions",
+        "question": "What follow-up actions are needed for this student?"
+      },
+      {
+        "label": "Admission documents",
+        "question": "Show this student's attached admission documents"
+      }
+    ],
+    "cohort": [
+      {
+        "label": "Cohort dashboard",
+        "question": "Show the cohort dashboard"
+      },
+      {
+        "label": "Class today",
+        "question": "Who are the students in class today?"
+      },
+      {
+        "label": "Graduating this month",
+        "question": "Who is graduating this month?"
+      },
+      {
+        "label": "Graduated months ago",
+        "question": "Who graduated 6 months ago?"
+      },
+      {
+        "label": "Leave count",
+        "question": "How many students are on leave from 15 to 30 August 2026?"
+      }
+    ]
+  },
+  "recruitment_agent": {
+    "profile": [
+      {
+        "label": "Agent profile",
+        "question": "Show this agent's profile"
+      },
+      {
+        "label": "Contract status",
+        "question": "Is this agent's contract active?"
+      },
+      {
+        "label": "Contract dates",
+        "question": "Show this agent's contract dates"
+      }
+    ],
+    "journey": [
+      {
+        "label": "Agent journey",
+        "question": "Show this agent's complete journey"
+      },
+      {
+        "label": "Latest contract",
+        "question": "Show this agent's latest contract"
+      },
+      {
+        "label": "Expiry",
+        "question": "When does this agent's contract expire?"
+      }
+    ],
+    "academic": [
+      {
+        "label": "Students recruited",
+        "question": "How many students did this agent recruit?"
+      },
+      {
+        "label": "Recruitment list",
+        "question": "Show students recruited by this agent"
+      }
+    ],
+    "attendance": [
+      {
+        "label": "Latest rating",
+        "question": "What is this agent's latest rating?"
+      },
+      {
+        "label": "Rating threshold",
+        "question": "Does this agent meet the minimum rating?"
+      }
+    ],
+    "finance": [
+      {
+        "label": "Revenue contribution",
+        "question": "What revenue came from this agent?"
+      },
+      {
+        "label": "Commission status",
+        "question": "Show this agent's commission status"
+      }
+    ],
+    "graduation": [
+      {
+        "label": "Renewal readiness",
+        "question": "Should this agent's contract be renewed?"
+      },
+      {
+        "label": "Compliance issues",
+        "question": "Show this agent's compliance issues"
+      },
+      {
+        "label": "Risk summary",
+        "question": "Show this agent's risk summary"
+      }
+    ],
+    "cohort": [
+      {
+        "label": "Active agents",
+        "question": "How many recruitment agents have active contracts?"
+      },
+      {
+        "label": "Expiring contracts",
+        "question": "Which agent contracts are expiring soon?"
+      }
+    ]
+  },
+  "quality_action": {
+    "profile": [
+      {
+        "label": "Quality Action overview",
+        "question": "Show this Quality Action"
+      },
+      {
+        "label": "Problem",
+        "question": "What is the problem?"
+      },
+      {
+        "label": "Current status",
+        "question": "What is the current status?"
+      }
+    ],
+    "journey": [
+      {
+        "label": "Root cause and resolution",
+        "question": "Show the root cause and resolution"
+      },
+      {
+        "label": "Action taken",
+        "question": "What action has been taken?"
+      },
+      {
+        "label": "Assigned person",
+        "question": "Who is assigned?"
+      }
+    ],
+    "academic": [
+      {
+        "label": "Due date",
+        "question": "When is it due?"
+      },
+      {
+        "label": "Overdue check",
+        "question": "Is it overdue?"
+      },
+      {
+        "label": "Completion status",
+        "question": "What is the current status?"
+      }
+    ],
+    "attendance": [
+      {
+        "label": "Closure readiness",
+        "question": "Is this Quality Action ready for closure?"
+      },
+      {
+        "label": "Quality review",
+        "question": "Run a quality review of the root cause and action taken"
+      },
+      {
+        "label": "Root-cause review",
+        "question": "Assess the root cause and resolution"
+      }
+    ],
+    "finance": [
+      {
+        "label": "Open Quality Actions",
+        "question": "Show all open Quality Actions"
+      },
+      {
+        "label": "Overdue Quality Actions",
+        "question": "Show overdue Quality Actions"
+      }
+    ],
+    "graduation": [
+      {
+        "label": "NC findings",
+        "question": "Show NC findings"
+      },
+      {
+        "label": "OFI findings",
+        "question": "Show OFI findings"
+      }
+    ],
+    "cohort": [
+      {
+        "label": "All open actions",
+        "question": "Show all open Quality Actions"
+      },
+      {
+        "label": "All overdue actions",
+        "question": "Show overdue Quality Actions"
+      },
+      {
+        "label": "All NC findings",
+        "question": "Show NC findings"
+      },
+      {
+        "label": "All OFI findings",
+        "question": "Show OFI findings"
+      }
+    ]
+  }
+}

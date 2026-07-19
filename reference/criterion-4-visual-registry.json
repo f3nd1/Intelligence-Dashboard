@@ -1,0 +1,181 @@
+{
+  "version": "1.8.4",
+  "diagram_count": 24,
+  "principle": "All Criterion 4 diagrams reuse the existing permission-aware metric registry; no duplicate calculations or guessed fields are introduced.",
+  "interaction_contract": {
+    "diagram_node_click": "Open matching records through the shared Criterion 4 drill-down",
+    "source_click": "Open the canonical Frappe DocType list",
+    "table_view": "Show the same underlying metric set",
+    "persistence": "Remember Diagram or Table per visual card"
+  },
+  "visuals": [
+    {
+      "id": "c4-overview-flow",
+      "panel": "overview",
+      "type": "network",
+      "title": "Student protection control flow",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c4-overview-exceptions",
+      "panel": "overview",
+      "type": "radial",
+      "title": "Open exception profile",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c4-overview-readiness",
+      "panel": "overview",
+      "type": "ladder",
+      "title": "Student control readiness",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c411",
+      "panel": "c411",
+      "type": "funnel",
+      "title": "Where are counselling and admission cases waiting?",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c411-coverage",
+      "panel": "c411",
+      "type": "radial",
+      "title": "Counselling and admission control coverage",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c411-exceptions",
+      "panel": "c411",
+      "type": "ladder",
+      "title": "Admissions exception escalation",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c421",
+      "panel": "c421",
+      "type": "lifecycle",
+      "title": "Where are student contracts delayed?",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c421-readiness",
+      "panel": "c421",
+      "type": "radial",
+      "title": "Student contract readiness",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c421-aging",
+      "panel": "c421",
+      "type": "ladder",
+      "title": "Contract follow-up ladder",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c422",
+      "panel": "c422",
+      "type": "reconciliation",
+      "title": "Where are fee and FPS controls incomplete?",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c422-flow",
+      "panel": "c422",
+      "type": "lifecycle",
+      "title": "Fee and FPS processing flow",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c422-exceptions",
+      "panel": "c422",
+      "type": "radial",
+      "title": "Fee-control exception profile",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c431",
+      "panel": "c431",
+      "type": "decision",
+      "title": "Which movement requests require action?",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c431-mix",
+      "panel": "c431",
+      "type": "radial",
+      "title": "Course movement request mix",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c431-timing",
+      "panel": "c431",
+      "type": "ladder",
+      "title": "Movement processing timeliness",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c441",
+      "panel": "c441",
+      "type": "radial",
+      "title": "Which refunds require management attention?",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c441-outcomes",
+      "panel": "c441",
+      "type": "reconciliation",
+      "title": "Refund request outcomes",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c441-aging",
+      "panel": "c441",
+      "type": "ladder",
+      "title": "Refund follow-up ladder",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c451",
+      "panel": "c451",
+      "type": "network",
+      "title": "Which support cases require follow-up?",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c451-channels",
+      "panel": "c451",
+      "type": "radial",
+      "title": "Student support channel mix",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c451-followup",
+      "panel": "c451",
+      "type": "lifecycle",
+      "title": "Student support follow-up flow",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c461",
+      "panel": "c461",
+      "type": "ladder",
+      "title": "Which attendance cases require intervention?",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c461-risk",
+      "panel": "c461",
+      "type": "radial",
+      "title": "Attendance risk profile",
+      "data_mode": "existing_live_metric_registry"
+    },
+    {
+      "id": "c461-response",
+      "panel": "c461",
+      "type": "lifecycle",
+      "title": "Attendance intervention response",
+      "data_mode": "existing_live_metric_registry"
+    }
+  ]
+}

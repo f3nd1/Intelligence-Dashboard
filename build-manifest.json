@@ -1,0 +1,21 @@
+{
+  "version": "1.9.5",
+  "html": [
+    "src/html/platform.html"
+  ],
+  "css": [
+    "src/css/platform.css"
+  ],
+  "javascript": [
+    "src/js/00-shared-runtime.js",
+    "src/js/10-platform-runtime.js",
+    "src/js/30-live-foundation-runtime.js",
+    "src/js/20-explore-runtime.js",
+    "src/js/40-visual-navigation-runtime.js"
+  ],
+  "outputs": {
+    "html": "custom-html-block/HTML.html",
+    "css": "custom-html-block/CSS.css",
+    "javascript": "custom-html-block/JAVASCRIPT.js"
+  }
+}

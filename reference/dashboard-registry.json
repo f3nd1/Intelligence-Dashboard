@@ -1,0 +1,63 @@
+{
+  "platform": "UCC Intelligence Platform",
+  "version": "1.9.5",
+  "workspace": "Analytics Hub",
+  "dashboards": [
+    {
+      "id": "criterion_1",
+      "label": "Criterion 1 \u00b7 Leadership and Strategic Planning",
+      "status": "live_foundation",
+      "enabled": true,
+      "api_method": "ucc_analytics_criterion_1",
+      "frontend_mode": "permission_aware_live_api"
+    },
+    {
+      "id": "criterion_2",
+      "label": "Criterion 2 \u00b7 Corporate Administration",
+      "status": "live_foundation",
+      "enabled": true,
+      "api_method": "ucc_analytics_criterion_2",
+      "frontend_mode": "permission_aware_live_api"
+    },
+    {
+      "id": "criterion_3",
+      "label": "Criterion 3 \u00b7 External Recruitment Agents",
+      "status": "live_foundation",
+      "enabled": true,
+      "api_method": "ucc_analytics_criterion_3",
+      "frontend_mode": "permission_aware_live_api"
+    },
+    {
+      "id": "criterion_4",
+      "label": "Criterion 4 \u00b7 Student Protection and Support Services",
+      "status": "live",
+      "enabled": true,
+      "api_method": "ucc_analytics_criterion_4",
+      "frontend_mode": "permission_aware_live_analytics"
+    },
+    {
+      "id": "criterion_5",
+      "label": "Criterion 5 \u00b7 Academic Systems and Processes",
+      "status": "live",
+      "enabled": true,
+      "api_method": "ucc_analytics_criterion_5",
+      "frontend_mode": "validated_live_frontend"
+    },
+    {
+      "id": "criterion_6",
+      "label": "Criterion 6 \u00b7 Quality Assurance, Innovation and Continual Improvement",
+      "status": "live_foundation",
+      "enabled": true,
+      "api_method": "ucc_analytics_criterion_6",
+      "frontend_mode": "permission_aware_live_api"
+    },
+    {
+      "id": "criterion_7",
+      "label": "Criterion 7 \u00b7 Performance Outcomes",
+      "status": "live_foundation",
+      "enabled": true,
+      "api_method": "ucc_analytics_criterion_7",
+      "frontend_mode": "permission_aware_live_api"
+    }
+  ]
+}

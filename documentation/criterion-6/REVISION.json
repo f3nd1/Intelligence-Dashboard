@@ -1,0 +1,25 @@
+{
+  "package_version": "1.8.7",
+  "documentation_revision": "criterion-6-source-inventory-1",
+  "generated_at_utc": "2026-07-19T06:46:49.681429+00:00",
+  "runtime_changed": false,
+  "custom_html_block_changed": false,
+  "server_script_logic_changed": false,
+  "criterion_6_status": "dummy_preview_partial_source_inventory",
+  "confirmed_supplied_sources": [
+    "Quality Action Resolution",
+    "Management Review",
+    "Operational Outcomes Cost Time Saving",
+    "Quality Action custom field export"
+  ],
+  "cross_criterion_sources": [
+    "Provider Rating"
+  ],
+  "quality_action_field_count": 118,
+  "management_review_field_count": 92,
+  "preview_visual_count": 36,
+  "dashboard_status": "live_foundation",
+  "api_method": "ucc_analytics_criterion_6",
+  "frontend_connected": true,
+  "dummy_values_active": false
+}

@@ -1,0 +1,89 @@
+{
+  "criterion_5_confirmed": [
+    "Academic Year",
+    "Student Group",
+    "Course",
+    "Program",
+    "Assessment Plan",
+    "Assessment Result",
+    "Course Schedule",
+    "Course Enrollment",
+    "Student Attendance",
+    "Module Review",
+    "Course Review",
+    "Student Intake No",
+    "Module Class Details",
+    "Student Admission UCC",
+    "Classroom Observation",
+    "Partnership Agreement",
+    "Partnerships Agreement Management",
+    "Supplier Rating",
+    "Survey Response"
+  ],
+  "ask_ucc_student_journey": [
+    "Student Applicant",
+    "Student",
+    "Student Group",
+    "Course Schedule",
+    "Student Attendance",
+    "Student Leave Application",
+    "Assessment Result",
+    "Sales Invoice",
+    "Payment Entry",
+    "Student Admission UCC"
+  ],
+  "ask_ucc_recruitment_agent": [
+    "Agent Contract",
+    "Agent",
+    "Student Applicant",
+    "Supplier Rating",
+    "Sales Invoice"
+  ],
+  "ask_ucc_quality_action": [
+    "Quality Action"
+  ],
+  "notes": [
+    "Technical names may differ on the live site; use diagnostics and runtime resolution.",
+    "User-facing translations must not be substituted into Frappe API calls.",
+    "Provider Rating is the confirmed UCC source; Supplier Rating remains an approved fallback for Criteria 3 and 6.",
+    "Staff Goal analytics use the ERPNext Goal DocType with UCC custom fields.",
+    "Criterion 2 uses Training Needs Analysis and Material Vetting Form. Retired source assumptions are not probed."
+  ],
+  "criterion_4_repository_confirmed": [
+    "Student Applicant",
+    "Student Admission UCC",
+    "Student Contract",
+    "New Student Counselling and Monitoring Form",
+    "Student Attendance",
+    "Student Leave Application",
+    "Student Log",
+    "Dismissal Letters due to Attendance Requirements",
+    "HD Ticket",
+    "Sales Invoice",
+    "Payment Entry",
+    "Course Adjustment Request Form",
+    "Intervention Issue Academic Support",
+    "Intervention Issue Academic Integrity",
+    "Intervention Issue Wellness Services"
+  ],
+  "criterion_4_runtime_only_or_unconfirmed": [
+    "FPS Record",
+    "Student Support Service Strategy Insights",
+    "Joining an On-going Class"
+  ],
+  "criterion_3_provider_rating_candidates": [
+    "Provider Rating",
+    "Supplier Rating"
+  ],
+  "criterion_6_provider_rating_candidates": [
+    "Provider Rating",
+    "Supplier Rating"
+  ],
+  "criterion_1_confirmed": [
+    "Goal"
+  ],
+  "criterion_2_confirmed": [
+    "Training Needs Analysis",
+    "Material Vetting Form"
+  ]
+}

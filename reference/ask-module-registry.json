@@ -1,0 +1,43 @@
+{
+  "platform": "UCC Intelligence Platform",
+  "workspace": "Ask UCC",
+  "modules": [
+    {
+      "id": "student_journey",
+      "label": "Student Journey",
+      "status": "active",
+      "api_method": "ucc_ask_student_journey",
+      "record_type": "Student Applicant"
+    },
+    {
+      "id": "recruitment_agent",
+      "label": "Recruitment Agent",
+      "status": "active",
+      "api_method": "ucc_ask_recruitment_agent",
+      "record_type": "Agent Contract"
+    },
+    {
+      "id": "quality_action",
+      "label": "Quality Action",
+      "status": "active",
+      "api_method": "ucc_ask_quality_action",
+      "record_type": "Quality Action"
+    },
+    {
+      "id": "hr",
+      "label": "HR",
+      "status": "planned",
+      "api_method": null,
+      "record_type": "Employee"
+    }
+  ],
+  "future_candidates_excluding_lms_and_helpdesk": [
+    "admissions",
+    "fees_payments",
+    "academic_operations",
+    "finance",
+    "enquiries",
+    "orders",
+    "quality_compliance"
+  ]
+}

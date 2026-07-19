@@ -1,0 +1,972 @@
+<div class="ucc-c4-dashboard ucc-criterion-dashboard ucc-hidden" data-active-c4-tab="overview" data-dashboard-panel="criterion_4">
+  <div class="loading-overlay hidden" data-c4-loading-overlay>
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <strong data-c4-loading-title>Loading Criterion 4 analytics</strong>
+      <div class="progress-track"><div class="progress-fill" data-c4-progress-fill></div></div>
+      <div class="progress-text"><span data-c4-progress-value>0%</span> · <span data-c4-progress-task>Preparing…</span></div>
+    </div>
+  </div>
+
+  <header class="hero">
+    <div class="hero-copy">
+      <span class="ucc-c4-kicker">EDUTRUST CRITERION 4</span>
+      <h1>Student Support &amp; Services</h1>
+      <p>Live, permission-aware analytics for admissions, contracts, fees, student movement, refunds, student support, conduct and attendance.</p>
+    </div>
+    <div class="hero-action-card" aria-label="Criterion 4 analytics actions">
+      <button class="primary-btn" data-c4-action="refresh" type="button">Refresh</button>
+      <button data-c4-action="export-answers" type="button">Export Q&amp;A CSV</button>
+      <button data-c4-action="export-exceptions" type="button">Export Exceptions CSV</button>
+      <button data-c4-action="show-diagnostics" type="button">Diagnostics Log (<span data-c4-log-count>0</span>)</button>
+      <details class="ucc-hero-tools">
+        <summary>View tools</summary>
+        <div class="ucc-hero-tools-menu">
+          <button data-c4-action="export-current" type="button">Export current table</button>
+          <button data-c4-action="export-exceptions" type="button">Export exception list</button>
+          <button data-c4-action="copy-link" type="button">Copy filtered link</button>
+        </div>
+      </details>
+    </div>
+  </header>
+
+  <div class="sticky-navigation">
+    <section class="controls">
+      <div class="control-grid">
+        <div><label>Academic Year</label><select data-c4-filter="academic_year"><option value="">All Academic Years</option></select></div>
+        <div><label>Programme</label><select data-c4-filter="program"><option value="">All Programmes</option></select></div>
+        <div><label>Intake</label><select data-c4-filter="intake"><option value="">All Intakes</option></select></div>
+        <div><label>Status</label><select data-c4-filter="status"><option value="">All Statuses</option></select></div>
+      </div>
+    </section>
+    <nav class="tabs" aria-label="Criterion 4 analytics sections">
+      <button class="active" data-c4-tab="overview" type="button">Overview</button><button data-c4-tab="c411" type="button">4.1.1 Admissions</button><button data-c4-tab="c421" type="button">4.2.1 Student Contract</button><button data-c4-tab="c422" type="button">4.2.2 Fees &amp; FPS</button><button data-c4-tab="c431" type="button">4.3.1 Transfer / Defer / Withdraw</button><button data-c4-tab="c441" type="button">4.4.1 Refunds</button><button data-c4-tab="c451" type="button">4.5.1 Student Support</button><button data-c4-tab="c461" type="button">4.6.1 Conduct &amp; Attendance</button><button data-c4-tab="quality" type="button">Data Quality</button><button data-c4-tab="sources" type="button">Sources</button>
+    </nav>
+  </div>
+
+  <div class="ucc-c4-notice ucc-criterion-notice" data-c4-source-notice data-status="loading">
+    <div class="ucc-criterion-notice-copy">
+      <strong>Loading Criterion 4 analytics…</strong>
+      <span>The platform is checking live DocTypes, fields and current-user permissions.</span>
+    </div>
+    <button type="button" class="ucc-notice-dismiss" data-notice-dismiss aria-label="Dismiss notification" title="Dismiss">×</button>
+  </div>
+
+  <section class="kpis ucc-c4-overall-kpis">
+    <article><span>Policies in scope</span><strong data-c4-overall-kpi="policies">7</strong><small>Criterion 4.1.1–4.6.1</small></article>
+    <article><span>Available sources</span><strong data-c4-overall-kpi="sources">—</strong><small>Permission-aware</small></article>
+    <article><span>Available metrics</span><strong data-c4-overall-kpi="metrics">—</strong><small>Mapped live calculations</small></article>
+    <article><span>Questions answered</span><strong data-c4-overall-kpi="questions">—</strong><small>Management questions</small></article>
+    <article><span>Open exceptions</span><strong data-c4-overall-kpi="exceptions">—</strong><small>Current filter scope</small></article>
+    <article><span>Data quality issues</span><strong data-c4-overall-kpi="quality">—</strong><small>Missing or inaccessible inputs</small></article>
+  </section>
+
+  <section class="panel-view" data-c4-panel="overview">
+    <div class="grid2">
+      <article class="panel">
+        <div class="panel-head"><h2>Target Gap Summary</h2><span data-c4-overview-updated>Waiting for data</span></div>
+        <div class="ucc-c4-gap-summary" data-c4-gap-summary></div>
+      </article>
+      <article class="panel">
+        <div class="panel-head"><h2>Source Availability</h2><span data-c4-source-total>0 sources checked</span></div>
+        <div class="ucc-c4-source-summary" data-c4-source-summary></div>
+      </article>
+    </div>
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Management Questions and Data-Based Answers</h2>
+        <label class="qa-filter-label">Criterion
+          <select data-c4-qa-filter>
+            <option value="">All criteria</option>
+            <option value="4.1.1">4.1.1 Admissions</option><option value="4.2.1">4.2.1 Student Contract</option><option value="4.2.2">4.2.2 Fees &amp; FPS</option><option value="4.3.1">4.3.1 Transfer / Defer / Withdraw</option><option value="4.4.1">4.4.1 Refunds</option><option value="4.5.1">4.5.1 Student Support</option><option value="4.6.1">4.6.1 Conduct &amp; Attendance</option>
+          </select>
+        </label>
+      </div>
+      <div class="table-wrap">
+        <table class="management-qa">
+          <thead><tr><th>Criterion</th><th>Question</th><th>Answer from current data</th><th>Source / logic</th><th>Confidence</th></tr></thead>
+          <tbody data-c4-overview-qa></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  
+<section class="panel-view hidden" data-c4-panel="c411">
+  <div class="section-heading">
+    <div>
+      <div class="section-code">4.1.1</div>
+      <h2>Pre-Course Counselling, Selection &amp; Admissions</h2>
+      <p>Application completeness, counselling acknowledgement, conditional admissions and late-admission controls.</p>
+    </div>
+  </div>
+
+  <section class="kpis ucc-c4-section-kpis">
+    <article data-c4-drill="c411-counselling">
+  <span>Counselling declarations</span>
+  <strong>—</strong>
+  <small>Pre Course Counselling Declaration</small>
+</article>
+<article data-c4-drill="c411-acknowledged">
+  <span>Applicant acknowledgements</span>
+  <strong>—</strong>
+  <small>declaration_check</small>
+</article>
+<article data-c4-drill="c411-complete">
+  <span>Approved applications</span>
+  <strong>—</strong>
+  <small>Student Applicant.application_status</small>
+</article>
+<article data-c4-drill="c411-conditional">
+  <span>Conditional admissions</span>
+  <strong>—</strong>
+  <small>Student Admission UCC.conditional</small>
+</article>
+  </section>
+
+  <div class="grid2">
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Where are counselling and admission cases waiting?</h2>
+        <div class="mini-toggle" data-c4-card-toggle="process-c411">
+          <button class="active" data-c4-card-view="diagram" type="button">Diagram</button>
+          <button data-c4-card-view="table" type="button">Table</button>
+        </div>
+      </div>
+      <div class="ucc-c4-d3-visual" data-c4-visual="c411" data-c4-card-panel="diagram">
+        <div class="ucc-c4-visual-loading">Preparing live diagram…</div>
+      </div>
+      <div class="table-wrap hidden" data-c4-card-panel="table">
+        <table class="ucc-c4-visual-table">
+          <thead><tr><th>Stage / control</th><th>Current count</th><th>Status</th><th>Source</th><th>Matching records</th></tr></thead>
+          <tbody data-c4-visual-table="c411"></tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Exception Queue</h2>
+        <button data-c4-action="export-exceptions" type="button">Export exceptions</button>
+      </div>
+      <div class="table-wrap">
+        <table class="ucc-c4-exception-table">
+          <thead><tr><th>Exception</th><th>Current count</th><th>Status</th></tr></thead>
+          <tbody><tr data-c4-exception-row="c411-unacknowledged"><td>Applicant acknowledgement missing</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c411-pdpa-missing"><td>PDPA consent missing</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c411-conditional"><td>Conditional requirement still open</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c411-late"><td>Late-admission request requires review</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr></tbody>
+        </table>
+      </div>
+    </article>
+  </div>
+
+  <article class="panel">
+    <h2>4.1.1 Management Questions and Data-Based Answers</h2>
+    <div class="table-wrap">
+      <table class="qa-table">
+        <thead>
+          <tr><th>No.</th><th>Question</th><th>Answer from current data</th><th>Exact source / calculation</th><th>Status</th></tr>
+        </thead>
+        <tbody data-c4-qa-table="c411"></tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-head">
+      <h2>Source Availability</h2>
+      <span class="ucc-c4-policy-badge" data-c4-policy-badge="c411">Checking policy mapping…</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Source key</th><th>Canonical DocType</th><th>Status</th><th>Runtime detail</th></tr></thead>
+        <tbody data-c4-source-table="c411"></tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+
+<section class="panel-view hidden" data-c4-panel="c421">
+  <div class="section-heading">
+    <div>
+      <div class="section-code">4.2.1</div>
+      <h2>Student Contract</h2>
+      <p>Contract preparation, approval, sending, signing and enrolment progression.</p>
+    </div>
+  </div>
+
+  <section class="kpis ucc-c4-section-kpis">
+    <article data-c4-drill="c421-generated">
+  <span>Contracts generated</span>
+  <strong>—</strong>
+  <small>Student Admission UCC.contract_url / student_contract</small>
+</article>
+<article data-c4-drill="c421-approved">
+  <span>Approved contracts</span>
+  <strong>—</strong>
+  <small>Student Admission UCC.application_status</small>
+</article>
+<article data-c4-drill="c421-signed">
+  <span>Signed contracts</span>
+  <strong>—</strong>
+  <small>Student Admission UCC.contract_signed_by_student_date</small>
+</article>
+<article data-c4-drill="c421-pending">
+  <span>Sent but not signed</span>
+  <strong>—</strong>
+  <small>Student Admission UCC.contract_sent_date</small>
+</article>
+  </section>
+
+  <div class="grid2">
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Where are student contracts delayed?</h2>
+        <div class="mini-toggle" data-c4-card-toggle="process-c421">
+          <button class="active" data-c4-card-view="diagram" type="button">Diagram</button>
+          <button data-c4-card-view="table" type="button">Table</button>
+        </div>
+      </div>
+      <div class="ucc-c4-d3-visual" data-c4-visual="c421" data-c4-card-panel="diagram">
+        <div class="ucc-c4-visual-loading">Preparing live diagram…</div>
+      </div>
+      <div class="table-wrap hidden" data-c4-card-panel="table">
+        <table class="ucc-c4-visual-table">
+          <thead><tr><th>Stage / control</th><th>Current count</th><th>Status</th><th>Source</th><th>Matching records</th></tr></thead>
+          <tbody data-c4-visual-table="c421"></tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Exception Queue</h2>
+        <button data-c4-action="export-exceptions" type="button">Export exceptions</button>
+      </div>
+      <div class="table-wrap">
+        <table class="ucc-c4-exception-table">
+          <thead><tr><th>Exception</th><th>Current count</th><th>Status</th></tr></thead>
+          <tbody><tr data-c4-exception-row="c421-generated"><td>Contract not generated</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c421-approved"><td>Approval missing before sending</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c421-signed"><td>Sent contract not signed</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c421-pending"><td>Student action still pending</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr></tbody>
+        </table>
+      </div>
+    </article>
+  </div>
+
+  <article class="panel">
+    <h2>4.2.1 Management Questions and Data-Based Answers</h2>
+    <div class="table-wrap">
+      <table class="qa-table">
+        <thead>
+          <tr><th>No.</th><th>Question</th><th>Answer from current data</th><th>Exact source / calculation</th><th>Status</th></tr>
+        </thead>
+        <tbody data-c4-qa-table="c421"></tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-head">
+      <h2>Source Availability</h2>
+      <span class="ucc-c4-policy-badge" data-c4-policy-badge="c421">Checking policy mapping…</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Source key</th><th>Canonical DocType</th><th>Status</th><th>Runtime detail</th></tr></thead>
+        <tbody data-c4-source-table="c421"></tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+
+<section class="panel-view hidden" data-c4-panel="c422">
+  <div class="section-heading">
+    <div>
+      <div class="section-code">4.2.2</div>
+      <h2>Fee Collection &amp; Fee Protection Scheme</h2>
+      <p>Invoice, payment, receipt, FPS declaration and coverage controls.</p>
+    </div>
+  </div>
+
+  <section class="kpis ucc-c4-section-kpis">
+    <article data-c4-drill="c422-invoiced">
+  <span>Students invoiced</span>
+  <strong>—</strong>
+  <small>Student Admission UCC.sales_invoice</small>
+</article>
+<article data-c4-drill="c422-paid">
+  <span>Submitted receipts</span>
+  <strong>—</strong>
+  <small>Payment Entry.payment_type / docstatus</small>
+</article>
+<article data-c4-drill="c422-fps">
+  <span>FPS declarations processed</span>
+  <strong>—</strong>
+  <small>FPS Record.fps_status</small>
+</article>
+<article data-c4-drill="c422-late">
+  <span>Late-payment exceptions</span>
+  <strong>—</strong>
+  <small>Sales Invoice.status</small>
+</article>
+  </section>
+
+  <div class="grid2">
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Where are fee and FPS controls incomplete?</h2>
+        <div class="mini-toggle" data-c4-card-toggle="process-c422">
+          <button class="active" data-c4-card-view="diagram" type="button">Diagram</button>
+          <button data-c4-card-view="table" type="button">Table</button>
+        </div>
+      </div>
+      <div class="ucc-c4-d3-visual" data-c4-visual="c422" data-c4-card-panel="diagram">
+        <div class="ucc-c4-visual-loading">Preparing live diagram…</div>
+      </div>
+      <div class="table-wrap hidden" data-c4-card-panel="table">
+        <table class="ucc-c4-visual-table">
+          <thead><tr><th>Stage / control</th><th>Current count</th><th>Status</th><th>Source</th><th>Matching records</th></tr></thead>
+          <tbody data-c4-visual-table="c422"></tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Exception Queue</h2>
+        <button data-c4-action="export-exceptions" type="button">Export exceptions</button>
+      </div>
+      <div class="table-wrap">
+        <table class="ucc-c4-exception-table">
+          <thead><tr><th>Exception</th><th>Current count</th><th>Status</th></tr></thead>
+          <tbody><tr data-c4-exception-row="c422-invoiced"><td>Invoice missing</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c422-paid"><td>Receipt not submitted</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c422-fps"><td>FPS declaration not processed</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c422-late"><td>Invoice overdue</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr></tbody>
+        </table>
+      </div>
+    </article>
+  </div>
+
+  <article class="panel">
+    <h2>4.2.2 Management Questions and Data-Based Answers</h2>
+    <div class="table-wrap">
+      <table class="qa-table">
+        <thead>
+          <tr><th>No.</th><th>Question</th><th>Answer from current data</th><th>Exact source / calculation</th><th>Status</th></tr>
+        </thead>
+        <tbody data-c4-qa-table="c422"></tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-head">
+      <h2>Source Availability</h2>
+      <span class="ucc-c4-policy-badge" data-c4-policy-badge="c422">Checking policy mapping…</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Source key</th><th>Canonical DocType</th><th>Status</th><th>Runtime detail</th></tr></thead>
+        <tbody data-c4-source-table="c422"></tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+
+<section class="panel-view hidden" data-c4-panel="c431">
+  <div class="section-heading">
+    <div>
+      <div class="section-code">4.3.1</div>
+      <h2>Course Transfer, Deferment &amp; Withdrawal</h2>
+      <p>Request intake, approval, processing time, contract and FPS follow-up.</p>
+    </div>
+  </div>
+
+  <section class="kpis ucc-c4-section-kpis">
+    <article data-c4-drill="c431-transfer">
+  <span>Transfer requests</span>
+  <strong>—</strong>
+  <small>Course Adjustment Request Form.type</small>
+</article>
+<article data-c4-drill="c431-defer">
+  <span>Deferment requests</span>
+  <strong>—</strong>
+  <small>Course Adjustment Request Form.type</small>
+</article>
+<article data-c4-drill="c431-withdraw">
+  <span>Withdrawal requests</span>
+  <strong>—</strong>
+  <small>Course Adjustment Request Form.type</small>
+</article>
+<article data-c4-drill="c431-overdue">
+  <span>Open requests beyond 21 working days</span>
+  <strong>—</strong>
+  <small>Course Adjustment Request Form.posting_date</small>
+</article>
+  </section>
+
+  <div class="grid2">
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Which movement requests require action?</h2>
+        <div class="mini-toggle" data-c4-card-toggle="process-c431">
+          <button class="active" data-c4-card-view="diagram" type="button">Diagram</button>
+          <button data-c4-card-view="table" type="button">Table</button>
+        </div>
+      </div>
+      <div class="ucc-c4-d3-visual" data-c4-visual="c431" data-c4-card-panel="diagram">
+        <div class="ucc-c4-visual-loading">Preparing live diagram…</div>
+      </div>
+      <div class="table-wrap hidden" data-c4-card-panel="table">
+        <table class="ucc-c4-visual-table">
+          <thead><tr><th>Stage / control</th><th>Current count</th><th>Status</th><th>Source</th><th>Matching records</th></tr></thead>
+          <tbody data-c4-visual-table="c431"></tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Exception Queue</h2>
+        <button data-c4-action="export-exceptions" type="button">Export exceptions</button>
+      </div>
+      <div class="table-wrap">
+        <table class="ucc-c4-exception-table">
+          <thead><tr><th>Exception</th><th>Current count</th><th>Status</th></tr></thead>
+          <tbody><tr data-c4-exception-row="c431-transfer"><td>Transfer request requires action</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c431-defer"><td>Deferment request requires action</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c431-withdraw"><td>Withdrawal request requires action</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c431-overdue"><td>Request exceeds processing threshold</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr></tbody>
+        </table>
+      </div>
+    </article>
+  </div>
+
+  <article class="panel">
+    <h2>4.3.1 Management Questions and Data-Based Answers</h2>
+    <div class="table-wrap">
+      <table class="qa-table">
+        <thead>
+          <tr><th>No.</th><th>Question</th><th>Answer from current data</th><th>Exact source / calculation</th><th>Status</th></tr>
+        </thead>
+        <tbody data-c4-qa-table="c431"></tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-head">
+      <h2>Source Availability</h2>
+      <span class="ucc-c4-policy-badge" data-c4-policy-badge="c431">Checking policy mapping…</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Source key</th><th>Canonical DocType</th><th>Status</th><th>Runtime detail</th></tr></thead>
+        <tbody data-c4-source-table="c431"></tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+
+<section class="panel-view hidden" data-c4-panel="c441">
+  <div class="section-heading">
+    <div>
+      <div class="section-code">4.4.1</div>
+      <h2>Refund</h2>
+      <p>Eligibility, approval, seven-working-day processing and financial completion.</p>
+    </div>
+  </div>
+
+  <section class="kpis ucc-c4-section-kpis">
+    <article data-c4-drill="c441-open">
+  <span>Open refund requests</span>
+  <strong>—</strong>
+  <small>Course Adjustment Request Form.type</small>
+</article>
+<article data-c4-drill="c441-eligible">
+  <span>Approved refund requests</span>
+  <strong>—</strong>
+  <small>Course Adjustment Request Form.approved_date</small>
+</article>
+<article data-c4-drill="c441-paid">
+  <span>Refunds completed</span>
+  <strong>—</strong>
+  <small>Course Adjustment Request Form.approved_date</small>
+</article>
+<article data-c4-drill="c441-overdue">
+  <span>Over seven working days</span>
+  <strong>—</strong>
+  <small>Course Adjustment Request Form.posting_date</small>
+</article>
+  </section>
+
+  <div class="grid2">
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Which refunds require management attention?</h2>
+        <div class="mini-toggle" data-c4-card-toggle="process-c441">
+          <button class="active" data-c4-card-view="diagram" type="button">Diagram</button>
+          <button data-c4-card-view="table" type="button">Table</button>
+        </div>
+      </div>
+      <div class="ucc-c4-d3-visual" data-c4-visual="c441" data-c4-card-panel="diagram">
+        <div class="ucc-c4-visual-loading">Preparing live diagram…</div>
+      </div>
+      <div class="table-wrap hidden" data-c4-card-panel="table">
+        <table class="ucc-c4-visual-table">
+          <thead><tr><th>Stage / control</th><th>Current count</th><th>Status</th><th>Source</th><th>Matching records</th></tr></thead>
+          <tbody data-c4-visual-table="c441"></tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Exception Queue</h2>
+        <button data-c4-action="export-exceptions" type="button">Export exceptions</button>
+      </div>
+      <div class="table-wrap">
+        <table class="ucc-c4-exception-table">
+          <thead><tr><th>Exception</th><th>Current count</th><th>Status</th></tr></thead>
+          <tbody><tr data-c4-exception-row="c441-open"><td>Refund request remains open</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c441-eligible"><td>Eligibility decision missing</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c441-paid"><td>Refund not completed</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c441-overdue"><td>Processing exceeds seven working days</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr></tbody>
+        </table>
+      </div>
+    </article>
+  </div>
+
+  <article class="panel">
+    <h2>4.4.1 Management Questions and Data-Based Answers</h2>
+    <div class="table-wrap">
+      <table class="qa-table">
+        <thead>
+          <tr><th>No.</th><th>Question</th><th>Answer from current data</th><th>Exact source / calculation</th><th>Status</th></tr>
+        </thead>
+        <tbody data-c4-qa-table="c441"></tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-head">
+      <h2>Source Availability</h2>
+      <span class="ucc-c4-policy-badge" data-c4-policy-badge="c441">Checking policy mapping…</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Source key</th><th>Canonical DocType</th><th>Status</th><th>Runtime detail</th></tr></thead>
+        <tbody data-c4-source-table="c441"></tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+
+<section class="panel-view hidden" data-c4-panel="c451">
+  <div class="section-heading">
+    <div>
+      <div class="section-code">4.5.1</div>
+      <h2>Student Support Services</h2>
+      <p>Support availability, interventions, referrals, follow-up and outcomes.</p>
+    </div>
+  </div>
+
+  <section class="kpis ucc-c4-section-kpis">
+    <article data-c4-drill="c451-services">
+  <span>Support services recorded</span>
+  <strong>—</strong>
+  <small>Intervention Issue / Counselling DocTypes</small>
+</article>
+<article data-c4-drill="c451-cases">
+  <span>Student support cases</span>
+  <strong>—</strong>
+  <small>Student Log.log</small>
+</article>
+<article data-c4-drill="c451-followup">
+  <span>Cases requiring follow-up</span>
+  <strong>—</strong>
+  <small>Student Log.log</small>
+</article>
+<article data-c4-drill="c451-outcomes">
+  <span>Cases with outcomes</span>
+  <strong>—</strong>
+  <small>Student Log.log</small>
+</article>
+  </section>
+
+  <div class="grid2">
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Which support cases require follow-up?</h2>
+        <div class="mini-toggle" data-c4-card-toggle="process-c451">
+          <button class="active" data-c4-card-view="diagram" type="button">Diagram</button>
+          <button data-c4-card-view="table" type="button">Table</button>
+        </div>
+      </div>
+      <div class="ucc-c4-d3-visual" data-c4-visual="c451" data-c4-card-panel="diagram">
+        <div class="ucc-c4-visual-loading">Preparing live diagram…</div>
+      </div>
+      <div class="table-wrap hidden" data-c4-card-panel="table">
+        <table class="ucc-c4-visual-table">
+          <thead><tr><th>Stage / control</th><th>Current count</th><th>Status</th><th>Source</th><th>Matching records</th></tr></thead>
+          <tbody data-c4-visual-table="c451"></tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Exception Queue</h2>
+        <button data-c4-action="export-exceptions" type="button">Export exceptions</button>
+      </div>
+      <div class="table-wrap">
+        <table class="ucc-c4-exception-table">
+          <thead><tr><th>Exception</th><th>Current count</th><th>Status</th></tr></thead>
+          <tbody><tr data-c4-exception-row="c451-services"><td>Support service evidence missing</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c451-cases"><td>Student support case requires action</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c451-followup"><td>Follow-up remains open</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c451-outcomes"><td>Outcome not recorded</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr></tbody>
+        </table>
+      </div>
+    </article>
+  </div>
+
+  <article class="panel">
+    <h2>4.5.1 Management Questions and Data-Based Answers</h2>
+    <div class="table-wrap">
+      <table class="qa-table">
+        <thead>
+          <tr><th>No.</th><th>Question</th><th>Answer from current data</th><th>Exact source / calculation</th><th>Status</th></tr>
+        </thead>
+        <tbody data-c4-qa-table="c451"></tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-head">
+      <h2>Source Availability</h2>
+      <span class="ucc-c4-policy-badge" data-c4-policy-badge="c451">Checking policy mapping…</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Source key</th><th>Canonical DocType</th><th>Status</th><th>Runtime detail</th></tr></thead>
+        <tbody data-c4-source-table="c451"></tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+
+<section class="panel-view hidden" data-c4-panel="c461">
+  <div class="section-heading">
+    <div>
+      <div class="section-code">4.6.1</div>
+      <h2>Student Conduct &amp; Attendance</h2>
+      <p>Attendance thresholds, leave, warnings, interventions and outcomes.</p>
+    </div>
+  </div>
+
+  <section class="kpis ucc-c4-section-kpis">
+    <article data-c4-drill="c461-attendance">
+  <span>Attendance records</span>
+  <strong>—</strong>
+  <small>Student Attendance</small>
+</article>
+<article data-c4-drill="c461-risk">
+  <span>Attendance risk records</span>
+  <strong>—</strong>
+  <small>Student Attendance.status</small>
+</article>
+<article data-c4-drill="c461-warning">
+  <span>Warning records</span>
+  <strong>—</strong>
+  <small>Dismissal Letters due to Attendance Requirements</small>
+</article>
+<article data-c4-drill="c461-intervention">
+  <span>Open interventions</span>
+  <strong>—</strong>
+  <small>Student Log.log</small>
+</article>
+  </section>
+
+  <div class="grid2">
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Which attendance cases require intervention?</h2>
+        <div class="mini-toggle" data-c4-card-toggle="process-c461">
+          <button class="active" data-c4-card-view="diagram" type="button">Diagram</button>
+          <button data-c4-card-view="table" type="button">Table</button>
+        </div>
+      </div>
+      <div class="ucc-c4-d3-visual" data-c4-visual="c461" data-c4-card-panel="diagram">
+        <div class="ucc-c4-visual-loading">Preparing live diagram…</div>
+      </div>
+      <div class="table-wrap hidden" data-c4-card-panel="table">
+        <table class="ucc-c4-visual-table">
+          <thead><tr><th>Stage / control</th><th>Current count</th><th>Status</th><th>Source</th><th>Matching records</th></tr></thead>
+          <tbody data-c4-visual-table="c461"></tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Exception Queue</h2>
+        <button data-c4-action="export-exceptions" type="button">Export exceptions</button>
+      </div>
+      <div class="table-wrap">
+        <table class="ucc-c4-exception-table">
+          <thead><tr><th>Exception</th><th>Current count</th><th>Status</th></tr></thead>
+          <tbody><tr data-c4-exception-row="c461-attendance"><td>Attendance risk detected</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c461-risk"><td>Leave or absence requires review</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c461-warning"><td>Warning record issued</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr><tr data-c4-exception-row="c461-intervention"><td>Intervention remains open</td><td data-c4-exception-value>—</td><td data-c4-exception-status>Checking</td></tr></tbody>
+        </table>
+      </div>
+    </article>
+  </div>
+
+  <article class="panel">
+    <h2>4.6.1 Management Questions and Data-Based Answers</h2>
+    <div class="table-wrap">
+      <table class="qa-table">
+        <thead>
+          <tr><th>No.</th><th>Question</th><th>Answer from current data</th><th>Exact source / calculation</th><th>Status</th></tr>
+        </thead>
+        <tbody data-c4-qa-table="c461"></tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-head">
+      <h2>Source Availability</h2>
+      <span class="ucc-c4-policy-badge" data-c4-policy-badge="c461">Checking policy mapping…</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Source key</th><th>Canonical DocType</th><th>Status</th><th>Runtime detail</th></tr></thead>
+        <tbody data-c4-source-table="c461"></tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+
+  <section class="panel-view hidden" data-c4-panel="quality">
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Data Quality Checks</h2>
+        <button data-c4-action="export-current" type="button">Export current table</button>
+      </div>
+      <p class="panel-subtitle">Permission, source, field and calculation checks across Criterion 4.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Criterion</th><th>Check</th><th>Source</th><th>Status</th><th>Detail</th></tr></thead>
+          <tbody data-c4-quality-table></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section class="panel-view hidden" data-c4-panel="sources">
+    <article class="panel">
+      <div class="panel-head">
+        <h2>Source Registry</h2>
+        <button data-c4-action="refresh" type="button">Refresh sources</button>
+      </div>
+      <p class="panel-subtitle">Canonical DocType names are shown. Translated labels are display-only and are never used for API lookup.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Criterion</th><th>Source key</th><th>Candidate DocTypes</th><th>Resolved DocType</th><th>Status</th><th>Runtime detail</th></tr></thead>
+          <tbody data-c4-registry-table></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <dialog class="records-dialog" data-c4-drill-dialog>
+    <div class="dialog-head">
+      <h2 data-c4-drill-title>Criterion 4 drill-down</h2>
+      <button data-c4-drill-close type="button">Close</button>
+    </div>
+    <div class="ucc-c4-state" data-c4-drill-state>Select a KPI to load permission-aware records.</div>
+    <div class="table-wrap hidden" data-c4-drill-table-wrap>
+      <table><thead data-c4-drill-head-row></thead><tbody data-c4-drill-body></tbody></table>
+    </div>
+    <div class="dialog-actions">
+      <button data-c4-drill-export type="button">Export table</button>
+    </div>
+  </dialog>
+
+  <dialog class="diagnostics-dialog" data-c4-diagnostics-dialog>
+    <div class="dialog-head">
+      <h2>Criterion 4 Diagnostics Log</h2>
+      <button data-c4-diagnostics-close type="button">Close</button>
+    </div>
+    <div class="dialog-actions">
+      <button data-c4-diagnostics-export type="button">Export diagnostics CSV</button>
+      <button data-c4-diagnostics-clear type="button">Clear log</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Time</th><th>Level</th><th>Event</th><th>Detail</th></tr></thead>
+        <tbody data-c4-diagnostics-body></tbody>
+      </table>
+    </div>
+  </dialog>
+</div>
+
+
+
+    </section>
+
+
+
+
+    <section class="ucc-platform-workspace" data-ucc-workspace-panel="ask" hidden>
+<div class="aja-app aja-approved-v17" id="ajaApp">
+  <header class="aja-approved-header">
+    <select id="ajaModuleSelect" class="aja-module-select aja-approved-title" aria-label="Assistant module">
+      <option value="student_journey">Student Journey</option>
+      <option value="recruitment_agent">Recruitment Agent</option>
+      <option value="quality_action">Quality Action</option>
+      <option value="hr_assistant">HR - Coming Soon</option>
+    </select>
+
+    <div class="aja-approved-ask-wrap">
+      <div class="aja-composer-box aja-approved-askbar">
+        <span class="aja-command-icon" aria-hidden="true">🔎</span>
+        <textarea id="ajaQuestion" rows="1" autocomplete="off" spellcheck="true" placeholder="Ask a free-form question..."></textarea>
+        <span class="aja-api-inline-note" title="AI Mode requires an OpenAI API key. Guided ERPNext checks work without OpenAI.">AI optional</span>
+        <button type="button" id="ajaSend" class="aja-send-button">Ask</button>
+      </div>
+    </div>
+
+    <div class="aja-approved-tools">
+      <button type="button" class="aja-api-button aja-approved-tool" id="ajaApiButton" title="AI API settings">🔑</button>
+      <button type="button" class="aja-icon-action aja-approved-tool" id="ajaExportCsv" title="Export CSV">📥</button>
+      <button type="button" class="aja-icon-action aja-approved-tool" id="ajaPrint" title="Print / PDF">🖨️</button>
+      <button type="button" class="aja-icon-action aja-approved-tool" id="ajaDiagnostics" title="Diagnostics">⚙️</button>
+    </div>
+
+    <p id="ajaHeaderSubtitle" class="aja-hidden-copy">Ask about students, courses, modules, assessments, classes, leave and graduation.</p>
+    <div id="ajaModuleStatus" class="aja-hidden-copy">Student Journey is active.</div>
+  </header>
+
+  <div class="aja-approved-workspace">
+    <aside class="aja-approved-record-panel">
+      <div class="aja-step-heading">
+        <span class="aja-step-number">2</span>
+        <div>
+          <div class="aja-eyebrow" id="ajaFindLabel">FIND STUDENT</div>
+          <h3>Select a record</h3>
+        </div>
+      </div>
+
+      <div class="aja-current-student" id="ajaCurrentStudent">
+        <div class="aja-panel-heading-row">
+          <div>
+            <div class="aja-current-label" id="ajaPinnedLabel">Pinned student</div>
+            <div class="aja-current-value">Not selected</div>
+          </div>
+          <button type="button" id="ajaResetContext" class="aja-icon-button" title="Clear selection">×</button>
+        </div>
+        <button type="button" id="ajaChangeStudent" class="aja-mini-button aja-full-button">Change record</button>
+      </div>
+
+      <div class="aja-search-wrap">
+        <span class="aja-search-icon" aria-hidden="true">⌕</span>
+        <input id="ajaStudentSearch" class="aja-search-input" placeholder="Type name or Applicant ID">
+      </div>
+
+      <select id="ajaCourseFilter" class="aja-course-filter">
+        <option value="">All courses</option>
+      </select>
+
+      <div id="ajaStudentMatches" class="aja-student-matches"></div>
+      <div id="ajaStudentPager" class="aja-student-pager"></div>
+
+      <div class="aja-approved-recent">
+        <div class="aja-sidebar-title" id="ajaRecentLabel">Recent students</div>
+        <div id="ajaRecentStudents" class="aja-recent-students"></div>
+      </div>
+    </aside>
+
+    <main class="aja-approved-main">
+      <section class="aja-approved-question-panel aja-sidebar-section" id="ajaSuggestions">
+        <div class="aja-approved-question-head">
+          <div class="aja-step-heading">
+            <span class="aja-step-number">3</span>
+            <div>
+              <div class="aja-eyebrow">GUIDED QUESTIONS</div>
+              <h3>Choose what to check</h3>
+            </div>
+          </div>
+
+          <div id="ajaQuestionCategoryButtons" class="aja-category-button-row" aria-label="Question categories"></div>
+          <select id="ajaQuestionCategory" class="aja-category-select aja-hidden-category-select" aria-hidden="true" tabindex="-1">
+            <option value="profile">Profile</option>
+            <option value="journey">Student Journey</option>
+            <option value="academic">Academic and Results</option>
+            <option value="attendance">Attendance and Leave</option>
+            <option value="finance">Fees and Payments</option>
+            <option value="graduation">Graduation and Risk</option>
+            <option value="cohort">Cohort Questions</option>
+          </select>
+        </div>
+
+        <div id="ajaControlledQuestions" class="aja-controlled-questions aja-approved-question-grid"></div>
+      </section>
+
+      <section class="aja-approved-result-panel">
+        <div class="aja-result-step-header">
+          <div class="aja-step-heading">
+            <span class="aja-step-number">4</span>
+            <div>
+              <div class="aja-eyebrow">ASK UCC RESULT</div>
+              <h3>Review the result</h3>
+            </div>
+          </div>
+          <button type="button" id="ajaClearChat" class="aja-clear-chat-button" title="Clear result history">Clear chat</button>
+        </div>
+
+        <section class="aja-chat" id="ajaChat">
+          <div id="ajaComingSoon" class="aja-coming-soon" hidden></div>
+          <div class="aja-welcome">
+            <div class="aja-avatar">AI</div>
+            <div>
+              <strong>Ready to review</strong>
+              <p>Select a record, then choose a guided question.</p>
+              <div class="aja-example">ERPNext evidence, tables, warnings and optional AI interpretation will appear here.</div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+<div class="aja-api-modal" id="ajaApiModal" hidden>
+    <div class="aja-api-dialog" role="dialog" aria-modal="true" aria-labelledby="ajaApiTitle">
+      <h3 id="ajaApiTitle">Optional future AI mode</h3>
+      <p>Guided ERPNext questions extract records without OpenAI. Add an OpenAI API key only when free-form AI interpretation is enabled.</p>
+      <label for="ajaApiKeyInput">OpenAI API key</label>
+      <input id="ajaApiKeyInput" type="password" autocomplete="off" placeholder="sk-...">
+      <div class="aja-api-actions">
+        <button type="button" id="ajaApiCancel">Cancel</button>
+        <button type="button" id="ajaApiSkip">Continue without AI</button>
+        <button type="button" id="ajaApiConnect" class="primary">Connect API</button>
+      </div>
+      <small>The key is kept only in this browser session and is used only for an optional free-form AI request.</small>
+    </div>
+  </div>
+</div>
+
+    </section>
+  </main>
+
+<div class="ucc-changelog-overlay ucc-hidden" data-changelog-overlay aria-hidden="true">
+  <div class="ucc-changelog-backdrop" data-changelog-close></div>
+  <section class="ucc-changelog-sheet" role="dialog" aria-modal="true" aria-labelledby="uccChangelogTitle">
+    <header><div><small>UCC Intelligence Platform</small><h3 id="uccChangelogTitle">Version v1.7.0</h3></div>
+      <button type="button" data-changelog-close aria-label="Close changelog">×</button></header>
+    <div class="ucc-changelog-content">
+      <h4>v1.7.0</h4>
+      <p>Activated Criterion 4 runtime DocType and field mapping, permission-aware KPIs and drill-downs, and aligned its controls with Criterion 5.</p>
+      <h4>v1.2.0</h4>
+      <p>Added Criterion 4 policy-led pages, compact navigation, view tools, and duplicate-toggle corrections.</p>
+      <h4>v1.1.0</h4>
+      <p>Expanded Criterion 5 subcriteria and added universal interactions, persisted view state, exports, filtered links, and explicit empty states.</p>
+    </div>
+  </section>
+</div>
+</div>

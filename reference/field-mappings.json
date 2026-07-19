@@ -1,0 +1,700 @@
+{
+  "terminology": [
+    {
+      "user_label": "Course",
+      "technical_doctype": "Program",
+      "confidence": "confirmed"
+    },
+    {
+      "user_label": "Module",
+      "technical_doctype": "Course",
+      "confidence": "confirmed"
+    },
+    {
+      "user_label": "Module Class Details",
+      "technical_doctype": "Student Group",
+      "confidence": "confirmed"
+    },
+    {
+      "user_label": "Shortlisted Applicants",
+      "technical_doctype": "Student Admission UCC",
+      "confidence": "confirmed"
+    },
+    {
+      "user_label": "Provider Rating",
+      "technical_doctype": "Provider Rating",
+      "confidence": "confirmed"
+    },
+    {
+      "user_label": "Teacher",
+      "technical_term": "Instructor",
+      "confidence": "confirmed"
+    }
+  ],
+  "calculation_rules": [
+    {
+      "id": "attendance_capture",
+      "formula": "distinct Student Attendance.course_schedule / distinct Course Schedule.name",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "assessment_result_coverage",
+      "formula": "distinct Assessment Result.assessment_plan / selected Assessment Plan.name",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "course_scope",
+      "rule": "selected Student Group course, else Program child courses, else all readable Course records",
+      "confidence": "confirmed"
+    }
+  ],
+  "criterion_4": {
+    "mapping_strategy": "Resolve first readable DocType and first existing field from each candidate list at runtime.",
+    "subcriteria": {
+      "4.1.1": {
+        "sources": {
+          "applicant": [
+            "Student Applicant"
+          ],
+          "admission": [
+            "Student Admission UCC"
+          ],
+          "counselling": [
+            "Pre Course Counselling Declaration"
+          ],
+          "late_joining": [
+            "Joining an On-going Class",
+            "Joining an Ongoing Class",
+            "Course Adjustment Request Form",
+            "HD Ticket"
+          ]
+        },
+        "fields": {
+          "counselling_acknowledged": [
+            "pre_course_counselling_acknowledged",
+            "pre_course_counselling",
+            "counselling_acknowledged",
+            "acknowledge_pre_course_counselling"
+          ],
+          "application_status": [
+            "status",
+            "application_status",
+            "workflow_state"
+          ],
+          "conditional_status": [
+            "conditional_offer",
+            "is_conditional",
+            "conditional_admission",
+            "admission_type"
+          ],
+          "conditional_deadline": [
+            "condition_deadline",
+            "conditional_deadline",
+            "condition_due_date"
+          ],
+          "approval_status": [
+            "approval_status",
+            "workflow_state",
+            "status"
+          ],
+          "counselling_declaration": [
+            "name"
+          ],
+          "applicant_acknowledgement": [
+            "declaration_check"
+          ],
+          "pdpa_consent": [
+            "pdpa_check"
+          ],
+          "staff_representative": [
+            "name_of_staff"
+          ],
+          "declaration_date": [
+            "date"
+          ],
+          "student_name": [
+            "name_of_student"
+          ],
+          "student_identifier": [
+            "nric_passport_fin_no"
+          ],
+          "programme": [
+            "course_applying_for",
+            "course_type"
+          ],
+          "intake": [
+            "intake_applying"
+          ]
+        },
+        "confirmed_live_doctype": "Pre Course Counselling Declaration",
+        "confirmed_live_fields": [
+          "name_of_student",
+          "nric_passport_fin_no",
+          "contact_no",
+          "email_no",
+          "course_type",
+          "course_applying_for",
+          "intake_applying",
+          "name_of_staff",
+          "date",
+          "declaration_check",
+          "pdpa_check"
+        ]
+      },
+      "4.2.1": {
+        "sources": {
+          "contract": [
+            "Student Admission UCC"
+          ],
+          "admission": [
+            "Student Admission UCC"
+          ],
+          "invoice": [
+            "Sales Invoice"
+          ]
+        },
+        "fields": {
+          "generated": [
+            "student_contract",
+            "student_contract_attachment",
+            "contract_generated",
+            "student_contract_generated"
+          ],
+          "approved": [
+            "contract_approved",
+            "approval_status",
+            "workflow_state"
+          ],
+          "sent": [
+            "contract_sent",
+            "student_contract_sent",
+            "email_sent"
+          ],
+          "signed": [
+            "contract_signed",
+            "student_contract_signed",
+            "signed_contract",
+            "signed_date"
+          ],
+          "guardian_signed": [
+            "guardian_signed",
+            "parent_signed",
+            "guardian_signature"
+          ]
+        }
+      },
+      "4.2.2": {
+        "sources": {
+          "invoice": [
+            "Sales Invoice"
+          ],
+          "payment": [
+            "Payment Entry"
+          ],
+          "fps": [
+            "FPS Record",
+            "Student Admission UCC",
+            "Student Applicant"
+          ],
+          "admission": [
+            "Student Admission UCC"
+          ],
+          "contract": [
+            "Student Admission UCC"
+          ]
+        },
+        "fields": {
+          "student": [
+            "student",
+            "customer",
+            "party"
+          ],
+          "due_date": [
+            "due_date",
+            "payment_due_date"
+          ],
+          "outstanding": [
+            "outstanding_amount",
+            "outstanding"
+          ],
+          "fps_status": [
+            "fps_status",
+            "coverage_status",
+            "status"
+          ],
+          "fps_start": [
+            "coverage_start_date",
+            "fps_start_date",
+            "commencement_date"
+          ],
+          "payment_date": [
+            "posting_date",
+            "payment_date"
+          ]
+        }
+      },
+      "4.3.1": {
+        "sources": {
+          "request": [
+            "HD Ticket",
+            "Helpdesk Ticket"
+          ],
+          "student_log": [
+            "Student Log"
+          ],
+          "contract": [
+            "Student Admission UCC"
+          ],
+          "fps": [
+            "FPS Record",
+            "Student Admission UCC"
+          ]
+        },
+        "fields": {
+          "request_type": [
+            "request_type",
+            "ticket_type",
+            "issue_type",
+            "category"
+          ],
+          "status": [
+            "status",
+            "workflow_state"
+          ],
+          "request_date": [
+            "request_date",
+            "opening_date",
+            "creation"
+          ],
+          "decision_date": [
+            "decision_date",
+            "resolution_date",
+            "closed_on",
+            "modified"
+          ],
+          "supporting_documents": [
+            "supporting_documents",
+            "attachments_complete",
+            "documents_complete"
+          ]
+        }
+      },
+      "4.4.1": {
+        "sources": {
+          "request": [
+            "HD Ticket",
+            "Helpdesk Ticket"
+          ],
+          "payment": [
+            "Payment Entry"
+          ],
+          "invoice": [
+            "Sales Invoice"
+          ],
+          "contract": [
+            "Student Admission UCC"
+          ]
+        },
+        "fields": {
+          "request_type": [
+            "request_type",
+            "ticket_type",
+            "issue_type",
+            "category"
+          ],
+          "status": [
+            "status",
+            "workflow_state"
+          ],
+          "request_date": [
+            "request_date",
+            "opening_date",
+            "creation"
+          ],
+          "processed_date": [
+            "refund_date",
+            "processed_date",
+            "resolution_date",
+            "closed_on"
+          ],
+          "refund_amount": [
+            "refund_amount",
+            "paid_amount",
+            "base_paid_amount"
+          ]
+        }
+      },
+      "4.5.1": {
+        "sources": {
+          "strategy": [
+            "Student Support Service Strategy Insights",
+            "Intervention Issue Academic Support",
+            "Intervention Issue Wellness Services",
+            "Intervention Issue Academic Integrity",
+            "New Student Counselling and Monitoring Form"
+          ],
+          "student_log": [
+            "Student Log"
+          ],
+          "student": [
+            "Student"
+          ]
+        },
+        "fields": {
+          "service_category": [
+            "service_category",
+            "support_category",
+            "category"
+          ],
+          "status": [
+            "status",
+            "operational_status",
+            "workflow_state"
+          ],
+          "review_frequency": [
+            "review_frequency",
+            "frequency"
+          ],
+          "last_review": [
+            "last_review_date",
+            "review_date",
+            "modified"
+          ],
+          "action_plan": [
+            "action_plan",
+            "intervention_plan",
+            "support_plan"
+          ]
+        }
+      },
+      "4.6.1": {
+        "sources": {
+          "attendance": [
+            "Student Attendance"
+          ],
+          "student_log": [
+            "Student Log"
+          ],
+          "warning": [
+            "Dismissal Letters due to Attendance Requirements",
+            "Warning Letters",
+            "Warning Letter"
+          ],
+          "leave": [
+            "Student Leave Application",
+            "HD Ticket"
+          ]
+        },
+        "fields": {
+          "student": [
+            "student"
+          ],
+          "status": [
+            "status",
+            "attendance_status"
+          ],
+          "date": [
+            "date",
+            "attendance_date"
+          ],
+          "student_pass": [
+            "student_pass_holder",
+            "is_stp_holder",
+            "student_pass"
+          ],
+          "attendance_percentage": [
+            "attendance_percentage",
+            "attendance_rate",
+            "percentage"
+          ],
+          "warning_status": [
+            "status",
+            "workflow_state"
+          ],
+          "intervention_status": [
+            "intervention_status",
+            "status",
+            "workflow_state"
+          ]
+        }
+      }
+    },
+    "repository_review": {
+      "reviewed_repositories": [
+        "ucc-education-dev",
+        "ucc-erpnext-dev",
+        "ucc-helpdesk-dev",
+        "ucc-ai-assistant"
+      ],
+      "confirmed_doctypes": [
+        "Student Applicant",
+        "Student Admission UCC",
+        "Student Contract",
+        "New Student Counselling and Monitoring Form",
+        "Student Attendance",
+        "Student Leave Application",
+        "Student Log",
+        "Dismissal Letters due to Attendance Requirements",
+        "HD Ticket",
+        "Sales Invoice",
+        "Payment Entry",
+        "Course Adjustment Request Form",
+        "Intervention Issue Academic Support",
+        "Intervention Issue Academic Integrity",
+        "Intervention Issue Wellness Services"
+      ],
+      "runtime_only_or_not_found_in_uploaded_repo": [
+        "FPS Record",
+        "Student Support Service Strategy Insights",
+        "Joining an On-going Class"
+      ],
+      "note": "Runtime metadata remains authoritative because several UCC records are site customisations referenced by workspaces but not defined as repository DocType JSON files."
+    },
+    "live_confirmed_2026_07": {
+      "fps_record": {
+        "doctype": "FPS Record",
+        "fields": {
+          "posting_date": "Submission Date",
+          "fps_status": "FPS Status",
+          "date_issued": "Date Issued",
+          "student": "FPS Record Contract Childtable"
+        }
+      },
+      "fps_yearly_monitoring": {
+        "doctype": "FPS Yearly Monitoring",
+        "fields": {
+          "policy_period_from": "Policy Period (From)",
+          "policy_period_to": "Policy Period (To)",
+          "alram": "Set Limit (%)",
+          "maximum_insurable_limit": "Maximum Insurable Limit",
+          "ytd_total": "YTD Total",
+          "records_table": "Records"
+        }
+      },
+      "student_contract": {
+        "doctype": "Shortlisted Applicants",
+        "fields": {
+          "sales_invoice": "Sales Invoice",
+          "contract_url": "Contract URL",
+          "student_contract": "Student Contract",
+          "application_status": "Admission Status",
+          "contract_sent_date": "Contract Sent Date",
+          "contract_signed_by_student_date": "Contract Signed by Student Date",
+          "student_signed_date": "Student Signed Date",
+          "approved_by": "Approved by",
+          "conditional": "Conditional?",
+          "program": "Course",
+          "student_batch": "Student Intake No"
+        }
+      },
+      "student_log_course_adjustment": {
+        "parent_doctype": "Student Log",
+        "table_field": "custom_course_adjustment",
+        "child_doctype": "Course Adjustment Request Form",
+        "child_fields": {
+          "type": "Type",
+          "approved_date": "Approved Date",
+          "student_id": "Student ID",
+          "student_name": "Student Name",
+          "program": "Course",
+          "posting_date": "Posting Date",
+          "academic_year": "Academic Year",
+          "reasons_for_request": "Reasons for Request",
+          "parent_consent": "Parent/guardian consent",
+          "attach_parent": "Parent approval attachment",
+          "attach_docs": "Supporting documents",
+          "withdrawal_type": "Withdrawal Type",
+          "transferring_to": "Transferring to",
+          "start_date_of_deferral": "Start Date of Deferral",
+          "end_date_of_deferral": "End Date of Deferral",
+          "expected_date_of_return": "Expected Date of Return",
+          "courses_to_be_deferred": "Module(s) to be Deferred"
+        }
+      }
+    },
+    "translation_aliases": {
+      "Student Admission UCC": "Shortlisted Applicants",
+      "Student Applicant": "Shortlisted Applicants"
+    },
+    "translation_rule": "Server Scripts and API calls must use canonical Source Text DocType names. Translated Text is display-only."
+  },
+  "criterion_1_confirmed": {
+    "staff_goal": {
+      "doctype": "Goal",
+      "fields": [
+        "goal_name",
+        "progress",
+        "status",
+        "employee",
+        "employee_name",
+        "start_date",
+        "end_date",
+        "custom_department"
+      ]
+    }
+  },
+  "criterion_2_confirmed": {
+    "training_needs_analysis": {
+      "doctype": "Training Needs Analysis",
+      "fields": [
+        "participant_type",
+        "participant",
+        "employee_id",
+        "source_type",
+        "department",
+        "assessment_date",
+        "review_date",
+        "reviewed_by",
+        "improvement_average",
+        "total_estimated_cost"
+      ]
+    },
+    "material_vetting": {
+      "doctype": "Material Vetting Form",
+      "fields": [
+        "material_name",
+        "posting_date",
+        "department",
+        "approval_status",
+        "final_approval_date",
+        "approved_by",
+        "vetter"
+      ]
+    },
+    "provider_rating": {
+      "doctype": "Provider Rating",
+      "fields": [
+        "posting_date",
+        "year",
+        "status",
+        "type",
+        "document",
+        "supplier",
+        "evaluation_stage",
+        "rating",
+        "rating_likert"
+      ]
+    }
+  },
+  "confirmed_ucc_analytics_mappings": {
+    "staff_goal": {
+      "doctype": "Goal",
+      "fields": [
+        "name",
+        "goal_name",
+        "is_group",
+        "parent_goal",
+        "progress",
+        "status",
+        "custom_type",
+        "employee",
+        "employee_name",
+        "company",
+        "user",
+        "start_date",
+        "end_date",
+        "custom_change_department",
+        "custom_department",
+        "appraisal_cycle",
+        "kra",
+        "description",
+        "custom_goals_and_updates",
+        "modified"
+      ],
+      "confidence": "confirmed_from_supplied_field_export"
+    },
+    "training_needs": {
+      "doctype": "Training Needs Analysis",
+      "fields": [
+        "name",
+        "participant_type",
+        "participant_doctype",
+        "participant",
+        "participant_full_name",
+        "employee_id",
+        "employee_full_name",
+        "source_type",
+        "department",
+        "manpower_planning_and_development",
+        "employee_onboarding",
+        "appraisal_link",
+        "academic_year",
+        "assessment_date",
+        "assessed_by",
+        "assessed_by_full_name",
+        "review_date",
+        "reviewed_by",
+        "reviewed_by_full_name",
+        "performance_evaluation",
+        "index_value",
+        "improvement_average",
+        "conclusion",
+        "list_of_trainings",
+        "total_estimated_cost",
+        "appraisal",
+        "amended_from",
+        "modified"
+      ],
+      "confidence": "confirmed_from_supplied_doctype_definition"
+    },
+    "material_vetting": {
+      "doctype": "Material Vetting Form",
+      "fields": [
+        "name",
+        "naming_series",
+        "material_name",
+        "type",
+        "requestor_name",
+        "full_name",
+        "department",
+        "posting_date",
+        "duration_of_use",
+        "marketing_channel",
+        "target_audience",
+        "geographic_scope",
+        "version_no",
+        "material_attachment",
+        "description_of_request",
+        "reason_for_request",
+        "impact_analysis",
+        "impact_description",
+        "external_parties",
+        "vetter",
+        "vetter_name",
+        "amendments",
+        "vetter_table",
+        "checklist_template",
+        "list",
+        "general_comment",
+        "final_approval_date",
+        "approval_status",
+        "approved_by",
+        "approved_by_full_name",
+        "approval_remarks",
+        "modified"
+      ],
+      "confidence": "confirmed_from_supplied_doctype_definition"
+    },
+    "provider_rating": {
+      "doctype": "Provider Rating",
+      "fallback_doctype": "Supplier Rating",
+      "fields": [
+        "name",
+        "posting_date",
+        "year",
+        "status",
+        "type",
+        "document",
+        "supplier",
+        "evaluation_stage",
+        "rating",
+        "rating_likert",
+        "assessment_template",
+        "assessment",
+        "note",
+        "modified"
+      ],
+      "confidence": "confirmed_from_supplied_doctype_definition"
+    }
+  }
+}

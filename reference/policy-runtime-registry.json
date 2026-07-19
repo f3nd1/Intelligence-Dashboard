@@ -1,0 +1,231 @@
+{
+  "version": "1.8.8",
+  "note": "Policy and visual registry. Live foundations use permission-aware APIs; visual counts describe the retained catalogue, not invented data.",
+  "criterion_1": {
+    "mode": "live_foundation",
+    "api_method": "ucc_analytics_criterion_1",
+    "policies": [
+      {
+        "code": "PPD-SGL-CG-1.1.1",
+        "version": "2.2",
+        "title": "Leadership and Corporate Governance",
+        "updated": "15 January 2026"
+      },
+      {
+        "code": "PPD-SGL-SQ-1.2.1",
+        "version": "1.2",
+        "title": "Strategic Planning",
+        "updated": "15 January 2026"
+      }
+    ]
+  },
+  "criterion_2": {
+    "mode": "live_foundation",
+    "api_method": "ucc_analytics_criterion_2",
+    "policies": [
+      {
+        "code": "PPD-OEE-HR-2.1.1",
+        "version": "2.2",
+        "title": "Staff Selection and Management",
+        "updated": "15 January 2026"
+      },
+      {
+        "code": "PPD-OEE-HR-2.1.2",
+        "version": "1.2",
+        "title": "Staff Training and Development",
+        "updated": "15 January 2026"
+      },
+      {
+        "code": "PPD-SES-MG-2.2.1",
+        "version": "1.2",
+        "title": "Internal and External Communication",
+        "updated": "15 January 2026"
+      },
+      {
+        "code": "PPD-OEE-IT-2.3.1",
+        "version": "1.2",
+        "title": "Data and Information Management",
+        "updated": "15 January 2026"
+      },
+      {
+        "code": "PPD-OE-IT-2.3.2",
+        "version": "1.2",
+        "title": "Knowledge Management",
+        "updated": "15 January 2026"
+      },
+      {
+        "code": "PPD-SGL-SQ-2.4.1",
+        "version": "2.3",
+        "title": "Feedback Management",
+        "updated": "15 January 2026"
+      },
+      {
+        "code": "PPD-SGL-SQ-2.4.2",
+        "version": "2.2",
+        "title": "Student Satisfaction Survey",
+        "updated": "15 January 2026"
+      },
+      {
+        "code": "PPD-SGL-SQ-2.4.3",
+        "version": "2.2",
+        "title": "Staff Satisfaction Survey",
+        "updated": "15 January 2026"
+      }
+    ]
+  },
+  "criterion_3": {
+    "mode": "live_foundation",
+    "policies": [
+      {
+        "code": "PPD-SES-SL-3.1.1",
+        "version": "1.2",
+        "title": "Selection and Appointment of External Recruitment Agents",
+        "updated": "15 January 2026"
+      },
+      {
+        "code": "PPD-SES-SL-3.2.1",
+        "version": "1.2",
+        "title": "Management and Evaluation of Recruitment Agents",
+        "updated": "15 January 2026"
+      }
+    ],
+    "diagram_count": 19,
+    "sections": {
+      "overview": [
+        "Agent Lifecycle Coverage",
+        "Policy Control Coverage",
+        "Agent Control Health",
+        "Renewal and Evaluation Trend",
+        "Open Exception Profile"
+      ],
+      "3.1.1": [
+        "Identification Pathways",
+        "Selection and Screening Funnel",
+        "Selection Criteria Weighting",
+        "Selection Score Distribution",
+        "Approval and Background Check",
+        "Contract and NDA Readiness",
+        "Agent Listing and Status"
+      ],
+      "3.2.1": [
+        "Agent Onboarding Funnel",
+        "Training Coverage",
+        "Service Delivery Controls",
+        "Performance Evaluation Distribution",
+        "Renewal Checkpoint Flow",
+        "Complaints and Breaches",
+        "Offboarding and Exit Security"
+      ]
+    },
+    "api_method": "ucc_analytics_criterion_3"
+  },
+  "criterion_4": {
+    "mode": "live",
+    "diagram_count": 24,
+    "note": "All added diagrams reuse the existing permission-aware Criterion 4 metric registry."
+  },
+  "criterion_5": {
+    "mode": "live",
+    "note": "Existing diagram-rich Criterion 5 implementation retained and standardised to the shared framework."
+  },
+  "criterion_6": {
+    "mode": "live_foundation",
+    "policies": [
+      {
+        "code": "PPD-SGL-SQ-6.1.1",
+        "version": "1.2",
+        "title": "Internal Assessment and Quality Audits",
+        "updated": "15 January 2026"
+      },
+      {
+        "code": "PPD-SGL-SQ-6.2.1",
+        "version": "1.3",
+        "title": "Management Review",
+        "updated": "10 April 2026"
+      },
+      {
+        "code": "PPD-SGL-SQ-6.3.1",
+        "version": "1.2",
+        "title": "Innovation and Continual Improvement",
+        "updated": "15 January 2026"
+      },
+      {
+        "code": "PPD-OE-FN-6.4.1",
+        "version": "1.2",
+        "title": "Provider's Accreditation and Evaluation",
+        "updated": "15 January 2026"
+      },
+      {
+        "code": "PPD-SGL-SQ-6.5.3",
+        "version": "1.2",
+        "title": "Hazard Identification and Risk Assessment",
+        "updated": "15 January 2026"
+      }
+    ],
+    "diagram_count": 36,
+    "sections": {
+      "overview": [
+        "Quality Management Cycle",
+        "Policy Evidence Coverage",
+        "Quality System Health",
+        "Quality Calendar Completion",
+        "Action Status",
+        "Source Readiness"
+      ],
+      "6.1.1": [
+        "Annual Audit Programme",
+        "Audit Scope Coverage",
+        "Audit Lifecycle",
+        "Auditor Qualification and Independence",
+        "Audit Findings by Severity",
+        "Corrective Action Closure"
+      ],
+      "6.2.1": [
+        "THESIS Review Coverage",
+        "Management Review Preparation",
+        "Review Input Completeness",
+        "Review Outputs",
+        "Action Ageing",
+        "Action Effectiveness"
+      ],
+      "6.3.1": [
+        "Innovation Type Mix",
+        "Improvement Initiative Lifecycle",
+        "Innovation Performance Categories",
+        "QIPI Outcome Trend",
+        "Before and After Impact",
+        "Improvement Action Status"
+      ],
+      "6.4.1": [
+        "Provider Tier Profile",
+        "Provider Accreditation Funnel",
+        "Compliance Package",
+        "Service Delivery and Purchase Controls",
+        "Provider Rating Weighting",
+        "Provider Evaluation Outcomes"
+      ],
+      "6.5.3": [
+        "Hazard Reporting Funnel",
+        "Risk Level Distribution",
+        "5×5 Risk Matrix",
+        "Risk Treatment Lifecycle",
+        "Residual Risk Trend",
+        "Business Continuity Readiness"
+      ]
+    },
+    "api_method": "ucc_analytics_criterion_6"
+  },
+  "criterion_7": {
+    "mode": "live_foundation",
+    "api_method": "ucc_analytics_criterion_7",
+    "policies": [
+      {
+        "code": "PPD-SGL-SQ-7.1.1",
+        "version": "1.2",
+        "title": "Measurement of Outcomes",
+        "updated": "15 January 2026"
+      }
+    ],
+    "note": "No active 7.2 section is included because no approved 7.2 policy was supplied."
+  }
+}

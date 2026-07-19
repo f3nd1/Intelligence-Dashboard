@@ -1,0 +1,24 @@
+{
+  "package_version": "1.8.7",
+  "documentation_revision": "criterion-3-source-inventory-1",
+  "generated_at_utc": "2026-07-19T06:46:49.681429+00:00",
+  "runtime_changed": false,
+  "custom_html_block_changed": false,
+  "server_script_logic_changed": false,
+  "confirmed_primary_doctypes": [
+    "Agent",
+    "External Onboarding",
+    "External Offboarding",
+    "Provider Rating",
+    "Supplier Rating Assessment Childtable",
+    "Agent Claim Form",
+    "Agent Annual Performance Review",
+    "Agent Contract",
+    "Non Disclosure Agreement",
+    "Student Applicant"
+  ],
+  "dashboard_status": "live_foundation",
+  "api_method": "ucc_analytics_criterion_3",
+  "frontend_connected": true,
+  "dummy_values_active": false
+}
