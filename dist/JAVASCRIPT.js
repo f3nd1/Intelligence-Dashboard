@@ -6448,7 +6448,7 @@ return entry.node || null;
 function revealNestedViews(entry) {
 const node = resolveEntryNode(entry);
 if (entry.kind === "demo") {
-window.UCCDemoAnalytics?.showTab(entry.dashboard, entry.panel || "overview");
+window.UCCLiveAnalytics?.showTab(entry.dashboard, entry.panel || "overview");
 node?.closest("[data-demo-card]")?.querySelector('[data-demo-view="diagram"]')?.click();
 return;
 }
@@ -6509,7 +6509,7 @@ window.dispatchEvent(new Event("resize"));
 };
 
 if (entry.kind === "demo") {
-window.UCCDemoAnalytics?.showTab(entry.dashboard, entry.panel || "overview");
+window.UCCLiveAnalytics?.showTab(entry.dashboard, entry.panel || "overview");
 setTimeout(finish, 120);
 } else if (entry.dashboard === "criterion_4") {
 const tab = platformRoot.querySelector(
