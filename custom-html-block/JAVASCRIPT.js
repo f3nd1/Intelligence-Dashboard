@@ -215,7 +215,6 @@ const BUILD_ID="UCC-PLATFORM-1.9.6-20260719";
 const root=typeof root_element!=="undefined"?root_element.querySelector(".ucc-c5-v41"):document.querySelector(".ucc-c5-v41");if(!root)return;
 if(root.dataset.uccBuildInitialized===BUILD_ID){console.warn("[UCC C5] Duplicate initialization ignored",BUILD_ID);return}
 root.dataset.uccBuildInitialized=BUILD_ID;
-const esc=v=>String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
 const htmlBuild=root.dataset.buildId||"";
 const MAX=5000,LOG_MAX=50000;
 const state={progressTimer:null,progressValue:0,loaded:false,data:{},sources:{},qa:[],exceptions:[],quality:[],loading:false,scopeCourses:new Set(),scopeStudentGroups:new Set(),logs:[],resolvedDoctypes:{},requestSeq:0,startedAt:new Date().toISOString(),buildId:BUILD_ID};
@@ -347,7 +346,7 @@ risk:["table_ornh","budget_management","total_budget_fee","total_actual_spending
 approval:["approval_status","decision_date","quality_meeting","ssg_approval_date","decision_summary"]
 };
 const $=s=>root.querySelector(s),$$=s=>Array.from(root.querySelectorAll(s));
-
+const esc=v=>String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
 const pct=(n,d)=>d?Math.round(n/d*100):0;
 const set=(s,v)=>{const e=$(s);if(e)e.textContent=v};
 
@@ -5715,7 +5714,16 @@ if(TAB_MAP[state.tab])renderC4Visual(state.tab);
 },{passive:true});
 bindActions();
 addLog("INFO","criterion_4_initialized",{version:"1.9.6"});
+if(!root.classList.contains("ucc-hidden")){
 restoreState();
+}else{
+platform.addEventListener("ucc:dashboard-change",function onFirstShow(event){
+if(event.detail&&event.detail.dashboard==="criterion_4"){
+platform.removeEventListener("ucc:dashboard-change",onFirstShow);
+restoreState();
+}
+});
+}
 })();
 (function(){
 "use strict";
@@ -5891,13 +5899,9 @@ return`<article class="panel ucc-shared-panel ucc-demo-visual-card ucc-live-gene
 function panelInsertPoint(panel){
 return Array.from(panel.children).find(function(child){return/Management Questions and Data-Based Answers/i.test(child.textContent||"");})||null;
 }
-function ensureLiveVisualCards(dashboard,config){
+function ensureLiveSectionCards(dashboard,config,sectionKey){
 const definitions=LIVE_VISUAL_EXPANSION[dashboard.dataset.demoDashboard]||{};
-dashboard.querySelectorAll(".ucc-demo-visual-card:not(.ucc-live-generated-card)").forEach(function(card){
-card.hidden=true;
-card.classList.add("ucc-live-base-card");
-});
-Object.keys(definitions).forEach(function(sectionKey){
+if(!sectionKey||!definitions[sectionKey])return;
 const panelKey=(config.panelMap&&config.panelMap[sectionKey])||sectionKey;
 if(panelKey==="quality"||panelKey==="sources")return;
 const panel=dashboard.querySelector(`[data-demo-panel="${CSS.escape(panelKey)}"]`);
@@ -5913,7 +5917,14 @@ if(!grid.dataset.liveCardsMounted){
 grid.innerHTML=(definitions[sectionKey]||[]).map(liveChartCardMarkup).join("");
 grid.dataset.liveCardsMounted="1";
 }
+}
+function ensureLiveVisualCards(dashboard,config){
+const definitions=LIVE_VISUAL_EXPANSION[dashboard.dataset.demoDashboard]||{};
+dashboard.querySelectorAll(".ucc-demo-visual-card:not(.ucc-live-generated-card)").forEach(function(card){
+card.hidden=true;
+card.classList.add("ucc-live-base-card");
 });
+if(!dashboard.classList.contains("ucc-hidden"))ensureLiveSectionCards(dashboard,config,activeSection(dashboard));
 }
 function syncLiveSectionVisibility(dashboard,tab){
 dashboard.querySelectorAll("[data-live-section]").forEach(function(grid){
@@ -6105,8 +6116,8 @@ function renderQuality(dashboard,result){const target=dashboard.querySelector(`[
 function renderReadiness(dashboard,config,result){const title=dashboard.querySelector("[data-demo-readiness-title]"),copy=dashboard.querySelector("[data-demo-readiness-copy]");if(title)title.textContent=`Criterion ${config.number} live analytics active.`;if(copy){if(!result){copy.textContent="Waiting for the live API response.";return;}const policy=result.policy||{},ss=result.source_summary||{},ms=result.metric_summary||{};copy.textContent=`${policy.policy||"Criterion "+config.number} v${policy.version||""} · ${ss.available||0}/${ss.total||0} sources available · ${ms.available||0}/${ms.total||0} metrics available`;}}
 function renderError(dashboard,config,error){const title=dashboard.querySelector("[data-demo-readiness-title]"),copy=dashboard.querySelector("[data-demo-readiness-copy]");if(title)title.textContent=`Criterion ${config.number} live API unavailable.`;if(copy)copy.textContent=error.message||String(error);const mount=dashboard.querySelector("[data-demo-kpis]");if(mount)mount.innerHTML=`<article><span>API status</span><strong>Unavailable</strong><small>${esc(error.message||error)}</small></article>`;}
 function renderDashboard(dashboard){const config=CONFIG[dashboard.dataset.demoDashboard],state=dashboardState(dashboard),result=state.result;if(!config)return;if(state.error&&!result){renderError(dashboard,config,state.error);return;}const tab=activeSection(dashboard),section=sectionDefinition(config,tab);renderKpis(dashboard,config,result);(section?.charts||[]).forEach((chart,index)=>renderLiveChartCard(dashboard,chart,index,result));renderQa(dashboard,result,tab);renderSources(dashboard,result);renderQuality(dashboard,result);renderReadiness(dashboard,config,result);}
-async function loadLive(dashboard,force=false){const config=CONFIG[dashboard.dataset.demoDashboard],state=dashboardState(dashboard),section=apiSection(config,dashboard,activeSection(dashboard));if(state.loading)return;if(!force&&state.result&&state.result.meta?.subcriterion===section){renderDashboard(dashboard);return;}state.loading=true;state.error=null;setLoading(dashboard,true,15,`Loading ${section}`);try{const result=await callApi(config,dashboard,"summary");setLoading(dashboard,true,80,"Rendering live analytics");state.result=result;state.error=null;renderDashboard(dashboard);setLoading(dashboard,true,100,"Live analytics ready");setTimeout(()=>setLoading(dashboard,false),150);}catch(error){state.error=error;logEvent(dashboard,"ERROR","api_failure",error.message||error);renderDashboard(dashboard);setLoading(dashboard,false);}finally{state.loading=false;}}
-function showTab(dashboard,tab){const config=CONFIG[dashboard.dataset.demoDashboard];dashboard.dataset.demoActiveTab=tab;dashboard.querySelectorAll("[data-demo-tab]").forEach(button=>button.classList.toggle("active",button.dataset.demoTab===tab));const panelKey=(config.panelMap&&config.panelMap[tab])||tab;dashboardState(dashboard).lastPanel=panelKey;dashboard.querySelectorAll("[data-demo-panel]").forEach(panel=>panel.classList.toggle("hidden",panel.dataset.demoPanel!==panelKey));syncLiveSectionVisibility(dashboard,tab);if(tab!=="quality"&&tab!=="sources")loadLive(dashboard);else renderDashboard(dashboard);}
+async function loadLive(dashboard,force=false){const config=CONFIG[dashboard.dataset.demoDashboard],state=dashboardState(dashboard),section=apiSection(config,dashboard,activeSection(dashboard));ensureLiveSectionCards(dashboard,config,activeSection(dashboard));if(state.loading)return;if(!force&&state.result&&state.result.meta?.subcriterion===section){renderDashboard(dashboard);return;}state.loading=true;state.error=null;setLoading(dashboard,true,15,`Loading ${section}`);try{const result=await callApi(config,dashboard,"summary");setLoading(dashboard,true,80,"Rendering live analytics");state.result=result;state.error=null;renderDashboard(dashboard);setLoading(dashboard,true,100,"Live analytics ready");setTimeout(()=>setLoading(dashboard,false),150);}catch(error){state.error=error;logEvent(dashboard,"ERROR","api_failure",error.message||error);renderDashboard(dashboard);setLoading(dashboard,false);}finally{state.loading=false;}}
+function showTab(dashboard,tab){const config=CONFIG[dashboard.dataset.demoDashboard];dashboard.dataset.demoActiveTab=tab;dashboard.querySelectorAll("[data-demo-tab]").forEach(button=>button.classList.toggle("active",button.dataset.demoTab===tab));const panelKey=(config.panelMap&&config.panelMap[tab])||tab;dashboardState(dashboard).lastPanel=panelKey;dashboard.querySelectorAll("[data-demo-panel]").forEach(panel=>panel.classList.toggle("hidden",panel.dataset.demoPanel!==panelKey));ensureLiveSectionCards(dashboard,config,tab);syncLiveSectionVisibility(dashboard,tab);if(tab!=="quality"&&tab!=="sources")loadLive(dashboard);else renderDashboard(dashboard);}
 function allQaRows(result){return extendedQuestionRows(result,result?.meta?.subcriterion||"section").map(row=>[row.criterion,row.question,row.answer,sourceCalculation(row,metricById(result,row.metric_id)),row.status]);}
 function allExceptionRows(result){return(result?.exceptions||[]).map(row=>[row.id,row.label,metricValue(row),row.status,row.doctype||row.source]);}
 function ensureModal(){let modal=platform.querySelector("[data-demo-modal]");if(modal)return modal;modal=document.createElement("div");modal.className="ucc-demo-modal";modal.dataset.demoModal="1";modal.hidden=true;modal.innerHTML=`<div class="ucc-demo-modal-card"><header><div><strong data-demo-modal-title>Analytics details</strong><span>Permission-aware live data</span></div><button type="button" data-demo-modal-close aria-label="Close">×</button></header><div class="ucc-demo-modal-body" data-demo-modal-body></div></div>`;platform.appendChild(modal);modal.querySelector("[data-demo-modal-close]").addEventListener("click",()=>modal.hidden=true);modal.addEventListener("click",event=>{if(event.target===modal)modal.hidden=true;});return modal;}

@@ -1,4 +1,4 @@
-/* UCC universal visual navigation and diagnostics v1.9.5 */
+/* UCC universal visual navigation and diagnostics v1.9.6 */
 (function (global) {
 "use strict";
 
@@ -319,7 +319,7 @@ notify("The source mapping report has not finished loading.", "orange");
 return;
 }
 const report = JSON.stringify({
-platform_version: "1.9.5",
+platform_version: "1.9.6",
 source_mapping: lastMappingResult,
 visual_catalogue: visualCountSummary(),
 visual_issues: issues.slice()

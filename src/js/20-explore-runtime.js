@@ -1,4 +1,4 @@
-/* UCC DIAGRAM EXPLORER v1.9.5 */
+/* UCC DIAGRAM EXPLORER v1.9.6 */
 (function (global) {
 "use strict";
 

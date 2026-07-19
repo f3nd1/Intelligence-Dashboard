@@ -120,7 +120,7 @@ setDashboard(savedDashboard);
 applyShellState();
 })();
 (function(){
-const BUILD_ID="UCC-PLATFORM-1.9.5-20260719";
+const BUILD_ID="UCC-PLATFORM-1.9.6-20260719";
 const root=typeof root_element!=="undefined"?root_element.querySelector(".ucc-c5-v41"):document.querySelector(".ucc-c5-v41");if(!root)return;
 if(root.dataset.uccBuildInitialized===BUILD_ID){console.warn("[UCC C5] Duplicate initialization ignored",BUILD_ID);return}
 root.dataset.uccBuildInitialized=BUILD_ID;
@@ -140,6 +140,7 @@ window.addEventListener("unhandledrejection",event=>addLog("ERROR","window","unh
 addLog("INFO","lifecycle","initialization_started",{url:location.href,user:frappe?.session?.user||"unknown",user_agent:navigator.userAgent});
 if(htmlBuild&&htmlBuild!==BUILD_ID){addLog("ERROR","deployment","build_mismatch",{html_build:htmlBuild,javascript_build:BUILD_ID});root.insertAdjacentHTML("afterbegin",`<div class="deployment-warning"><strong>Deployment mismatch:</strong> HTML ${esc(htmlBuild)} · JavaScript ${esc(BUILD_ID)}. Replace all three frontend files and clear cache.</div>`)}
 const CHANGELOG=[
+["v1.9.6","Frontend startup hotfix","Prevented a deployment-version warning from aborting JavaScript initialisation, so View tools, diagnostics and visual navigation still load while a clear mismatch warning is shown."],
 ["v1.9.5","Visual catalogue and mapping fixes","Fixed scoped diagnostics, exact subcriterion visual ownership, slow-load blank detection, and confirmed UCC DocType mappings."],
 ["v1.9.4","Navigation and diagnostics","Restored a fixed-position visual menu across all seven criteria, standardised Diagram/Table controls, repaired View tools, and added source mapping plus invalid-SVG diagnostics."],
 ["v1.9.3","Navigation UX","Removed the global Visual Navigator and added hierarchical hover/focus child menus under Criterion 5 parent tabs."],
@@ -5621,8 +5622,17 @@ if(TAB_MAP[state.tab])renderC4Visual(state.tab);
 });
 },{passive:true});
 bindActions();
-addLog("INFO","criterion_4_initialized",{version:"1.9.5"});
+addLog("INFO","criterion_4_initialized",{version:"1.9.6"});
+if(!root.classList.contains("ucc-hidden")){
 restoreState();
+}else{
+platform.addEventListener("ucc:dashboard-change",function onFirstShow(event){
+if(event.detail&&event.detail.dashboard==="criterion_4"){
+platform.removeEventListener("ucc:dashboard-change",onFirstShow);
+restoreState();
+}
+});
+}
 })();
 (function(){
 "use strict";

@@ -1139,7 +1139,7 @@
 }
 
 
-/* UCC Intelligence Platform v1.9.5: exact visual catalogue and scoped diagnostics */
+/* UCC Intelligence Platform v1.9.6: frontend startup hotfix and scoped diagnostics */
 .ucc-platform [data-dashboard-panel].ucc-criterion-dashboard .mini-toggle{
   display:flex !important;
   flex:0 0 auto !important;

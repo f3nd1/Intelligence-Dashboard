@@ -211,7 +211,7 @@ setDashboard(savedDashboard);
 applyShellState();
 })();
 (function(){
-const BUILD_ID="UCC-PLATFORM-1.9.5-20260719";
+const BUILD_ID="UCC-PLATFORM-1.9.6-20260719";
 const root=typeof root_element!=="undefined"?root_element.querySelector(".ucc-c5-v41"):document.querySelector(".ucc-c5-v41");if(!root)return;
 if(root.dataset.uccBuildInitialized===BUILD_ID){console.warn("[UCC C5] Duplicate initialization ignored",BUILD_ID);return}
 root.dataset.uccBuildInitialized=BUILD_ID;
@@ -231,6 +231,7 @@ window.addEventListener("unhandledrejection",event=>addLog("ERROR","window","unh
 addLog("INFO","lifecycle","initialization_started",{url:location.href,user:frappe?.session?.user||"unknown",user_agent:navigator.userAgent});
 if(htmlBuild&&htmlBuild!==BUILD_ID){addLog("ERROR","deployment","build_mismatch",{html_build:htmlBuild,javascript_build:BUILD_ID});root.insertAdjacentHTML("afterbegin",`<div class="deployment-warning"><strong>Deployment mismatch:</strong> HTML ${esc(htmlBuild)} · JavaScript ${esc(BUILD_ID)}. Replace all three frontend files and clear cache.</div>`)}
 const CHANGELOG=[
+["v1.9.6","Frontend startup hotfix","Prevented a deployment-version warning from aborting JavaScript initialisation, so View tools, diagnostics and visual navigation still load while a clear mismatch warning is shown."],
 ["v1.9.5","Visual catalogue and mapping fixes","Fixed scoped diagnostics, exact subcriterion visual ownership, slow-load blank detection, and confirmed UCC DocType mappings."],
 ["v1.9.4","Navigation and diagnostics","Restored a fixed-position visual menu across all seven criteria, standardised Diagram/Table controls, repaired View tools, and added source mapping plus invalid-SVG diagnostics."],
 ["v1.9.3","Navigation UX","Removed the global Visual Navigator and added hierarchical hover/focus child menus under Criterion 5 parent tabs."],
@@ -5712,8 +5713,17 @@ if(TAB_MAP[state.tab])renderC4Visual(state.tab);
 });
 },{passive:true});
 bindActions();
-addLog("INFO","criterion_4_initialized",{version:"1.9.5"});
+addLog("INFO","criterion_4_initialized",{version:"1.9.6"});
+if(!root.classList.contains("ucc-hidden")){
 restoreState();
+}else{
+platform.addEventListener("ucc:dashboard-change",function onFirstShow(event){
+if(event.detail&&event.detail.dashboard==="criterion_4"){
+platform.removeEventListener("ucc:dashboard-change",onFirstShow);
+restoreState();
+}
+});
+}
 })();
 (function(){
 "use strict";
@@ -5831,7 +5841,7 @@ panel.classList.toggle("is-active", active);
 });
 
 })();
-/* UCC live foundation analytics v1.9.5 */
+/* UCC live foundation analytics v1.9.6 */
 (function(){
 "use strict";
 const platform=typeof root_element!=="undefined"?root_element.querySelector("#uccIntelligencePlatform"):document.querySelector("#uccIntelligencePlatform");
@@ -5889,13 +5899,9 @@ return`<article class="panel ucc-shared-panel ucc-demo-visual-card ucc-live-gene
 function panelInsertPoint(panel){
 return Array.from(panel.children).find(function(child){return/Management Questions and Data-Based Answers/i.test(child.textContent||"");})||null;
 }
-function ensureLiveVisualCards(dashboard,config){
+function ensureLiveSectionCards(dashboard,config,sectionKey){
 const definitions=LIVE_VISUAL_EXPANSION[dashboard.dataset.demoDashboard]||{};
-dashboard.querySelectorAll(".ucc-demo-visual-card:not(.ucc-live-generated-card)").forEach(function(card){
-card.hidden=true;
-card.classList.add("ucc-live-base-card");
-});
-Object.keys(definitions).forEach(function(sectionKey){
+if(!sectionKey||!definitions[sectionKey])return;
 const panelKey=(config.panelMap&&config.panelMap[sectionKey])||sectionKey;
 if(panelKey==="quality"||panelKey==="sources")return;
 const panel=dashboard.querySelector(`[data-demo-panel="${CSS.escape(panelKey)}"]`);
@@ -5911,7 +5917,14 @@ if(!grid.dataset.liveCardsMounted){
 grid.innerHTML=(definitions[sectionKey]||[]).map(liveChartCardMarkup).join("");
 grid.dataset.liveCardsMounted="1";
 }
+}
+function ensureLiveVisualCards(dashboard,config){
+const definitions=LIVE_VISUAL_EXPANSION[dashboard.dataset.demoDashboard]||{};
+dashboard.querySelectorAll(".ucc-demo-visual-card:not(.ucc-live-generated-card)").forEach(function(card){
+card.hidden=true;
+card.classList.add("ucc-live-base-card");
 });
+if(!dashboard.classList.contains("ucc-hidden"))ensureLiveSectionCards(dashboard,config,activeSection(dashboard));
 }
 function syncLiveSectionVisibility(dashboard,tab){
 dashboard.querySelectorAll("[data-live-section]").forEach(function(grid){
@@ -6103,8 +6116,8 @@ function renderQuality(dashboard,result){const target=dashboard.querySelector(`[
 function renderReadiness(dashboard,config,result){const title=dashboard.querySelector("[data-demo-readiness-title]"),copy=dashboard.querySelector("[data-demo-readiness-copy]");if(title)title.textContent=`Criterion ${config.number} live analytics active.`;if(copy){if(!result){copy.textContent="Waiting for the live API response.";return;}const policy=result.policy||{},ss=result.source_summary||{},ms=result.metric_summary||{};copy.textContent=`${policy.policy||"Criterion "+config.number} v${policy.version||""} · ${ss.available||0}/${ss.total||0} sources available · ${ms.available||0}/${ms.total||0} metrics available`;}}
 function renderError(dashboard,config,error){const title=dashboard.querySelector("[data-demo-readiness-title]"),copy=dashboard.querySelector("[data-demo-readiness-copy]");if(title)title.textContent=`Criterion ${config.number} live API unavailable.`;if(copy)copy.textContent=error.message||String(error);const mount=dashboard.querySelector("[data-demo-kpis]");if(mount)mount.innerHTML=`<article><span>API status</span><strong>Unavailable</strong><small>${esc(error.message||error)}</small></article>`;}
 function renderDashboard(dashboard){const config=CONFIG[dashboard.dataset.demoDashboard],state=dashboardState(dashboard),result=state.result;if(!config)return;if(state.error&&!result){renderError(dashboard,config,state.error);return;}const tab=activeSection(dashboard),section=sectionDefinition(config,tab);renderKpis(dashboard,config,result);(section?.charts||[]).forEach((chart,index)=>renderLiveChartCard(dashboard,chart,index,result));renderQa(dashboard,result,tab);renderSources(dashboard,result);renderQuality(dashboard,result);renderReadiness(dashboard,config,result);}
-async function loadLive(dashboard,force=false){const config=CONFIG[dashboard.dataset.demoDashboard],state=dashboardState(dashboard),section=apiSection(config,dashboard,activeSection(dashboard));if(state.loading)return;if(!force&&state.result&&state.result.meta?.subcriterion===section){renderDashboard(dashboard);return;}state.loading=true;state.error=null;setLoading(dashboard,true,15,`Loading ${section}`);try{const result=await callApi(config,dashboard,"summary");setLoading(dashboard,true,80,"Rendering live analytics");state.result=result;state.error=null;renderDashboard(dashboard);setLoading(dashboard,true,100,"Live analytics ready");setTimeout(()=>setLoading(dashboard,false),150);}catch(error){state.error=error;logEvent(dashboard,"ERROR","api_failure",error.message||error);renderDashboard(dashboard);setLoading(dashboard,false);}finally{state.loading=false;}}
-function showTab(dashboard,tab){const config=CONFIG[dashboard.dataset.demoDashboard];dashboard.dataset.demoActiveTab=tab;dashboard.querySelectorAll("[data-demo-tab]").forEach(button=>button.classList.toggle("active",button.dataset.demoTab===tab));const panelKey=(config.panelMap&&config.panelMap[tab])||tab;dashboardState(dashboard).lastPanel=panelKey;dashboard.querySelectorAll("[data-demo-panel]").forEach(panel=>panel.classList.toggle("hidden",panel.dataset.demoPanel!==panelKey));syncLiveSectionVisibility(dashboard,tab);if(tab!=="quality"&&tab!=="sources")loadLive(dashboard);else renderDashboard(dashboard);}
+async function loadLive(dashboard,force=false){const config=CONFIG[dashboard.dataset.demoDashboard],state=dashboardState(dashboard),section=apiSection(config,dashboard,activeSection(dashboard));ensureLiveSectionCards(dashboard,config,activeSection(dashboard));if(state.loading)return;if(!force&&state.result&&state.result.meta?.subcriterion===section){renderDashboard(dashboard);return;}state.loading=true;state.error=null;setLoading(dashboard,true,15,`Loading ${section}`);try{const result=await callApi(config,dashboard,"summary");setLoading(dashboard,true,80,"Rendering live analytics");state.result=result;state.error=null;renderDashboard(dashboard);setLoading(dashboard,true,100,"Live analytics ready");setTimeout(()=>setLoading(dashboard,false),150);}catch(error){state.error=error;logEvent(dashboard,"ERROR","api_failure",error.message||error);renderDashboard(dashboard);setLoading(dashboard,false);}finally{state.loading=false;}}
+function showTab(dashboard,tab){const config=CONFIG[dashboard.dataset.demoDashboard];dashboard.dataset.demoActiveTab=tab;dashboard.querySelectorAll("[data-demo-tab]").forEach(button=>button.classList.toggle("active",button.dataset.demoTab===tab));const panelKey=(config.panelMap&&config.panelMap[tab])||tab;dashboardState(dashboard).lastPanel=panelKey;dashboard.querySelectorAll("[data-demo-panel]").forEach(panel=>panel.classList.toggle("hidden",panel.dataset.demoPanel!==panelKey));ensureLiveSectionCards(dashboard,config,tab);syncLiveSectionVisibility(dashboard,tab);if(tab!=="quality"&&tab!=="sources")loadLive(dashboard);else renderDashboard(dashboard);}
 function allQaRows(result){return extendedQuestionRows(result,result?.meta?.subcriterion||"section").map(row=>[row.criterion,row.question,row.answer,sourceCalculation(row,metricById(result,row.metric_id)),row.status]);}
 function allExceptionRows(result){return(result?.exceptions||[]).map(row=>[row.id,row.label,metricValue(row),row.status,row.doctype||row.source]);}
 function ensureModal(){let modal=platform.querySelector("[data-demo-modal]");if(modal)return modal;modal=document.createElement("div");modal.className="ucc-demo-modal";modal.dataset.demoModal="1";modal.hidden=true;modal.innerHTML=`<div class="ucc-demo-modal-card"><header><div><strong data-demo-modal-title>Analytics details</strong><span>Permission-aware live data</span></div><button type="button" data-demo-modal-close aria-label="Close">×</button></header><div class="ucc-demo-modal-body" data-demo-modal-body></div></div>`;platform.appendChild(modal);modal.querySelector("[data-demo-modal-close]").addEventListener("click",()=>modal.hidden=true);modal.addEventListener("click",event=>{if(event.target===modal)modal.hidden=true;});return modal;}
@@ -6165,7 +6178,7 @@ if(doctype)window.open(doctypeListRoute(doctype),"_blank","noopener");
 });
 window.UCCLiveAnalytics=Object.freeze({config:CONFIG,refresh:function(criterion){const dashboard=platform.querySelector(`[data-demo-dashboard="${CSS.escape(criterion)}"]`);if(dashboard)return loadLive(dashboard,true);},showTab:function(criterion,tab){const dashboard=platform.querySelector(`[data-demo-dashboard="${CSS.escape(criterion)}"]`);if(dashboard)showTab(dashboard,tab);}});
 })();
-/* UCC DIAGRAM EXPLORER v1.9.5 */
+/* UCC DIAGRAM EXPLORER v1.9.6 */
 (function (global) {
 "use strict";
 
@@ -6596,7 +6609,7 @@ renderList();
 }
 });
 })(window);
-/* UCC universal visual navigation and diagnostics v1.9.5 */
+/* UCC universal visual navigation and diagnostics v1.9.6 */
 (function (global) {
 "use strict";
 
@@ -6917,7 +6930,7 @@ notify("The source mapping report has not finished loading.", "orange");
 return;
 }
 const report = JSON.stringify({
-platform_version: "1.9.5",
+platform_version: "1.9.6",
 source_mapping: lastMappingResult,
 visual_catalogue: visualCountSummary(),
 visual_issues: issues.slice()
