@@ -34,7 +34,6 @@ c53: ["c53", "c531"]
 });
 const issues = [];
 const blankFirstSeen = new WeakMap();
-let closeTimer = 0;
 let activeTrigger = null;
 let activeEntries = [];
 let activeDashboard = "";
@@ -91,43 +90,29 @@ return Array.from(platform.querySelectorAll(
 const menu = document.createElement("section");
 menu.className = "ucc-visual-hover-menu";
 menu.hidden = true;
-menu.setAttribute("role", "dialog");
+menu.setAttribute("role", "region");
 menu.setAttribute("aria-label", "Section visual menu");
 menu.innerHTML = '<header><div><strong data-visual-menu-title>Section visuals</strong><br><span data-visual-menu-count>0 visuals</span></div></header><div class="ucc-visual-hover-menu-list" data-visual-menu-list></div><div class="ucc-visual-hover-menu-footer"><button type="button" data-visual-menu-section>Open section</button><button type="button" data-visual-menu-all>View all visuals</button></div>';
-platform.appendChild(menu);
 const menuTitle = menu.querySelector("[data-visual-menu-title]");
 const menuCount = menu.querySelector("[data-visual-menu-count]");
 const menuList = menu.querySelector("[data-visual-menu-list]");
 
-function positionMenu(trigger) {
-if (!trigger || menu.hidden) return;
-const rect = trigger.getBoundingClientRect();
-const width = Math.min(420, Math.max(300, rect.width + 110));
-menu.style.width = width + "px";
-const left = Math.max(10, Math.min(global.innerWidth - width - 10, rect.left));
-menu.style.left = left + "px";
-menu.style.top = Math.min(global.innerHeight - menu.offsetHeight - 10, rect.bottom + 7) + "px";
+function placeMenu(trigger) {
+// In-flow panel: anchor it directly below the tab bar it belongs to,
+// outside any position:sticky wrapper, so it pushes following content
+// (readiness strip, KPI cards, panels) down instead of floating over it.
+const anchor = trigger.closest(".sticky-navigation") || trigger.closest("nav") || trigger.parentElement;
+if (anchor && anchor.nextElementSibling !== menu) anchor.insertAdjacentElement("afterend", menu);
 }
-function cancelClose() {
-if (closeTimer) global.clearTimeout(closeTimer);
-closeTimer = 0;
-}
-function closeMenu(immediate) {
-cancelClose();
-const close = () => {
+function closeMenu() {
 menu.hidden = true;
-menu.removeAttribute("style");
 if (activeTrigger) activeTrigger.setAttribute("aria-expanded", "false");
 activeTrigger = null;
 activeEntries = [];
 activeDashboard = "";
 activeSection = "";
-};
-if (immediate) close();
-else closeTimer = global.setTimeout(close, 180);
 }
 function openMenu(trigger) {
-cancelClose();
 const dashboard = triggerDashboard(trigger);
 const section = triggerSection(trigger);
 const entries = entriesFor(dashboard, section);
@@ -142,8 +127,12 @@ menuCount.textContent = entries.length + " visual" + (entries.length === 1 ? "" 
 menuList.innerHTML = entries.length
 ? entries.map(entry => '<button type="button" data-visual-entry="' + esc(entry.key) + '"><strong>' + esc(entry.title) + '</strong><small>' + esc(entry.type) + '</small></button>').join("")
 : '<div class="ucc-visual-diagnostic"><strong>No visual is registered for this section</strong><span>Use Source Mapping Report to check whether a DocType, permission or field mapping prevented the visual catalogue from loading.</span><button type="button" data-ucc-open-mapping>Source mapping report</button></div>';
+placeMenu(trigger);
 menu.hidden = false;
-requestAnimationFrame(() => positionMenu(trigger));
+}
+function toggleMenu(trigger) {
+if (activeTrigger === trigger && !menu.hidden) closeMenu();
+else openMenu(trigger);
 }
 function addCountBadge(trigger) {
 const dashboard = triggerDashboard(trigger);
@@ -158,7 +147,7 @@ trigger.appendChild(badge);
 }
 badge.textContent = String(count);
 trigger.title = count + " visual" + (count === 1 ? "" : "s") + " in this section";
-trigger.setAttribute("aria-haspopup", "dialog");
+trigger.setAttribute("aria-haspopup", "true");
 trigger.setAttribute("aria-expanded", "false");
 }
 function bindTabs() {
@@ -166,20 +155,17 @@ directTabTriggers().forEach(trigger => {
 addCountBadge(trigger);
 if (trigger.dataset.visualHoverReady === "1") return;
 trigger.dataset.visualHoverReady = "1";
-trigger.addEventListener("mouseenter", () => openMenu(trigger));
-trigger.addEventListener("mouseleave", () => closeMenu(false));
-trigger.addEventListener("focus", () => openMenu(trigger));
 trigger.addEventListener("keydown", event => {
 if (event.key === "ArrowDown") {
 event.preventDefault();
-openMenu(trigger);
+if (activeTrigger !== trigger || menu.hidden) openMenu(trigger);
 setTimeout(() => menuList.querySelector("button")?.focus(), 0);
 }
-if (event.key === "Escape") closeMenu(true);
+if (event.key === "Escape" && activeTrigger === trigger) closeMenu();
 });
 trigger.addEventListener("click", () => {
 if (suppressNextTabMenu) { suppressNextTabMenu = false; return; }
-setTimeout(() => openMenu(trigger), 0);
+setTimeout(() => toggleMenu(trigger), 0);
 });
 });
 Object.keys(expectedCounts).forEach(dashboard => {
@@ -188,43 +174,38 @@ if (countNode) countNode.textContent = String(registry().filter(entry => entry.d
 });
 }
 
-menu.addEventListener("mouseenter", cancelClose);
-menu.addEventListener("mouseleave", () => closeMenu(false));
-menu.addEventListener("focusin", cancelClose);
-menu.addEventListener("focusout", event => { if (!menu.contains(event.relatedTarget)) closeMenu(false); });
 menu.addEventListener("click", event => {
 const entryButton = event.target.closest("[data-visual-entry]");
 if (entryButton) {
 global.UCCExplore?.openEntry(entryButton.dataset.visualEntry);
-closeMenu(true);
+closeMenu();
 return;
 }
 if (event.target.closest("[data-visual-menu-section]")) {
 const trigger = activeTrigger;
-closeMenu(true);
+closeMenu();
 if (trigger) { suppressNextTabMenu = true; trigger.click(); }
 return;
 }
 if (event.target.closest("[data-visual-menu-all]")) {
 global.UCCExplore?.openNavigator(activeDashboard);
-closeMenu(true);
+closeMenu();
 return;
 }
 if (event.target.closest("[data-ucc-open-mapping]")) {
 event.preventDefault();
 event.stopPropagation();
 const dashboard = activeDashboard;
-closeMenu(true);
+closeMenu();
 openSourceMapping(dashboard);
 return;
 }
 });
-global.addEventListener("resize", () => positionMenu(activeTrigger), { passive: true });
-document.addEventListener("scroll", () => positionMenu(activeTrigger), true);
-document.addEventListener("click", event => {
-if (!menu.contains(event.target) && !event.target.closest("[data-visual-hover-ready]")) closeMenu(true);
-}, true);
-document.addEventListener("keydown", event => { if (event.key === "Escape") { closeMenu(true); closeSourceMapping(); } });
+// The panel is in-flow (not floating), so it never overlaps neighbouring
+// content: an outside click no longer needs to close it. The panel only
+// ever closes by clicking its own (now-active) tab again, or switches by
+// clicking a different tab -- both handled by toggleMenu() above.
+document.addEventListener("keydown", event => { if (event.key === "Escape") { closeMenu(); closeSourceMapping(); } });
 
 const mappingDialog = document.createElement("section");
 mappingDialog.className = "ucc-source-mapping-dialog";

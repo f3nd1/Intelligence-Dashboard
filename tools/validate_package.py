@@ -130,11 +130,16 @@ def main() -> int:
 
     checks.append(report("UCCC4VisualDefinitions" in source_js, "Criterion 4 visual definitions are exposed to the universal navigator"))
     checks.append(report("visual-navigator" in source_html and "source-mapping" in source_html, "View tools contains functional visual and source actions"))
-    checks.append(report("data-visual-hover-ready" in navigation_js and "ucc-visual-hover-menu" in navigation_js, "universal hover visual menu is installed"))
+    checks.append(report("visualHoverReady" in navigation_js and "ucc-visual-hover-menu" in navigation_js, "universal visual menu is installed"))
     checks.append(report("invalidSvgReason" in navigation_js and "NaN|undefined|Infinity" in navigation_js, "invalid SVG and blank visual guard is installed"))
     checks.append(report("ucc_shared_diagnostics" in navigation_js, "source mapping report calls the diagnostics API"))
     checks.append(report("data-source-mapping-copy" in navigation_js and "Detected fields" in navigation_js, "source mapping report exposes field inventory and a copyable report"))
-    checks.append(report("platform.appendChild(mappingDialog)" in navigation_js and "platform.appendChild(menu)" in navigation_js, "overlay UI remains inside the scoped Custom HTML Block"))
+    checks.append(report(
+        "platform.appendChild(mappingDialog)" in navigation_js
+        and 'anchor.insertAdjacentElement("afterend", menu)' in navigation_js
+        and "platform.querySelectorAll(" in navigation_js,
+        "overlay UI remains inside the scoped Custom HTML Block"
+    ))
     checks.append(report('platform.addEventListener("click", event =>' in navigation_js and 'button.closest("[data-demo-dashboard]")' in navigation_js, "dynamic source-mapping buttons use scoped event delegation"))
     checks.append(report("UCCLiveVisualDefinitions" in live_js and "Object.entries(global.UCCLiveVisualDefinitions" in (ROOT / "src/js/20-explore-runtime.js").read_text(encoding="utf-8"), "explorer uses the approved live visual definitions"))
     checks.append(report("data-live-section" in live_js and "syncLiveSectionVisibility" in live_js, "grouped live panels show only the active subcriterion catalogue"))
