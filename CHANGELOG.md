@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.9.6-tabfix (2026-07-19)
+
+- Fixed sub-criterion tab navigation doing nothing for Criteria 1, 2, 3, 5, 6 and 7 (Criterion 4 was unaffected). The shared tab bar was being covered by the loading overlay while a section loaded, so clicks landed on the overlay instead of the tab. Raised the tab bar above the overlay (`.ucc-shared-tabs { position:relative; z-index:1000 }`) so clicks always reach the tab buttons, even mid-load.
+
+## v1.9.6-lazyload (2026-07-19)
+
+- Fixed page-load lag in the Custom HTML Block. Chart-card DOM for every subcriterion section of Criteria 1, 2, 3, 6 and 7 was being built eagerly on every page load (449 chart cards total), regardless of which dashboard or tab was actually visible. Now only the active dashboard's active section builds on load; the rest build lazily the first time a user switches into that tab.
+- Deferred Criterion 4's 7 Server Script API calls until the user actually switches to Criterion 4, instead of firing them unconditionally on every page load regardless of visibility.
+
 ## v1.9.5
 
 - Fixed Source Mapping Report and hover-menu CSS by mounting overlays inside the scoped Custom HTML Block.
