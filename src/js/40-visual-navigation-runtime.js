@@ -223,7 +223,7 @@ global.addEventListener("resize", () => positionMenu(activeTrigger), { passive: 
 document.addEventListener("scroll", () => positionMenu(activeTrigger), true);
 document.addEventListener("click", event => {
 if (!menu.contains(event.target) && !event.target.closest("[data-visual-hover-ready]")) closeMenu(true);
-});
+}, true);
 document.addEventListener("keydown", event => { if (event.key === "Escape") { closeMenu(true); closeSourceMapping(); } });
 
 const mappingDialog = document.createElement("section");
