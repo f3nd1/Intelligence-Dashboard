@@ -235,7 +235,7 @@ APPROVED_SOURCE_GROUPS = [{'key': 'appraisal',
  {'key': 'shared_payment_entry', 'label': 'Payment Entry', 'candidates': ['Payment Entry'], 'criteria': ['shared']},
  {'key': 'shared_provider_rating',
   'label': 'Provider Rating',
-  'candidates': ['Provider Rating'],
+  'candidates': ['Provider Rating', 'Supplier Rating'],
   'criteria': ['shared']},
  {'key': 'shared_quality_action', 'label': 'Quality Action', 'candidates': ['Quality Action'], 'criteria': ['shared']},
  {'key': 'shared_sales_invoice', 'label': 'Sales Invoice', 'candidates': ['Sales Invoice'], 'criteria': ['shared']},
@@ -311,7 +311,20 @@ def probe_candidate(doctype):
     try:
         attempt["exists"] = bool(frappe.db.exists("DocType", doctype))
     except Exception as error:
+        attempt["metadata_status"] = "unavailable"
         attempt["message"] = clean_text(error)
+        return attempt
+
+    if not attempt["exists"]:
+        # A candidate name can be a display label a site admin has
+        # retranslated (e.g. "Provider Rating" -> "Supplier Rating"), which
+        # only changes the label, not the real DocType name. Stop here
+        # instead of calling frappe.get_meta on a name we already know is
+        # not installed, so this never surfaces Frappe's own
+        # "DocType X not found" text as if it were an active error.
+        attempt["metadata_status"] = "unavailable"
+        attempt["message"] = "DocType is not installed on this site."
+        return attempt
 
     inventory = field_inventory(doctype)
     attempt["metadata_status"] = inventory.get("status")
@@ -320,8 +333,6 @@ def probe_candidate(doctype):
     if inventory.get("status") != "available":
         attempt["message"] = inventory.get("message") or attempt.get("message") or "DocType metadata is unavailable."
         return attempt
-
-    attempt["exists"] = True
     try:
         rows = frappe.get_list(
             doctype,

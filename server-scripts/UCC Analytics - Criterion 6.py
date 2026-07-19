@@ -587,14 +587,33 @@ def resolve_source(alias):
         attempt = {
             "doctype": doctype,
             "status": "checking",
-            "stage": "metadata",
+            "stage": "existence",
             "message": ""
         }
 
         try:
+            # A candidate name can be a display label a site admin has
+            # retranslated (e.g. "Provider Rating" -> "Supplier Rating").
+            # Check the real, stable DocType name exists before ever
+            # querying it, instead of catching a "not found" error after
+            # the fact.
+            if not frappe.db.exists("DocType", doctype):
+                attempt["status"] = "unavailable"
+                attempt["message"] = "DocType is not installed on this site."
+                attempts.append(attempt)
+                continue
+        except Exception as error:
+            attempt["status"] = "unavailable"
+            attempt["message"] = clean_text(error)
+            attempts.append(attempt)
+            continue
+
+        try:
             frappe.get_meta(doctype)
+            attempt["stage"] = "metadata"
             attempt["metadata"] = "available"
         except Exception as error:
+            attempt["stage"] = "metadata"
             attempt["status"] = "unavailable"
             attempt["message"] = clean_text(error)
             attempts.append(attempt)
