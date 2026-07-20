@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.9.6-cardrefactor-c2 (2026-07-20)
+
+- Added real one-sentence descriptions for Criterion 2's 99 visuals (batch 2 of 7) to `LIVE_VISUAL_EXPANSION`, replacing the generic fallback sentence introduced in v1.9.6-cardrefactor-c1's shared card-building refactor. No code changes this batch — the shared function, click-to-render, layout and menu/Explore description display already cover Criterion 2 automatically since it shares the same code path as Criterion 1.
+
 ## v1.9.6-cardrefactor-c1 (2026-07-20)
 
 - Refactored visual cards onto a shared card-building function and a per-visual `description` field (batch 1 of 7 — Criterion 1 complete; Criteria 2, 3, 4, 5, 6 and 7 follow in later batches). Each visual definition in `LIVE_VISUAL_EXPANSION` (`30-live-foundation-runtime.js`) now carries a short one-sentence description alongside its existing name and chart type.
