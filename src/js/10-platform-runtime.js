@@ -1,3 +1,17 @@
+// Consolidates a dashboard's separate "Data Quality" and "Sources" tabs into a
+// single "Sources & Data Quality" tab: the Data Quality panel's content is moved
+// into the Sources panel and the Data Quality tab button is removed. Shared by
+// all three dashboard architectures (demo/C4/C5) via their own tab attributes.
+window.__uccMergeSourcesQuality=function(dash,tabAttr,panelAttr){
+if(!dash||dash.dataset.sqMerged==="1")return;
+const sourcesTab=dash.querySelector(`[${tabAttr}="sources"]`),qualityTab=dash.querySelector(`[${tabAttr}="quality"]`);
+const sourcesPanel=dash.querySelector(`[${panelAttr}="sources"]`),qualityPanel=dash.querySelector(`[${panelAttr}="quality"]`);
+if(!sourcesTab||!sourcesPanel)return;
+dash.dataset.sqMerged="1";
+sourcesTab.textContent="Sources & Data Quality";
+if(qualityPanel){while(qualityPanel.firstChild)sourcesPanel.appendChild(qualityPanel.firstChild);qualityPanel.remove();}
+if(qualityTab)qualityTab.remove();
+};
 (function () {
 "use strict";
 const root = typeof root_element !== "undefined"
@@ -2477,6 +2491,8 @@ function hideDisabledC5Visuals(){
 C5_DISABLED_VISUALS.forEach(function(name){const n=chartNode(name),p=n&&n.closest(".panel");if(p)p.classList.add("ucc-visual-archived");});
 }
 hideDisabledC5Visuals();
+window.__uccMergeSourcesQuality(root,"data-tab","data-panel");
+(function(){const status=root.querySelector("[data-source-status]"),sp=root.querySelector('[data-panel="sources"]');const art=status&&status.closest("article");if(art&&sp)sp.insertBefore(art,sp.firstChild);})();
 sortChartCardsAlphabetically();
 bind();addLog("INFO","lifecycle","d3_initialization_started",{present:!!window.d3});ensureD3(async()=>{addLog("INFO","lifecycle","d3_ready",{version:window.d3?.version});await loadBase();await loadSection("overview",true);addLog("INFO","lifecycle","initialization_completed",{sources:state.sources,resolved_doctypes:state.resolvedDoctypes})});
 })();
@@ -4067,6 +4083,7 @@ if(!platform)return;
 const root=platform.querySelector('[data-dashboard-panel="criterion_4"]');
 if(!root||root.dataset.ready==="1")return;
 root.dataset.ready="1";
+window.__uccMergeSourcesQuality(root,"data-c4-tab","data-c4-panel");
 const $$=(selector,scope=root)=>Array.from(scope.querySelectorAll(selector));
 const $=(selector,scope=root)=>scope.querySelector(selector);
 const TAB_MAP={

@@ -89,6 +89,20 @@ readStorage,
 writeStorage
 });
 })(window);
+// Consolidates a dashboard's separate "Data Quality" and "Sources" tabs into a
+// single "Sources & Data Quality" tab: the Data Quality panel's content is moved
+// into the Sources panel and the Data Quality tab button is removed. Shared by
+// all three dashboard architectures (demo/C4/C5) via their own tab attributes.
+window.__uccMergeSourcesQuality=function(dash,tabAttr,panelAttr){
+if(!dash||dash.dataset.sqMerged==="1")return;
+const sourcesTab=dash.querySelector(`[${tabAttr}="sources"]`),qualityTab=dash.querySelector(`[${tabAttr}="quality"]`);
+const sourcesPanel=dash.querySelector(`[${panelAttr}="sources"]`),qualityPanel=dash.querySelector(`[${panelAttr}="quality"]`);
+if(!sourcesTab||!sourcesPanel)return;
+dash.dataset.sqMerged="1";
+sourcesTab.textContent="Sources & Data Quality";
+if(qualityPanel){while(qualityPanel.firstChild)sourcesPanel.appendChild(qualityPanel.firstChild);qualityPanel.remove();}
+if(qualityTab)qualityTab.remove();
+};
 (function () {
 "use strict";
 const root = typeof root_element !== "undefined"
@@ -2568,6 +2582,8 @@ function hideDisabledC5Visuals(){
 C5_DISABLED_VISUALS.forEach(function(name){const n=chartNode(name),p=n&&n.closest(".panel");if(p)p.classList.add("ucc-visual-archived");});
 }
 hideDisabledC5Visuals();
+window.__uccMergeSourcesQuality(root,"data-tab","data-panel");
+(function(){const status=root.querySelector("[data-source-status]"),sp=root.querySelector('[data-panel="sources"]');const art=status&&status.closest("article");if(art&&sp)sp.insertBefore(art,sp.firstChild);})();
 sortChartCardsAlphabetically();
 bind();addLog("INFO","lifecycle","d3_initialization_started",{present:!!window.d3});ensureD3(async()=>{addLog("INFO","lifecycle","d3_ready",{version:window.d3?.version});await loadBase();await loadSection("overview",true);addLog("INFO","lifecycle","initialization_completed",{sources:state.sources,resolved_doctypes:state.resolvedDoctypes})});
 })();
@@ -4158,6 +4174,7 @@ if(!platform)return;
 const root=platform.querySelector('[data-dashboard-panel="criterion_4"]');
 if(!root||root.dataset.ready==="1")return;
 root.dataset.ready="1";
+window.__uccMergeSourcesQuality(root,"data-c4-tab","data-c4-panel");
 const $$=(selector,scope=root)=>Array.from(scope.querySelectorAll(selector));
 const $=(selector,scope=root)=>scope.querySelector(selector);
 const TAB_MAP={
@@ -6150,7 +6167,7 @@ openModal(`Criterion ${config.number} readiness`,`<div class="ucc-demo-modal-not
 }
 function showDiagnostics(config,dashboard){const state=dashboardState(dashboard),result=state.result,logs=state.logs;openModal(`Criterion ${config.number} diagnostics`,`<div class="table-wrap"><table><thead><tr><th>Time</th><th>Level</th><th>Event</th><th>Detail</th></tr></thead><tbody>${logs.map(row=>`<tr><td>${esc(row.time)}</td><td>${statusBadge(row.level)}</td><td>${esc(row.event)}</td><td>${esc(row.detail)}</td></tr>`).join("")||'<tr><td colspan="4">No diagnostic events.</td></tr>'}</tbody></table></div><div class="ucc-demo-modal-note">API: ${esc(config.apiMethod)} · Section: ${esc(result?.meta?.subcriterion||apiSection(config,dashboard,activeSection(dashboard)))}</div>`);}
 async function handleAction(dashboard,action){const config=CONFIG[dashboard.dataset.demoDashboard],state=dashboardState(dashboard),result=state.result;if(action==="refresh")await loadLive(dashboard,true);if(action==="export-qa"){const rows=[["Section","Question","Answer","Source","Status"],...allQaRows(result)];download(`criterion_${config.number}_live_qa.csv`,rows.map(row=>row.map(csvCell).join(",")).join("\n"));}if(action==="export-exceptions"){const rows=[["Metric","Label","Value","Status","Source"],...allExceptionRows(result)];download(`criterion_${config.number}_live_exceptions.csv`,rows.map(row=>row.map(csvCell).join(",")).join("\n"));}if(action==="export-table"){const rows=[["Metric","Value","Unit","Status","Source"],...(result?.metrics||[]).map(item=>[item.label,item.value,item.unit,item.status,item.doctype||item.source])];download(`criterion_${config.number}_${result?.meta?.subcriterion||"section"}_live_metrics.csv`,rows.map(row=>row.map(csvCell).join(",")).join("\n"));}if(action==="copy-link"){const url=new URL(location.href);url.searchParams.set("dashboard",dashboard.dataset.demoDashboard);url.searchParams.set("live_tab",activeSection(dashboard));navigator.clipboard?.writeText(url.toString()).catch(()=>{});}if(action==="diagnostics")showDiagnostics(config,dashboard);if(action==="readiness")openReadiness(config,dashboard);}
-platform.querySelectorAll("[data-demo-dashboard]").forEach(function(dashboard){const config=CONFIG[dashboard.dataset.demoDashboard];if(!config)return;ensureLiveVisualCards(dashboard,config);syncLiveSectionVisibility(dashboard,"overview");dashboard.dataset.liveApi="1";dashboard.querySelectorAll("[data-demo-tab]").forEach(button=>button.addEventListener("click",()=>showTab(dashboard,button.dataset.demoTab)));dashboard.querySelectorAll("[data-demo-filter]").forEach(input=>input.addEventListener("change",()=>loadLive(dashboard,true)));dashboard.addEventListener("ucc:live-tool-action",function(event){const action=event.detail&&event.detail.action;const mapped=action==="export-current"?"export-table":action;if(mapped)handleAction(dashboard,mapped);});dashboard.addEventListener("click",function(event){
+platform.querySelectorAll("[data-demo-dashboard]").forEach(function(dashboard){const config=CONFIG[dashboard.dataset.demoDashboard];if(!config)return;if(window.__uccMergeSourcesQuality)window.__uccMergeSourcesQuality(dashboard,"data-demo-tab","data-demo-panel");ensureLiveVisualCards(dashboard,config);syncLiveSectionVisibility(dashboard,"overview");dashboard.dataset.liveApi="1";dashboard.querySelectorAll("[data-demo-tab]").forEach(button=>button.addEventListener("click",()=>showTab(dashboard,button.dataset.demoTab)));dashboard.querySelectorAll("[data-demo-filter]").forEach(input=>input.addEventListener("change",()=>loadLive(dashboard,true)));dashboard.addEventListener("ucc:live-tool-action",function(event){const action=event.detail&&event.detail.action;const mapped=action==="export-current"?"export-table":action;if(mapped)handleAction(dashboard,mapped);});dashboard.addEventListener("click",function(event){
 const sourceButton=event.target.closest("[data-live-source-doctype]");
 if(sourceButton){
 event.preventDefault();
@@ -6761,6 +6778,11 @@ function addCountBadge(trigger) {
 const dashboard = triggerDashboard(trigger);
 const section = triggerSection(trigger);
 const count = entriesFor(dashboard, section).length;
+if (!count) {
+trigger.querySelector(":scope > .ucc-tab-visual-count")?.remove();
+trigger.removeAttribute("aria-haspopup");
+return;
+}
 let badge = trigger.querySelector(":scope > .ucc-tab-visual-count");
 if (!badge) {
 badge = document.createElement("span");

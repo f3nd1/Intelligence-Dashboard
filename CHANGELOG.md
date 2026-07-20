@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.9.7-merge-sources-quality (2026-07-20)
+
+- Consolidated each dashboard's separate "Data Quality" and "Sources" tabs into a single "Sources & Data Quality" tab, so source and data-quality information lives together in one place instead of being scattered across two tabs. A shared `window.__uccMergeSourcesQuality(dash, tabAttr, panelAttr)` helper moves the Data Quality panel's content into the Sources panel and removes the Data Quality tab button; it is applied uniformly across all three dashboard architectures (Criteria 1/2/3/6/7 `data-demo-tab`, Criterion 4 `data-c4-tab`, Criterion 5 `data-tab`).
+- Criterion 5's standalone "Source Availability" widget (the live source-status panel that used to sit in the Overview) is now moved into the consolidated Sources & Data Quality tab, alongside the Source Registry and Data Quality Checks tables.
+- Suppressed the visual-count badge on tabs with zero catalogue visuals (previously the Sources/Data Quality tabs showed a stray "0" chip), so the merged tab reads cleanly as "Sources & Data Quality".
+- No data, drill-downs, or prior fixes changed; tab navigation, the reduction, chart consistency, and the readiness banners were all re-verified intact. The demo criteria's Overview "Live Source Availability" catalogue chart was left in place (it is part of the curated ~30-visual set); the Sources & Data Quality tab is the consolidated home for the source registry and data-quality detail.
+
 ## v1.9.7-friendly-readiness (2026-07-20)
 
 - Fixed Criterion 5's readiness banner, which never appeared: the `status()` helper called `set("[data-status]", message)`, and because the readiness notice carries a `data-status` attribute (used for styling), that selector matched the notice and overwrote its inner title/copy/"View readiness" markup with a plain "section loaded" string on every status update. `setC5Notice()` already fully owns the notice, so the `set("[data-status]", ...)` call was both redundant and destructive; removed it. Criterion 5 now shows the same sources-available / metrics-available readiness indicator as the other criteria.

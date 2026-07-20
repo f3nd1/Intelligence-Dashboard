@@ -138,6 +138,11 @@ function addCountBadge(trigger) {
 const dashboard = triggerDashboard(trigger);
 const section = triggerSection(trigger);
 const count = entriesFor(dashboard, section).length;
+if (!count) {
+trigger.querySelector(":scope > .ucc-tab-visual-count")?.remove();
+trigger.removeAttribute("aria-haspopup");
+return;
+}
 let badge = trigger.querySelector(":scope > .ucc-tab-visual-count");
 if (!badge) {
 badge = document.createElement("span");
