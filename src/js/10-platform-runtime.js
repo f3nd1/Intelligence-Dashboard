@@ -226,13 +226,13 @@ const CFG={
 "Student Attendance":{mode:"core",purpose:"5.2 attendance",fields:["name","student","course_schedule","date","student_group","status","duration_attended","expected_duration"]},
 "Module Review":{mode:"core",purpose:"5.1.2 module review records",fields:["name","course","module","module_class_details","date_of_review","status","type_of_review","recommendation","modified"],full:true},
 "Course Review":{mode:"core",purpose:"5.1.2 course review records",fields:["name","course","review_date","next_review_date","review_type","review_status","modified"],full:true},
-"Student Intake No":{mode:"core",purpose:"5.2.1 intake planning",fields:["name","batch_name","program","course_start_date","course_end_date","modified"],full:true},
+"Student Intake No":{mode:"core",purpose:"5.2.1 intake planning",fields:["name","batch_name","program","course_start_date","course_end_date","modified"],cap:500},
 "Module Class Details":{mode:"core",purpose:"5.2.1 and 5.2.2 module operations",fields:["name","program","course","custom_module_status","custom_instructor","custom_instructor_full_name","academic_year","modified"],full:true},
 "Student Admission UCC":{mode:"core",purpose:"5.2.1 Shortlisted Applicants admissions and contracts",fields:["name","student_name","program","student_batch","application_status","contract_start","contract_end","modified"],full:true},
 "Classroom Observation":{mode:"core",purpose:"5.2.2 teaching observation",fields:["name","date_of_observation","type_of_observation","module_class_details","course","module_name","name_of_teacher","platform_delivery","modified"],full:true},
 "Partnership Agreement":{mode:"core",purpose:"5.3.1 signed partnership agreements",fields:["name","party_name","posting_date","start_date","end_date","pa_agreement_type","pa_partner_name","requires_nda","nda_acknowledged","signed_date","ucc_signed_date","modified"],full:true},
 "Partnerships Agreement Management":{mode:"core",purpose:"5.3.1 partnership identification, monitoring and evaluation",fields:["name","agreement_title","party_name","type","status","agreement_date","expiry_date","average_identification_and_selection_score","modified"],full:true},
-"Supplier Rating":{mode:"core",purpose:"5.3.1 Provider Rating evaluation records",fields:["name","posting_date","year","status","type","document","supplier","evaluation_stage","rating","rating_likert","modified"],full:true},
+"Supplier Rating":{mode:"core",purpose:"5.3.1 Provider Rating evaluation records",fields:["name","posting_date","year","status","type","document","supplier","evaluation_stage","rating","rating_likert","modified"],cap:500},
 "Survey Response":{mode:"core",purpose:"5.4 survey scores and open-ended responses",fields:["name","title","email","program","course","posting_date","frequency","modified"],full:true},
 };
 const UCC_TERMS={
@@ -399,6 +399,7 @@ try{
 const resolved=await resolveDoctype(dt);
 let rows=await safeList(dt,resolved,c,filters);
 if(c.full){rows=await mapLimit(rows.slice(0,500),8,async r=>{try{return await doc(resolved,r.name)}catch(error){addLog("WARN","source","document_hydration_failed",{canonical:dt,resolved,name:r.name,error:error.message});return r}})}
+else if(c.cap){rows=rows.slice(0,c.cap)}
 state.sources[dt]={status:"Available",purpose:c.purpose,count:rows.length,resolved,attempted,route:SOURCE_ROUTES[resolved]||resolved.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")};
 addLog("INFO","source","source_loaded",{canonical:dt,resolved,count:rows.length,filters,full:!!c.full});
 return rows;
