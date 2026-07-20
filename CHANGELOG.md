@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.9.8-remove-changelog (2026-07-20)
+
+- **Removed the in-app Criterion 5 changelog feature entirely** (the `CHANGELOG` array, both dialog implementations, the version-pill trigger, and all styling). Root cause of the user's repeated failed removal attempts: the feature existed in **two independent implementations** in the source (`openChangelogDialog` + `<dialog data-changelog-dialog>` and `openChangelog` + `[data-changelog-overlay]` sheet, each with its own click handler on the same `[data-action="show-changelog"]` button), and edits made directly to the built/deployed `JAVASCRIPT.js` were silently reverted by the next `tools/build_custom_block.py` run, which regenerates it from `src/`. This removal is in the source files, so it survives rebuilds. Verified: zero `changelog` references remain in any of the three built files.
+- Adopted the changelog-removal scope from the user's manually-edited reference file; the Criterion 4 visual-card feature that file accidentally deleted (`C4_VISUAL_EXPANSION`, `ensureC4ExpandedVisuals`, `renderC4Visual`, `drawC4Visual`, all D3 shape renderers) is untouched on main and verified intact — all 30 C4 expanded cards render.
+
+## v1.9.8-hero-tools-stacking (2026-07-20)
+
+- Fixed the hero "View tools" menu rendering behind the filter row, tab bar and loading overlay. Root cause: `header.hero` creates a stacking context at `z-index:20` while the sibling tab bar creates one at `z-index:1000`, so **no** z-index inside the hero (the menu's 240, or even the old portal's 2147483646) could ever lift the menu above the tabs — which is why earlier menu-z-index fixes never held. The fix raises the **hero itself** to `z-index:1200` only while a tools menu is open (`.ucc-platform .hero:has(.ucc-hero-tools[open])`). Verified via elementFromPoint sampling: all menu points now hit the menu in Criteria 1, 4 and 5.
+
+## v1.9.8-dead-code (2026-07-20)
+
+- Removed verified-dead code: `coverageStatus`/`evidenceDetails` (10-platform-runtime), the dead chain `numeric`/`adjusted`/`adjustmentFor`/`selectedFilters`/`renderChartCard`/`sectionCode` (30-live-foundation-runtime; `renderChartCard` even called the never-defined `makeChartRows`, proving it can never have run), the orphaned `.ucc-tools-portal` CSS block (no JS ever assigns that class), and `.evidence-detail`/`.detail-list` CSS orphaned by the `evidenceDetails` removal. Each candidate confirmed to have zero references across all source JS/HTML before deletion.
+
+
 ## v1.9.7-c5-drop-hydration (2026-07-20)
 
 - Followed up the earlier parallel-hydration change (which batched the per-record `doc()` loops) by auditing whether Criterion 5's 10 `full:true` DocTypes need the full document at all. For each, traced exactly which fields the active (post-reduction) visuals read and compared against the fields `list()` already returns.

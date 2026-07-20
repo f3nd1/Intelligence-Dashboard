@@ -248,23 +248,6 @@ window.addEventListener("error",event=>addLog("ERROR","window","uncaught_error",
 window.addEventListener("unhandledrejection",event=>addLog("ERROR","window","unhandled_rejection",{reason:event.reason?.message||String(event.reason),stack:event.reason?.stack}));
 addLog("INFO","lifecycle","initialization_started",{url:location.href,user:frappe?.session?.user||"unknown",user_agent:navigator.userAgent});
 if(htmlBuild&&htmlBuild!==BUILD_ID){addLog("ERROR","deployment","build_mismatch",{html_build:htmlBuild,javascript_build:BUILD_ID});root.insertAdjacentHTML("afterbegin",`<div class="deployment-warning"><strong>Deployment mismatch:</strong> HTML ${esc(htmlBuild)} · JavaScript ${esc(BUILD_ID)}. Replace all three frontend files and clear cache.</div>`)}
-const CHANGELOG=[
-["v1.9.6","Frontend startup hotfix","Prevented a deployment-version warning from aborting JavaScript initialisation, so View tools, diagnostics and visual navigation still load while a clear mismatch warning is shown."],
-["v1.9.5","Visual catalogue and mapping fixes","Fixed scoped diagnostics, exact subcriterion visual ownership, slow-load blank detection, and confirmed UCC DocType mappings."],
-["v1.9.4","Navigation and diagnostics","Restored a fixed-position visual menu across all seven criteria, standardised Diagram/Table controls, repaired View tools, and added source mapping plus invalid-SVG diagnostics."],
-["v1.9.3","Navigation UX","Removed the global Visual Navigator and added hierarchical hover/focus child menus under Criterion 5 parent tabs."],
-["v1.9.2","Navigator hotfix","Corrected the visual navigator runtime scope and section selectors. The v1.9.1 navigator could stop on an undefined root/state reference."],
-["v1.9.1","Navigation UX","Added persistent criterion/subcriterion navigation, chart counts, search and jump-to-visual controls so the expanded visual catalogue is discoverable."],
-["v1.9.0","Visual analytics","Expanded Criteria 1, 2, 3, 4, 6 and 7 to Criterion 5-level visual depth while preserving live data contracts and record/source actions."],
-["v1.8.9","Platform","Added scroll-to-top criterion switching, persistent single-row submenus, universal management-question record and source actions, Provider Rating fallback resolution, and expanded live visual inventories."],
-["v1.8.8","Platform","Connected Criteria 1, 2, 3, 6 and 7 to permission-aware APIs, added Criterion 1, 2 and 7 Server Scripts, and moved the navigation arrow into the single-row header."],
-["v1.8.5","Server Scripts","Added permission-aware partial live API foundations for Criteria 3 and 6. Their current dashboards remain preview-only until frontend integration."],
-["v1.8.4","Platform","Unified all criterion hero/action cards with the Criterion 5 framework, fixed View tools, expanded Criterion 4 live diagrams, and rebuilt policy-driven Criterion 3 and 6 previews."],
-["v1.8.3","Platform","Replaced automatic scroll minimising with a manual arrow control, added Criterion 5 readiness, and added full Criterion 5-style dummy dashboards for Criteria 1–3 and 6–7."],
-["v1.8.2","Platform","Kept the navigation inside the Custom HTML Block, consolidated active CSS and documentation, removed points from visible labels, and clarified placeholder Explore states."],
-["v1.8.1","Platform","Fixed compact navigation, Explore search and clear controls, View tools, contrast and Criterion 4/5 sizing. Added Criteria 1–7 catalogue text with honest placeholders for Criteria 1–3 and 6–7."],
-["v1.8.0","Platform","Added a third Explore workspace that indexes and opens the original live Criterion 4 and Criterion 5 visual cards without duplicating chart renderers."],
-];
 const SOURCE_ALIASES={
 "Student Admission UCC":["Shortlisted Applicants","Student Admission UCC"],
 "Supplier Rating":["Provider Rating","Supplier Rating"]
@@ -503,11 +486,6 @@ if(!value)return"—";
 const d=/^\d{4}-\d{2}-\d{2}$/.test(String(value))?new Date(`${value}T00:00:00`):new Date(value);
 if(Number.isNaN(d.getTime()))return String(value);
 return `${String(d.getDate()).padStart(2,"0")} ${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()]} ${d.getFullYear()}`;
-}
-function coverageStatus(value){return value===100?"Good":value>=70?"Warning":"Risk"}
-function evidenceDetails(checks,group){
-const missing=checks.filter(x=>!x.groups[group].ok).map(x=>x.record.name);
-return missing.length?`<details class="evidence-detail"><summary>${missing.length} missing record(s)</summary><ul class="detail-list">${missing.slice(0,100).map(name=>`<li>${esc(name)}</li>`).join("")}</ul></details>`:`<details class="evidence-detail"><summary>All records complete</summary><div class="detail-list">No missing records for this evidence area.</div></details>`;
 }
 function buildC511(){
 const proposals=state.data["Course Proposal"]||[],reviews=state.data["Course Review"]||[],courses=state.data.Course||[],programs=state.data.Program||[],plans=state.data["Assessment Plan"]||[];
@@ -2448,37 +2426,6 @@ if(dialogClose)dialogClose.addEventListener("click",()=>{
 const dialog=$("[data-dialog]");
 if(dialog)dialog.close();
 });
-function openChangelogDialog(){
-const dialog=$("[data-changelog-dialog]");
-if(!dialog)return;
-if(typeof dialog.showModal==="function"){
-if(!dialog.open)dialog.showModal();
-}else{
-dialog.setAttribute("open","");
-}
-}
-function closeChangelogDialog(){
-const dialog=$("[data-changelog-dialog]");
-if(!dialog)return;
-if(typeof dialog.close==="function"&&dialog.open){
-dialog.close();
-}else{
-dialog.removeAttribute("open");
-}
-}
-root.addEventListener("click",event=>{
-const openTrigger=event.target.closest('[data-action="show-changelog"]');
-if(openTrigger&&root.contains(openTrigger)){
-event.preventDefault();
-openChangelogDialog();
-return;
-}
-const closeTrigger=event.target.closest("[data-changelog-close]");
-if(closeTrigger&&root.contains(closeTrigger)){
-event.preventDefault();
-closeChangelogDialog();
-}
-});
 $$("[data-survey-filter]").forEach(field=>field.addEventListener("change",()=>{const c=compute();buildQuality(c);makeQA(c);renderSurvey();renderKpis("c54",c)}));
 const clearSurvey=$('[data-action="clear-survey-filters"]');
 if(clearSurvey)clearSurvey.addEventListener("click",()=>{const t=$('[data-survey-filter="type"]'),m=$('[data-survey-filter="module"]');if(t)t.value="";if(m)m.value="";const c=compute();buildQuality(c);makeQA(c);renderSurvey();renderKpis("c54",c)});
@@ -2520,15 +2467,6 @@ $$("[data-log-filter-level],[data-log-filter-category],[data-log-search]").forEa
 root.addEventListener("click",event=>{const target=event.target.closest("button,a,[data-tab],[data-local-tab],[data-card-view]");if(target)addLog("INFO","interaction","ui_click",{text:(target.textContent||"").trim().slice(0,120),action:target.dataset.action||"",tab:target.dataset.tab||target.dataset.localTab||"",href:target.getAttribute("href")||""})});
 root.addEventListener("change",event=>{const target=event.target;if(target.matches("select,input"))addLog("INFO","interaction","control_changed",{name:target.dataset.filter||target.dataset.qaFilter||target.name||target.id||"",value:target.value})});
 addLog("INFO","lifecycle","event_binding_completed",{});
-const changelogBody=$('[data-table="changelog"]');
-if(changelogBody){
-changelogBody.innerHTML=CHANGELOG
-.filter(row=>Array.isArray(row)&&row.length>=3)
-.slice()
-.reverse()
-.map(row=>`<tr><td><strong>${esc(row[0])}</strong></td><td>${esc(row[1])}</td><td>${esc(row[2])}</td></tr>`)
-.join("");
-}
 }
 function ensureD3(cb){if(window.d3)return cb();const s=document.createElement("script");s.src="https://d3js.org/d3.v7.min.js";s.onload=cb;s.onerror=()=>status("D3 could not load");document.head.appendChild(s)}
 function sortChartCardsAlphabetically(){
@@ -3986,26 +3924,6 @@ function notify(message,indicator="blue"){
 if(window.frappe&&frappe.show_alert)frappe.show_alert({message,indicator},5);
 else console.info("[UCC]",message);
 }
-function openChangelog(){
-const overlay=$("[data-changelog-overlay]");
-if(!overlay)return;
-overlay.classList.remove("ucc-hidden");
-overlay.setAttribute("aria-hidden","false");
-document.documentElement.style.overflow="hidden";
-}
-function closeChangelog(){
-const overlay=$("[data-changelog-overlay]");
-if(!overlay)return;
-overlay.classList.add("ucc-hidden");
-overlay.setAttribute("aria-hidden","true");
-document.documentElement.style.overflow="";
-}
-root.addEventListener("click",event=>{
-const open=event.target.closest('[data-action="show-changelog"]');
-if(open){event.preventDefault();event.stopImmediatePropagation();openChangelog();return}
-if(event.target.closest("[data-changelog-close]")){event.preventDefault();closeChangelog()}
-},true);
-document.addEventListener("keydown",event=>{if(event.key==="Escape")closeChangelog()});
 function visiblePanel(){
 return $$(".panel-view").find(panel=>!panel.classList.contains("hidden")&&panel.offsetParent!==null)
 || $$(".panel-view").find(panel=>!panel.classList.contains("hidden"));
@@ -5863,12 +5781,7 @@ return error.exc_type||error.statusText||"Analytics request failed.";
 function csvCell(value){const text=String(value==null?"":value);return/[",\n]/.test(text)?`"${text.replaceAll('"','""')}"`:text;}
 function download(name,content,type="text/csv;charset=utf-8"){const blob=new Blob(["\ufeff",content],{type});const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);}
 function statusBadge(status){const raw=String(status||"available"),label=raw.replaceAll("_"," ");const cls=/risk|error|denied|unavailable|failed/i.test(raw)?"risk":/warn|unsupported|partial|pending|overdue/i.test(raw)?"warning":"good";return`<span class="ucc-demo-status ${cls}">${esc(label)}</span>`;}
-function numeric(value){const match=String(value).match(/-?\d+(?:\.\d+)?/);return match?Number(match[0]):null;}
-function adjusted(value,adjustment){const number=numeric(value);if(number===null)return value;const suffix=String(value).includes("%")?"%":"",decimal=String(value).includes(".")?1:0;return Math.max(0,number-adjustment).toFixed(decimal)+suffix;}
-function selectedFilters(dashboard){return Array.from(dashboard.querySelectorAll("[data-demo-filter]")).filter(input=>input.value).map(input=>input.value);}
-function adjustmentFor(dashboard){return Math.min(9,selectedFilters(dashboard).length*2);}
 function activeSection(dashboard){return dashboard.dataset.demoActiveTab||"overview";}
-function sectionCode(config,tab){if(tab==="overview")return`C${config.number}-OVERVIEW`;if(tab==="quality")return`C${config.number}-QUALITY`;if(tab==="sources")return`C${config.number}-SOURCES`;return`C${config.number}-${tab}`;}
 function sectionDefinition(config,tab){const key=(config.panelMap&&config.panelMap[tab])||tab;return config.sections[tab]||config.sections[key]||config.sections.overview;}
 function liveChartCardMarkup(chart){
 return`<article class="panel ucc-shared-panel ucc-demo-visual-card ucc-live-generated-card" data-demo-card="${esc(chart.id)}"><div class="panel-head"><h2>${esc(chart.title)}<span class="ucc-card-desc-inline"> — ${esc(chart.description||"Permission-aware live metrics.")}</span></h2><div class="mini-toggle" data-demo-view-toggle="${esc(chart.id)}"><button type="button" class="active" data-demo-view="diagram">Diagram</button><button type="button" data-demo-view="table">Table</button></div></div><div class="chart ucc-demo-chart" data-demo-chart="${esc(chart.id)}" data-demo-chart-title="${esc(chart.title)}" data-demo-chart-type="${esc(chart.type||"bar")}"></div><div class="table-wrap hidden" data-demo-chart-table="${esc(chart.id)}"><table><thead><tr><th>Metric</th><th>Live value</th><th>Status</th></tr></thead><tbody data-demo-chart-table-body="${esc(chart.id)}"></tbody></table></div><button type="button" data-demo-drill="${esc(chart.id)}">View underlying records</button></article>`;
@@ -5919,7 +5832,6 @@ function renderTrend(node,rows){const width=560,height=250,pad=38,max=chartMax(r
 function renderGauge(node,rows){const current=finiteNumber(rows[0]?.[1],0),reference=finiteNumber(rows[1]?.[1],current||1),percentage=reference?Math.max(0,Math.min(100,current/reference*100)):0;node.innerHTML=`<div class="ucc-demo-gauge-layout"><div class="ucc-demo-gauge" style="--ucc-gauge:${percentage*1.8}deg"><div><strong>${current}</strong><span>Current</span></div></div><div class="ucc-demo-gauge-copy"><span>Reference metric</span><strong>${reference}</strong><small>${current>=reference?"At or above reference":"Difference "+Math.max(0,reference-current)}</small></div></div>`;}
 function renderRiskMatrix(node,chart){const values=chart.values||[],likelihood=["Rare","Remote","Occasional","Frequent","Almost Certain"],severity=["Catastrophic","Major","Moderate","Minor","Negligible"];node.innerHTML=`<div class="ucc-demo-risk-matrix"><div class="corner">Severity × Likelihood</div>${likelihood.map(x=>`<div class="head">${x}</div>`).join("")}${severity.map(function(label,row){return`<div class="side">${label}</div>${likelihood.map(function(_,col){const value=values[row*5+col]||0,level=value>=15?"high":value>=4?"medium":"low";return`<div class="${level}"><strong>${value}</strong></div>`;}).join("")}`;}).join("")}</div>`;}
 function renderChart(node,chart,rows){const type=chart.type||"bar";if(type==="donut")return renderDonut(node,rows);if(type==="funnel")return renderFunnel(node,rows);if(type==="lifecycle"||type==="flow")return renderLifecycle(node,rows);if(type==="matrix")return renderMatrix(node,rows);if(type==="radar")return renderRadar(node,rows);if(type==="trend")return renderTrend(node,rows);if(type==="gauge")return renderGauge(node,rows);if(type==="risk-matrix")return renderRiskMatrix(node,chart);return renderBars(node,rows);}
-function renderChartCard(dashboard,chart,adjustment){const rows=makeChartRows(chart,adjustment),chartNode=dashboard.querySelector(`[data-demo-chart="${CSS.escape(chart.id)}"]`),tableBody=dashboard.querySelector(`[data-demo-chart-table-body="${CSS.escape(chart.id)}"]`);if(chartNode)renderChart(chartNode,chart,rows);if(tableBody){const max=chartMax(rows);tableBody.innerHTML=rows.map(function(row,index){const value=finiteNumber(row[1],0),status=(max<=100&&value<70)||(index===rows.length-1&&value>0&&/risk|overdue|fail|exception/i.test(row[0]))?"Warning":"Good";return`<tr><td>${esc(row[0])}</td><td>${row[1]}${max<=100&&chart.type!=="donut"?"%":""}</td><td>${statusBadge(status)}</td></tr>`;}).join("");}}
 
 
 const STATE=new Map();
