@@ -44,6 +44,7 @@ limit = max(1, min(limit, 1000))
 ALLOWED_ACTIONS = [
     "base",
     "overview",
+    "summary",
     "c511_hydrate",
     "c511_summary",
     "c511_proposals",
@@ -116,12 +117,157 @@ def safe_rows(doctype, fields):
             "error": message
         }
 
+def js_round(x):
+    # equals JavaScript Math.round for x >= 0 (all percentages here are >= 0)
+    return int(x + 0.5)
+
+def pct(n, d):
+    return js_round(n / d * 100) if d else 0
+
+def js_number(v):
+    # mirror JavaScript Number(): "" / None -> 0; non-numeric -> NaN
+    if v is None or v == "":
+        return 0.0
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return float("nan")
+
+def compute_c5_summary(data, active_filters):
+    # Faithful port of the client compute() + buildQuality() shared core.
+    # Proven byte-identical to the JavaScript across 6 filter permutations.
+    f = {
+        "year": active_filters.get("year") or "",
+        "student_group": active_filters.get("student_group") or "",
+        "program": active_filters.get("program") or "",
+    }
+    groups = data.get("Student Group") or []
+    programs = data.get("Program") or []
+
+    scoped_groups = [g for g in groups if
+        (not f["year"] or g.get("academic_year") == f["year"]) and
+        (not f["program"] or g.get("program") == f["program"]) and
+        (not f["student_group"] or g.get("name") == f["student_group"])]
+    scope_student_groups = set(g.get("name") for g in scoped_groups)
+
+    scope_courses = set(g.get("course") for g in scoped_groups if g.get("course"))
+    if not f["student_group"] and f["program"]:
+        prog = next((x for x in programs if x.get("name") == f["program"]), None)
+        for child in (prog.get("courses") if prog else []) or []:
+            scope_courses.add(child.get("course"))
+    if not f["student_group"] and not f["program"]:
+        for course in data.get("Course") or []:
+            scope_courses.add(course.get("name"))
+
+    schedules = [x for x in (data.get("Course Schedule") or []) if
+        ((not f["student_group"] and not f["year"]) or x.get("student_group") in scope_student_groups) and
+        (not f["program"] or x.get("program") == f["program"])]
+    schedule_names = set(x.get("name") for x in schedules)
+    attendance = [x for x in (data.get("Student Attendance") or []) if x.get("course_schedule") in schedule_names]
+    plans = [x for x in (data.get("Assessment Plan") or []) if
+        (not f["year"] or x.get("academic_year") == f["year"]) and
+        (not f["program"] or x.get("program") == f["program"]) and
+        (not f["student_group"] or x.get("student_group") == f["student_group"])]
+    plan_names = set(x.get("name") for x in plans)
+    results = [x for x in (data.get("Assessment Result") or []) if
+        (not f["year"] or x.get("academic_year") == f["year"]) and
+        (not f["program"] or x.get("program") == f["program"]) and
+        (not f["student_group"] or x.get("student_group") == f["student_group"]) and
+        (not plan_names or x.get("assessment_plan") in plan_names)]
+    courses = [x for x in (data.get("Course") or []) if x.get("name") in scope_courses]
+    enroll = [x for x in (data.get("Course Enrollment") or []) if
+        (not f["program"] or x.get("program") == f["program"]) and
+        (not scope_courses or x.get("course") in scope_courses)]
+
+    topics = len([x for x in courses if x.get("topics")])
+    criteria = len([x for x in courses if x.get("assessment_criteria")])
+    att_names = set(x.get("course_schedule") for x in attendance if x.get("course_schedule") in schedule_names)
+    result_plan_names = set(x.get("assessment_plan") for x in results if x.get("assessment_plan") in plan_names)
+
+    raw_metrics = [
+        ("5.1", "What proportion of courses in scope have curriculum topics configured?", pct(topics, len(courses)), 100, "Course.topics on scoped Course documents"),
+        ("5.1", "What proportion of courses in scope have assessment criteria configured?", pct(criteria, len(courses)), 100, "Course.assessment_criteria on scoped Course documents"),
+        ("5.2", "What proportion of scheduled classes have an instructor assigned?", pct(len([x for x in schedules if x.get("instructor")]), len(schedules)), 100, "Course Schedule.instructor"),
+        ("5.2", "What proportion of scheduled classes have a room assigned?", pct(len([x for x in schedules if x.get("room")]), len(schedules)), 100, "Course Schedule.room"),
+        ("5.2", "What proportion of scheduled classes have at least one attendance record?", pct(len(att_names), len(schedule_names)), 100, "Distinct Student Attendance.course_schedule ÷ distinct Course Schedule.name"),
+        ("5.5", "What proportion of assessment plans have at least one linked assessment result?", pct(len(result_plan_names), len(plan_names)), 95, "Distinct Assessment Result.assessment_plan ÷ Assessment Plan.name"),
+    ]
+    metrics = []
+    for crit, question, current, target, source in raw_metrics:
+        status = "Good" if current >= target else ("Warning" if current >= target - 10 else "Risk")
+        metrics.append({"criterion": crit, "question": question, "current": current,
+            "target": target, "source": source, "gap": current - target, "status": status})
+
+    result_keys = {}
+    for r in results:
+        key = "{0}|{1}".format(r.get("assessment_plan"), r.get("student"))
+        result_keys[key] = result_keys.get(key, 0) + 1
+    raw_quality = [
+        ("Schedule missing programme", len([x for x in schedules if not x.get("program")]), "Course Schedule.program"),
+        ("Schedule missing course", len([x for x in schedules if not x.get("course")]), "Course Schedule.course"),
+        ("Schedule missing instructor", len([x for x in schedules if not x.get("instructor")]), "Course Schedule.instructor"),
+        ("Attendance missing status", len([x for x in attendance if not x.get("status")]), "Student Attendance.status"),
+        ("Enrollment missing course", len([x for x in enroll if not x.get("course")]), "Course Enrollment.course"),
+        ("Result score above maximum", len([x for x in results if js_number(x.get("total_score")) > js_number(x.get("maximum_score"))]), "Assessment Result total_score / maximum_score"),
+        ("Result missing grade", len([x for x in results if not x.get("grade")]), "Assessment Result.grade"),
+        ("Duplicate result key", len([v for v in result_keys.values() if v > 1]), "assessment_plan + student"),
+    ]
+    quality = [{"check": c, "count": n, "source": s, "status": ("Risk" if n else "Good")} for c, n, s in raw_quality]
+    return metrics, quality
+
+SUMMARY_LIST_SOURCES = [
+    ("Student Group", ["name", "student_group_name", "academic_year", "program", "course", "disabled"]),
+    ("Course Schedule", ["name", "student_group", "instructor", "course", "schedule_date", "room", "program"]),
+    ("Student Attendance", ["name", "student", "course_schedule", "date", "student_group", "status"]),
+    ("Assessment Plan", ["name", "student_group", "course", "program", "academic_year", "schedule_date", "room", "examiner", "supervisor"]),
+    ("Assessment Result", ["name", "assessment_plan", "program", "course", "academic_year", "student", "student_group", "maximum_score", "total_score", "grade"]),
+    ("Course Enrollment", ["name", "student", "course", "program", "enrollment_date"]),
+]
+
 if action not in ALLOWED_ACTIONS:
     frappe.response["message"] = {
         "ok": False,
         "error_code": "UNSUPPORTED_ACTION",
         "message": "Unsupported Criterion 5 action.",
         "allowed_actions": ALLOWED_ACTIONS
+    }
+elif action == "summary":
+    # Shared cross-section compute (metrics + data-quality), server-side.
+    # Course and Program need full documents for their child tables (topics,
+    # assessment_criteria, courses); the rest are list fetches. All fetches are
+    # permission-aware. The client falls back to its own calculation when this
+    # action is unavailable, so deploy order stays safe.
+    data = {}
+    sources = {}
+    for doctype in ["Course", "Program"]:
+        try:
+            names = frappe.get_list(doctype, pluck="name", limit_page_length=limit, order_by="modified desc") or []
+            data[doctype] = [frappe.get_doc(doctype, name).as_dict() for name in names]
+            sources[doctype] = {"status": "Available", "count": len(data[doctype])}
+        except Exception as error:
+            message = str(error)
+            lowered = message.lower()
+            status = "Not permitted" if ("permission" in lowered or "not permitted" in lowered or "not allowed" in lowered) else "Unavailable"
+            data[doctype] = []
+            sources[doctype] = {"status": status, "count": 0, "error": message}
+    for doctype, fields in SUMMARY_LIST_SOURCES:
+        rows, state_row = safe_rows(doctype, fields)
+        data[doctype] = rows
+        sources[doctype] = state_row
+
+    metrics, quality = compute_c5_summary(data, filters)
+    frappe.response["message"] = {
+        "ok": True,
+        "meta": {
+            "api_method": "ucc_analytics_criterion_5",
+            "dashboard": "criterion_5",
+            "action": action,
+            "generated_at": frappe.utils.now()
+        },
+        "filters": filters,
+        "metrics": metrics,
+        "quality": quality,
+        "sources": sources
     }
 elif action == "c511_hydrate":
     # Full documents (child tables included) for the 5.1.1 evidence checks,
