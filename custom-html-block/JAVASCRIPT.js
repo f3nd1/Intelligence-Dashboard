@@ -4991,7 +4991,7 @@ const span=$("span",notice);
 if(strong){
 strong.textContent=status==="available"
 ?"Criterion 4 live analytics active."
-:"Criterion 4 data notice.";
+:"Criterion 4 live analytics active with limitations.";
 }
 if(span)span.textContent=message;
 }
@@ -5057,11 +5057,6 @@ tbody.innerHTML=(result.sources||[]).map(source=>`
         <td>${escapeHtml(sourceDetail(source))}</td>
       </tr>
     `).join("")||'<tr><td colspan="4">No source registry rows were returned.</td></tr>';
-const badge=$(`[data-c4-policy-badge="${CSS.escape(tab)}"]`);
-if(badge){
-const summary=result.source_summary||{};
-badge.textContent=`Live data connected · ${summary.available||0} of ${summary.total||0} sources available`;
-}
 }
 function renderExceptionRows(tab,result){
 const panel=$(`[data-c4-panel="${CSS.escape(tab)}"]`);
