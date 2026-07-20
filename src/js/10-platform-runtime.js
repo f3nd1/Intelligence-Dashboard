@@ -646,32 +646,26 @@ body.innerHTML=safeRows.length?safeRows.map((x,index)=>`<tr><td>${esc(x.label??x
 bindChartDrills(table);
 }
 function empty(n,msg){const e=chartNode(n);if(e)e.innerHTML=`<div class="empty">${esc(msg)}</div>`}
+// Shared ucc-demo-* component renderers so Criterion 5 charts match the
+// appearance of Criteria 1-4/6/7 (which use these same CSS components).
+function c5Fin(v){const n=Number(v);return Number.isFinite(n)?n:0;}
+function c5Bars(el,rows){const pairs=(rows||[]).map(r=>[r.label,c5Fin(r.value)]),max=Math.max(...pairs.map(p=>p[1]),1);el.innerHTML=`<div class="ucc-demo-bars">${pairs.map(p=>`<div class="ucc-demo-bar"><label>${esc(p[0])}</label><div><i style="width:${Math.max(4,p[1]/max*100)}%"></i></div><strong>${esc(p[1])}</strong></div>`).join("")}</div>`;}
+function c5DonutView(el,rows){const pairs=(rows||[]).map(r=>[r.label,c5Fin(r.value)]).filter(p=>p[1]>0),total=pairs.reduce((s,p)=>s+p[1],0)||1;let cur=0;const stops=pairs.map((p,i)=>{const a=cur/total*360;cur+=p[1];const b=cur/total*360;return`var(--ucc-chart-${i%6}) ${a}deg ${b}deg`;}).join(",");el.innerHTML=`<div class="ucc-demo-donut-layout"><div class="ucc-demo-donut" style="background:conic-gradient(${stops})"><span>${esc(total)}</span><small>Total</small></div><div class="ucc-demo-legend">${pairs.map((p,i)=>`<div><i style="background:var(--ucc-chart-${i%6})"></i><span>${esc(p[0])}</span><strong>${esc(p[1])}</strong></div>`).join("")}</div></div>`;}
+function c5FunnelView(el,rows){const pairs=(rows||[]).map(r=>[r.label,c5Fin(r.value)]),max=Math.max(...pairs.map(p=>p[1]),1);el.innerHTML=`<div class="ucc-demo-funnel">${pairs.map(p=>`<div class="ucc-demo-funnel-stage" style="width:${Math.max(38,p[1]/max*100)}%"><span>${esc(p[0])}</span><strong>${esc(p[1])}</strong></div>`).join("")}</div>`;}
+function c5TrendView(el,rows){const data=rows||[],width=560,height=250,pad=38,max=Math.max(...data.map(r=>c5Fin(r.value)),1),step=(width-pad*2)/Math.max(1,data.length-1);const pts=data.map((r,i)=>[pad+i*step,height-pad-(c5Fin(r.value)/max)*(height-pad*2)]);el.innerHTML=`<div class="ucc-demo-trend"><svg viewBox="0 0 ${width} ${height}"><line class="axis" x1="${pad}" y1="${height-pad}" x2="${width-pad}" y2="${height-pad}"></line><polyline points="${pts.map(p=>p.join(",")).join(" ")}"></polyline>${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="5"></circle><text x="${p[0]}" y="${height-10}" text-anchor="middle">${esc(data[i].label)}</text>`).join("")}</svg></div>`;}
+function c5RadarView(el,rows){const data=(rows||[]).filter(r=>r.label);if(!data.length){el.innerHTML='<div class="empty">No records found in the selected scope.</div>';return;}const size=320,cx=160,cy=160,radius=105,count=Math.max(data.length,3),max=Math.max(...data.map(r=>c5Fin(r.value)),1);const points=data.map((r,i)=>{const a=-Math.PI/2+i*2*Math.PI/count,rr=radius*(c5Fin(r.value)/max);return[cx+Math.cos(a)*rr,cy+Math.sin(a)*rr];});const axes=data.map((r,i)=>{const a=-Math.PI/2+i*2*Math.PI/count,x=cx+Math.cos(a)*radius,y=cy+Math.sin(a)*radius,lx=cx+Math.cos(a)*(radius+28),ly=cy+Math.sin(a)*(radius+28);return`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}"></line><text x="${lx}" y="${ly}" text-anchor="middle">${esc(r.label)}</text>`;}).join("");el.innerHTML=`<div class="ucc-demo-radar"><svg viewBox="0 0 ${size} ${size}"><circle cx="${cx}" cy="${cy}" r="${radius}"></circle><circle cx="${cx}" cy="${cy}" r="${radius*.66}"></circle><circle cx="${cx}" cy="${cy}" r="${radius*.33}"></circle>${axes}<polygon points="${points.map(p=>p.join(",")).join(" ")}"></polygon></svg></div>`;}
+function c5MatrixView(el,rows){const data=rows||[],max=Math.max(...data.map(r=>c5Fin(r.total||r.value)),1);el.innerHTML=`<div class="ucc-demo-matrix">${data.map(r=>`<div style="--ucc-intensity:${Math.max(.18,c5Fin(r.value)/(c5Fin(r.total)||max))}"><span>${esc(r.label)}</span><strong>${esc(r.display!=null?r.display:r.value)}</strong></div>`).join("")}</div>`;}
 function bar(n,rows){
 rows=(rows||[]).map(row=>({...row,value:Number.isFinite(Number(row.value))?Number(row.value):0}));
 ensureChartCompanion(n,rows);
-const el=chartNode(n);if(!el||!window.d3)return;d3.select(el).selectAll("*").remove();if(!rows.length)return empty(n,"No records found in the selected scope.");
-const w=Math.max(el.clientWidth||500,320),h=260,m={t:16,r:12,b:88,l:46},svg=d3.select(el).append("svg").attr("width",w).attr("height",h);
-const x=d3.scaleBand().domain(rows.map(d=>d.label)).range([m.l,w-m.r]).padding(.25),y=d3.scaleLinear().domain([0,d3.max(rows,d=>d.value)||1]).nice().range([h-m.b,m.t]);
-svg.append("g").attr("transform",`translate(0,${h-m.b})`).call(d3.axisBottom(x).tickFormat(v=>String(v).length>18?String(v).slice(0,17)+"…":v)).selectAll("text").attr("transform","rotate(-35)").style("text-anchor","end").style("font-size","10px");
-svg.append("g").attr("transform",`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5));
-const bars=svg.selectAll("rect").data(rows).enter().append("rect")
-.attr("x",d=>x(d.label)).attr("y",d=>y(d.value)).attr("width",x.bandwidth())
-.attr("height",d=>y(0)-y(d.value)).attr("rx",6).attr("fill","#26345b")
-.style("cursor",d=>Array.isArray(d.records)&&d.records.length&&d.doctype?"pointer":"default")
-.on("click",(event,d)=>{
-const index=rows.indexOf(d);
-if(index>=0)openChartDrill(n,index);
-});
-bars.append("title").text(d=>`${d.label}: ${d.value}${Array.isArray(d.records)&&d.records.length?" — click to inspect":""}`);
+const el=chartNode(n);if(!el)return;if(!rows.length)return empty(n,"No records found in the selected scope.");
+c5Bars(el,rows);
 }
 function line(n,rows){
 rows=(rows||[]).map(row=>({...row,value:Number.isFinite(Number(row.value))?Number(row.value):0}));
 ensureChartCompanion(n,rows);
-const el=chartNode(n);if(!el||!window.d3)return;d3.select(el).selectAll("*").remove();if(!rows.length)return empty(n,"No trend data");
-const w=Math.max(el.clientWidth||500,320),h=260,m={t:18,r:16,b:42,l:46},svg=d3.select(el).append("svg").attr("width",w).attr("height",h);
-const x=d3.scalePoint().domain(rows.map(d=>d.label)).range([m.l,w-m.r]),y=d3.scaleLinear().domain([0,d3.max(rows,d=>d.value)||1]).nice().range([h-m.b,m.t]);
-svg.append("g").attr("transform",`translate(0,${h-m.b})`).call(d3.axisBottom(x));svg.append("g").attr("transform",`translate(${m.l},0)`).call(d3.axisLeft(y));
-svg.append("path").datum(rows).attr("fill","none").attr("stroke","#26345b").attr("stroke-width",3).attr("d",d3.line().x(d=>x(d.label)).y(d=>y(d.value)).curve(d3.curveMonotoneX));
+const el=chartNode(n);if(!el)return;if(!rows.length)return empty(n,"No trend data");
+c5TrendView(el,rows);
 }
 function csv(name,rows){if(!rows.length)return;const keys=Object.keys(rows[0]),q=v=>`"${String(v??"").replaceAll('"','""')}"`,text=[keys.join(","),...rows.map(r=>keys.map(k=>q(r[k])).join(","))].join("\n"),a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:"text/csv"}));a.download=name;a.click();URL.revokeObjectURL(a.href)}
 function deriveScope(){
@@ -855,59 +849,17 @@ el.innerHTML=safe.length?safe.map(row=>`<div style="display:grid;grid-template-c
   </div>`).join(""):'<div class="chart-empty">No chart data available.</div>';
 }
 function radarChart(name,rows){
-const el=$(`[data-chart="${name}"]`);if(!el)return;
-if(!window.d3){renderFallbackBars(name,rows);return}
-d3.select(el).selectAll("*").remove();
+const el=chartNode(name);if(!el)return;
 const data=(rows||[]).filter(x=>x.label);
-if(!data.length){el.innerHTML='<div class="chart-empty">No chart data available.</div>';return}
-const w=Math.max(el.clientWidth||520,360),h=340,cx=w/2,cy=h/2+8,r=Math.min(w,h)*.34,levels=5;
-const svg=d3.select(el).append("svg").attr("width",w).attr("height",h);
-const angle=i=>-Math.PI/2+i*2*Math.PI/data.length;
-for(let level=1;level<=levels;level++){
-const rr=r*level/levels;
-const points=data.map((d,i)=>[cx+Math.cos(angle(i))*rr,cy+Math.sin(angle(i))*rr]);
-svg.append("polygon").attr("points",points.map(p=>p.join(",")).join(" "))
-.attr("fill","none").attr("stroke","#e5e7eb");
-}
-data.forEach((d,i)=>{
-svg.append("line").attr("x1",cx).attr("y1",cy)
-.attr("x2",cx+Math.cos(angle(i))*r).attr("y2",cy+Math.sin(angle(i))*r)
-.attr("stroke","#e5e7eb");
-svg.append("text").attr("x",cx+Math.cos(angle(i))*(r+28))
-.attr("y",cy+Math.sin(angle(i))*(r+28)).attr("text-anchor","middle")
-.attr("font-size",10).text(d.label);
-});
-const points=data.map((d,i)=>[cx+Math.cos(angle(i))*r*(Number(d.value)||0)/100,cy+Math.sin(angle(i))*r*(Number(d.value)||0)/100]);
-svg.append("polygon").attr("points",points.map(p=>p.join(",")).join(" "))
-.attr("fill","rgba(193,18,78,.20)").attr("stroke","#26345b").attr("stroke-width",2);
-points.forEach((point,i)=>{
-svg.append("circle").attr("cx",point[0]).attr("cy",point[1]).attr("r",4).attr("fill","#26345b");
-svg.append("text").attr("x",point[0]).attr("y",point[1]-9).attr("text-anchor","middle")
-.attr("class","chart-label").text(`${data[i].value}%`);
-});
+ensureChartCompanion(name,data.map(d=>({label:d.label,value:`${c5Fin(d.value)}%`})));
+c5RadarView(el,data);
 }
 function heatmapChart(name,rows){
-const el=$(`[data-chart="${name}"]`);if(!el)return;
-if(!window.d3){
-const totals=(rows||[]).map(row=>({label:row.label,value:pct((row.values||[]).filter(Boolean).length,(row.values||[]).length)}));
-renderFallbackBars(name,totals);return;
-}
-d3.select(el).selectAll("*").remove();
-const data=(rows||[]).slice(0,18);
-if(!data.length){el.innerHTML='<div class="chart-empty">No proposal evidence records available.</div>';return}
-const areas=["Overview","Strategy","Learner","Pedagogy","Curriculum","Assessment","Risk","Approval"];
-const cell=27,labelW=135,w=Math.max(el.clientWidth||620,labelW+areas.length*cell+30),h=80+data.length*cell;
-const svg=d3.select(el).append("svg").attr("width",w).attr("height",Math.min(h,570));
-const color=d3.scaleLinear().domain([0,1]).range(["#fee2e2","#26345b"]);
-areas.forEach((area,i)=>svg.append("text").attr("x",labelW+i*cell+cell/2).attr("y",58)
-.attr("transform",`rotate(-45 ${labelW+i*cell+cell/2} 58)`).attr("font-size",10).text(area));
-data.forEach((row,y)=>{
-svg.append("text").attr("x",4).attr("y",76+y*cell+18).attr("font-size",10).text(String(row.label).slice(0,18));
-(row.values||[]).forEach((value,x)=>svg.append("rect")
-.attr("x",labelW+x*cell).attr("y",64+y*cell).attr("width",cell-3).attr("height",cell-3)
-.attr("rx",4).attr("fill",color(value?1:0))
-.append("title").text(`${row.label} · ${areas[x]}: ${value?"Complete":"Missing"}`));
-});
+const el=chartNode(name);if(!el)return;
+const data=(rows||[]).slice(0,18).map(row=>{const values=row.values||[];const done=values.filter(Boolean).length,total=values.length;return{label:String(row.label).slice(0,28),value:done,total:total,display:`${done}/${total}`};});
+if(!data.length){el.innerHTML='<div class="empty">No records found in the selected scope.</div>';return}
+ensureChartCompanion(name,data.map(d=>({label:d.label,value:d.display})));
+c5MatrixView(el,data);
 }
 function networkChart(name,programs){
 const el=$(`[data-chart="${name}"]`);if(!el)return;
@@ -1024,41 +976,10 @@ updateFocus();
 }
 function donutChart(name,rows,centerLabel){
 ensureChartCompanion(name,rows);
-const el=$(`[data-chart="${name}"]`);if(!el)return;
-if(!window.d3){renderFallbackBars(name,rows,"");return}
-d3.select(el).selectAll("*").remove();
+const el=chartNode(name);if(!el)return;
 const data=(rows||[]).filter(x=>Number(x.value)>0);
-if(!data.length){el.innerHTML='<div class="chart-empty">No chart data available.</div>';return}
-const w=Math.max(el.clientWidth||420,320),h=300,r=Math.min(w,h)/2-28;
-const svg=d3.select(el).append("svg").attr("width",w).attr("height",h);
-const g=svg.append("g").attr("transform",`translate(${w/2},${h/2})`);
-const pie=d3.pie().sort(null).value(d=>Number(d.value)||0);
-const pieData=pie(data);
-const arc=d3.arc().innerRadius(r*.58).outerRadius(r);
-const color=d3.scaleOrdinal()
-.domain(data.map(d=>d.label))
-.range(["#26345b","#ce9e5d","#d9bf98","#52658f","#ce9e5d"]);
-g.selectAll("path").data(pieData).enter().append("path")
-.attr("d",arc).attr("fill",d=>color(d.data.label))
-.attr("stroke","#fff").attr("stroke-width",2)
-.append("title").text(d=>`${d.data.label}: ${d.data.value}`);
-g.selectAll(".slice-value").data(pieData).enter().append("text")
-.attr("class","chart-label-light")
-.attr("transform",d=>`translate(${arc.centroid(d)})`)
-.attr("text-anchor","middle")
-.text(d=>d.data.value);
-g.append("text").attr("text-anchor","middle").attr("dy","-.05em")
-.attr("font-size",26).attr("font-weight",900)
-.text(centerLabel??d3.sum(data,d=>Number(d.value)||0));
-g.append("text").attr("text-anchor","middle").attr("dy","1.5em")
-.attr("font-size",11).attr("fill","#667085").text("records");
-const legend=svg.append("g").attr("transform","translate(12,16)");
-data.forEach((d,i)=>{
-const y=i*20;
-legend.append("circle").attr("cx",6).attr("cy",y+6).attr("r",5).attr("fill",color(d.label));
-legend.append("text").attr("x",16).attr("y",y+10).attr("font-size",11)
-.text(`${d.label}: ${d.value}`);
-});
+if(!data.length){el.innerHTML='<div class="empty">No records found in the selected scope.</div>';return}
+c5DonutView(el,data);
 }
 function bubbleChart(name,rows){
 ensureChartCompanion(name,rows);
@@ -1092,24 +1013,10 @@ legend.append("text").attr("x",100).attr("y",24).attr("text-anchor","end").attr(
 }
 function funnelChart(name,rows){
 ensureChartCompanion(name,rows);
-const el=$(`[data-chart="${name}"]`);if(!el)return;
-if(!window.d3){renderFallbackBars(name,rows,"");return}
-d3.select(el).selectAll("*").remove();
+const el=chartNode(name);if(!el)return;
 const data=(rows||[]).filter(x=>Number(x.value)>=0);
-if(!data.length){el.innerHTML='<div class="chart-empty">No chart data available.</div>';return}
-const w=Math.max(el.clientWidth||500,340),h=300,max=d3.max(data,d=>Number(d.value))||1;
-const svg=d3.select(el).append("svg").attr("width",w).attr("height",h);
-const scale=d3.scaleLinear().domain([0,max]).range([90,w-80]);
-data.forEach((d,i)=>{
-const ww=scale(Number(d.value)||0),y=24+i*72,x=(w-ww)/2;
-svg.append("polygon")
-.attr("points",`${x},${y} ${x+ww},${y} ${x+ww-24},${y+50} ${x+24},${y+50}`)
-.attr("fill",["#26345b","#ce9e5d","#d9bf98","#52658f"][i%4]).attr("opacity",.9);
-svg.append("rect").attr("x",w/2-75).attr("y",y+13).attr("width",150).attr("height",24).attr("rx",12).attr("fill","rgba(255,255,255,.88)");
-svg.append("text").attr("x",w/2).attr("y",y+30)
-.attr("text-anchor","middle").attr("fill","#111827").attr("font-weight",800)
-.text(`${d.label}: ${d.value}`);
-});
+if(!data.length){el.innerHTML='<div class="empty">No records found in the selected scope.</div>';return}
+c5FunnelView(el,data);
 }
 function radialBars(name,rows){
 ensureChartCompanion(name,rows);

@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.9.7-consistent-charts (2026-07-20)
+
+- Made Criterion 5's charts render with the same visual components as Criteria 1-4/6/7. Criterion 5 was the only dashboard drawing charts as D3 SVG (vertical bars with rotated axis ticks, SVG donut/funnel), while every other criterion uses lightweight CSS `ucc-demo-*` components (horizontal bars, conic-gradient donut, CSS funnel). Converted Criterion 5's `bar`, `line`, `donutChart`, `funnelChart`, `radarChart` and `heatmapChart` to emit the same `ucc-demo-bars` / `ucc-demo-donut-layout` / `ucc-demo-funnel` / `ucc-demo-trend` / `ucc-demo-radar` / `ucc-demo-matrix` markup (styled by the shared rules already in `platform.css`), so all seven criteria now look identical. The multi-column evidence heatmap is now shown as the shared matrix component (per-record completion `done/total` with intensity), matching how the other criteria render "matrix" visuals. No underlying data, drill-downs, tables, or the click-to-render/deferral behaviour changed - only the diagram appearance. The exotic types only used by now-archived visuals (`bubbleChart`, `networkChart`, `radialBars`, `timelineChart`, `labelledBar`) were left as-is since no active visual uses them. Criterion 5 no longer depends on D3 for its active charts.
+
 ## v1.9.7-reduce (2026-07-20)
 
 - Audit-focused visual reduction: trimmed each criterion to ~30 active visuals, keeping the highest-value visuals for EduTrust audit purposes (coverage / status / completion / readiness / evidence-completeness of each compliance area, mapped to live DocType data) and dropping redundant trend/profile/portfolio variations, near-duplicates, and low-signal or unconfirmed-source visuals. Active per-criterion counts: 30 / 30 / 30 / 30 / 32 / 30 / 30 (Criteria 1-7). Total: 627 -> 212 active, 415 archived.
