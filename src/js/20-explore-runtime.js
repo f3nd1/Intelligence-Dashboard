@@ -152,7 +152,8 @@ panel,
 c511Panel: "",
 localPanel: "",
 type: definition.type || inferType(definition.id, definition.title),
-source: "Permission-aware live API metrics"
+source: "Permission-aware live API metrics",
+description: text(definition.description || "")
 };
 entry.section = sectionLabel(entry);
 if (!registry.has(entry.key)) registry.set(entry.key, entry);
@@ -220,6 +221,7 @@ ${sectionEntries.map(entry => `
 <button type="button" class="ucc-explore-item" data-ucc-explore-entry="${entry.key}">
 <span>
 <strong>${entry.title}</strong>
+${entry.description ? `<small>${entry.description}</small>` : ""}
 <small>${entry.source}</small>
 </span>
 <em>${entry.type}</em>

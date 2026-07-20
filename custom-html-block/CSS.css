@@ -1315,3 +1315,8 @@
 
 .ucc-platform .ucc-live-base-card[hidden],
 .ucc-platform .ucc-live-expanded-grid[hidden]{display:none !important}
+
+.ucc-demo-visual-card .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:0}
+.ucc-demo-visual-card .panel-head h2{margin:0}
+.ucc-card-description{margin:8px 0 12px;color:var(--ucc-muted);font-size:12.5px;line-height:1.45}
+.ucc-visual-menu-desc{display:block;margin-top:2px;font-size:9px;color:#7a8495;font-weight:400}
