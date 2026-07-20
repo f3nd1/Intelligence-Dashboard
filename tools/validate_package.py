@@ -14,14 +14,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_VERSION = "1.9.5"
+# Active (enabled) visual counts. Cut visuals are retained in source with
+# enabled:false (LIVE/C4) or listed in C5_DISABLED_VISUALS (C5) and archived in
+# documentation/archived-visuals.md; they are not counted here.
 EXPECTED_VISUALS = {
-    "criterion_1": 84,
-    "criterion_2": 99,
-    "criterion_3": 90,
-    "criterion_4": 84,
-    "criterion_5": 94,
-    "criterion_6": 96,
-    "criterion_7": 80,
+    "criterion_1": 30,
+    "criterion_2": 30,
+    "criterion_3": 30,
+    "criterion_4": 30,
+    "criterion_5": 32,
+    "criterion_6": 30,
+    "criterion_7": 30,
 }
 
 REQUIRED = [
@@ -116,17 +119,23 @@ def main() -> int:
     checks.append(report("ucc-demo-view-toggle" not in source_html + live_js + css, "separate live-foundation toggle CSS and markup were removed"))
     checks.append(report(".mini-toggle" in css and 'class="mini-toggle"' in source_html, "all Diagram/Table controls use the Criterion 5 mini-toggle pattern"))
 
+    def active(items):
+        return [item for item in items if item.get("enabled") is not False]
+
     live_definitions = extract_json_constant(live_js, "LIVE_VISUAL_EXPANSION")
     for dashboard in ("criterion_1", "criterion_2", "criterion_3", "criterion_6", "criterion_7"):
-        detected = sum(len(items) for items in live_definitions[dashboard].values())
-        checks.append(report(detected == EXPECTED_VISUALS[dashboard], f"{dashboard} has {detected} live visual definitions"))
+        detected = sum(len(active(items)) for items in live_definitions[dashboard].values())
+        checks.append(report(detected == EXPECTED_VISUALS[dashboard], f"{dashboard} has {detected} active live visual definitions"))
 
     c4_definitions = extract_json_constant(source_js, "C4_VISUAL_EXPANSION")
-    c4_count = sum(len(items) for items in c4_definitions.values())
-    checks.append(report(c4_count == EXPECTED_VISUALS["criterion_4"], f"criterion_4 has {c4_count} discoverable visual definitions"))
+    c4_count = sum(len(active(items)) for items in c4_definitions.values())
+    checks.append(report(c4_count == EXPECTED_VISUALS["criterion_4"], f"criterion_4 has {c4_count} active discoverable visual definitions"))
 
-    c5_count = len(set(re.findall(r'data-chart="([^"]+)"', source_html)))
-    checks.append(report(c5_count == EXPECTED_VISUALS["criterion_5"], f"criterion_5 has {c5_count} live visual definitions"))
+    c5_total = len(set(re.findall(r'data-chart="([^"]+)"', source_html)))
+    c5_disabled_match = re.search(r"const C5_DISABLED_VISUALS=new Set\((\[.*?\])\)", source_js, re.S)
+    c5_disabled = set(json.loads(c5_disabled_match.group(1))) if c5_disabled_match else set()
+    c5_count = c5_total - len(c5_disabled)
+    checks.append(report(c5_count == EXPECTED_VISUALS["criterion_5"], f"criterion_5 has {c5_count} active live visual definitions ({len(c5_disabled)} archived)"))
 
     checks.append(report("UCCC4VisualDefinitions" in source_js, "Criterion 4 visual definitions are exposed to the universal navigator"))
     checks.append(report("visual-navigator" in source_html and "source-mapping" in source_html, "View tools contains functional visual and source actions"))

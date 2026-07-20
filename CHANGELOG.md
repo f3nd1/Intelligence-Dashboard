@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.9.7-reduce (2026-07-20)
+
+- Audit-focused visual reduction: trimmed each criterion to ~30 active visuals, keeping the highest-value visuals for EduTrust audit purposes (coverage / status / completion / readiness / evidence-completeness of each compliance area, mapped to live DocType data) and dropping redundant trend/profile/portfolio variations, near-duplicates, and low-signal or unconfirmed-source visuals. Active per-criterion counts: 30 / 30 / 30 / 30 / 32 / 30 / 30 (Criteria 1-7). Total: 627 -> 212 active, 415 archived.
+- **Nothing was deleted.** Cut visuals in Criteria 1, 2, 3, 6, 7 (`LIVE_VISUAL_EXPANSION`) and Criterion 4 (`C4_VISUAL_EXPANSION`) carry `"enabled": false`; the render loop (`ensureLiveSectionCards`, `ensureC4ExpandedVisuals`) and the Explore/menu registry now skip them. Criterion 5's cut visuals (static HTML) are listed in a new `C5_DISABLED_VISUALS` set and hidden at init via the `ucc-visual-archived` class; `createEntry` skips them in Explore/menu. Every cut visual (name, type, subcriterion, reason) is recorded in the new `documentation/archived-visuals.md`, with restoration instructions.
+- Updated the hard-locked counts to the new active totals: `tools/validate_package.py` `EXPECTED_VISUALS` (now counts only enabled visuals) and `VERSION.json` `diagram_counts` + `visual_targets`.
+- No data mappings, chart types, or prior fixes changed (lazy-load, click-to-render, descriptions, alphabetical sort, tab-nav, stuck-menu all verified intact). Kept cards still render exactly as before; only the disabled ones no longer appear.
+
 ## v1.9.6-cardrefactor-c5 (2026-07-20)
 
 - Extended the visual card refactor to Criterion 5 (batch 7 of 7, final batch), completing all 627 visuals across all 7 criteria. Criterion 5 is architecturally the most different of the three: its ~94 visuals are static HTML (no JSON definitions existed for it at all — built one from scratch, `C5_VISUAL_DESCRIPTIONS`), and each chart is drawn by its own individually hand-written call to one of 12 chart-type functions (`bar`, `line`, `radarChart`, `heatmapChart`, `networkChart`, `donutChart`, `bubbleChart`, `funnelChart`, `radialBars`, `timelineChart`, `labelledBar`, `chartAndTable`) scattered through ~2,400 lines, rather than one shared render pipeline.

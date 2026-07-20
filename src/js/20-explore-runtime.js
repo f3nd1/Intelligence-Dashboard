@@ -96,6 +96,7 @@ return text(sourceLink ? sourceLink.textContent : "Configured live source");
 function createEntry(node, dashboard, kind) {
 const id = kind === "c4" ? node.dataset.c4Visual : kind === "demo" ? node.dataset.demoChart : node.dataset.chart;
 if (!id) return null;
+if (kind === "c5" && (global.UCCC5DisabledVisuals || new Set()).has(id)) return null;
 const panelNode = kind === "demo" ? node.closest("[data-demo-panel]") : dashboard === "criterion_4" ? node.closest("[data-c4-panel]") : node.closest("[data-panel]");
 const title = kind === "demo" ? text(node.dataset.demoChartTitle || titleFrom(node)) : titleFrom(node);
 const entry = {
@@ -116,6 +117,7 @@ const registry = new Map();
 
 Object.entries(global.UCCC4VisualDefinitions || {}).forEach(([panel, definitions]) => {
 (definitions || []).forEach(definition => {
+if (definition.enabled === false) return;
 const entry = {
 key: `criterion_4:c4-expanded:${definition.id}`,
 id: definition.id,
@@ -143,6 +145,7 @@ if (entry && !registry.has(entry.key)) registry.set(entry.key, entry);
 Object.entries(global.UCCLiveVisualDefinitions || {}).forEach(([dashboard, sections]) => {
 Object.entries(sections || {}).forEach(([panel, definitions]) => {
 (definitions || []).forEach(definition => {
+if (definition.enabled === false) return;
 const entry = {
 key: `${dashboard}:demo:${definition.id}`,
 id: definition.id,
