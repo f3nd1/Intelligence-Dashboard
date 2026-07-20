@@ -126,7 +126,8 @@ panel,
 c511Panel: "",
 localPanel: "",
 type: definition.type || inferType(definition.id, definition.title),
-source: "Permission-aware Criterion 4 API metrics"
+source: "Permission-aware Criterion 4 API metrics",
+description: text(definition.description || "")
 };
 entry.section = sectionLabel(entry);
 if (!registry.has(entry.key)) registry.set(entry.key, entry);

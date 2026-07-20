@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.9.6-cardrefactor-c4 (2026-07-20)
+
+- Extended the visual card refactor to Criterion 4 (batch 6 of 7), its own separate card-building path (`C4_VISUAL_EXPANSION`, `ensureC4ExpandedVisuals`, `c4ExpandedChartMarkup` in `10-platform-runtime.js`, distinct from the CONFIG-driven demo-kind criteria's code). Added real one-sentence descriptions for all 84 of Criterion 4's visuals.
+- `c4ExpandedChartMarkup`: new layout matching the demo-kind cards — title and Diagram/Table toggle share one row (`.ucc-c4-dashboard .panel-head` was already flex/space-between, so no new CSS was needed), the description replaces the old "Live Criterion 4 API metrics..." sentence below that row.
+- Click-to-render: `ensureC4ExpandedVisuals` now only stashes each card's pending data (chart, its original array index, and the API result) and binds the Diagram/Table toggle; the actual chart draw and table population moved to a new `renderC4ExpandedCardNow`, invoked on first click and cached via `data-c4-card-rendered`. Crucially, each visual's original index into `C4_VISUAL_EXPANSION[tab]` — not its sorted display position — is preserved for `c4ExpandedRows(result, index)`, so the specific metrics window each visual has always shown is unchanged; only when it draws changed.
+- Added `description` to Criterion 4's entries in the Explore registry (`20-explore-runtime.js`), so the visual navigation menu and Explore workspace list show its descriptions too.
+
+Verified in the harness across all 7 Criterion 4 sections (c411, c421, c422, c431, c441, c451, c461): every card shows its real description in the new layout, charts stay empty until clicked then render correctly and don't re-render on repeat clicks, card order stays alphabetical, the "View underlying records" drill button still opens the records dialog after a card renders, and the menu shows all 12 descriptions for the sampled section. Confirmed Criterion 1 (a different code path) is unaffected.
+
 ## v1.9.6-cardrefactor-c7 (2026-07-20)
 
 - Added real one-sentence descriptions for Criterion 7's 80 visuals (batch 5 of 7) to `LIVE_VISUAL_EXPANSION`, replacing the generic fallback sentence. No code changes this batch — Criterion 7 shares the same shared card-building function, click-to-render, layout, and menu/Explore description display already shipped for Criteria 1, 2, 3 and 6. This completes all five CONFIG-driven demo-kind criteria (1, 2, 3, 6, 7); Criterion 4 and Criterion 5 remain, each on their own separate card-building code path.
