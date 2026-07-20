@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.9.6-cardrefactor-c3 (2026-07-20)
+
+- Added real one-sentence descriptions for Criterion 3's 90 visuals (batch 3 of 7) to `LIVE_VISUAL_EXPANSION`, replacing the generic fallback sentence. No code changes this batch — Criterion 3 shares the same shared card-building function, click-to-render, layout, and menu/Explore description display already shipped for Criteria 1 and 2.
+
 ## v1.9.6-cardrefactor-c2 (2026-07-20)
 
 - Added real one-sentence descriptions for Criterion 2's 99 visuals (batch 2 of 7) to `LIVE_VISUAL_EXPANSION`, replacing the generic fallback sentence introduced in v1.9.6-cardrefactor-c1's shared card-building refactor. No code changes this batch — the shared function, click-to-render, layout and menu/Explore description display already cover Criterion 2 automatically since it shares the same code path as Criterion 1.
