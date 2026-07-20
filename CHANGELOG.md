@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.9.6-cardrefactor-c7 (2026-07-20)
+
+- Added real one-sentence descriptions for Criterion 7's 80 visuals (batch 5 of 7) to `LIVE_VISUAL_EXPANSION`, replacing the generic fallback sentence. No code changes this batch — Criterion 7 shares the same shared card-building function, click-to-render, layout, and menu/Explore description display already shipped for Criteria 1, 2, 3 and 6. This completes all five CONFIG-driven demo-kind criteria (1, 2, 3, 6, 7); Criterion 4 and Criterion 5 remain, each on their own separate card-building code path.
+
 ## v1.9.6-cardrefactor-c6 (2026-07-20)
 
 - Added real one-sentence descriptions for Criterion 6's 96 visuals (batch 4 of 7) to `LIVE_VISUAL_EXPANSION`, replacing the generic fallback sentence. No code changes this batch — Criterion 6 shares the same shared card-building function, click-to-render, layout, and menu/Explore description display already shipped for Criteria 1, 2 and 3.
