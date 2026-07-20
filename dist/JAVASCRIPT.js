@@ -456,7 +456,7 @@ return[]
 }
 async function hydrateDocuments(dt){
 const rows=state.data[dt]||[];
-setProgress(Math.min(90,8),`Loading ${dt} details (${rows.length})`);
+setProgress(Math.min(90,8),`Loading ${(UCC_TERMS[dt]||dt).toLowerCase()} design details…`);
 state.data[dt]=await mapLimit(rows,8,async row=>{
 if(row.topics||row.courses||Object.keys(row).length>8)return row;
 try{return await doc(state.resolvedDoctypes[dt]||dt,row.name)}catch(error){addLog("WARN","source","document_hydration_failed",{canonical:dt,name:row.name,error:error.message});return row}
