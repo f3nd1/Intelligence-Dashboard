@@ -357,6 +357,27 @@ addLog("ERROR","source","source_load_failed",{canonical:dt,attempted,status:sour
 return[]
 }
 }
+async function hydrateViaServer(dts){
+if(state.c5ServerHydrateFailed)return false;
+try{
+const message=await new Promise((resolve,reject)=>frappe.call({
+method:"ucc_analytics_criterion_5",
+args:{payload:JSON.stringify({action:"c511_hydrate",limit:1000})},
+callback:response=>resolve(response?.message),
+error:reject
+}));
+if(!message||message.ok!==true||!message.data)throw new Error(message?.message||"c511_hydrate is unavailable");
+let used=false;
+dts.forEach(dt=>{const rows=message.data[dt];if(Array.isArray(rows)&&rows.length){state.data[dt]=rows;used=true;}});
+if(!used)throw new Error("c511_hydrate returned no documents");
+addLog("INFO","source","server_hydration_used",{doctypes:dts,counts:dts.map(dt=>(message.data[dt]||[]).length)});
+return true;
+}catch(error){
+state.c5ServerHydrateFailed=true;
+addLog("WARN","source","server_hydration_unavailable",{error:error.message});
+return false;
+}
+}
 async function hydrateDocuments(dt){
 const rows=state.data[dt]||[];
 setProgress(Math.min(90,8),`Loading ${(UCC_TERMS[dt]||dt).toLowerCase()} design details…`);
@@ -1966,7 +1987,7 @@ const add=(dt,filters=[])=>tasks.push({dt,filters});
 if(tab==="overview"){
 }
 if(tab==="c511"||tab==="c55"){
-if(tab==="c511"){setProgress(5,"Loading detailed course and programme design");await hydrateDocuments("Course");await hydrateDocuments("Program");}
+if(tab==="c511"){setProgress(5,"Loading detailed course and programme design");if(!await hydrateViaServer(["Course","Program"])){await hydrateDocuments("Course");await hydrateDocuments("Program");}}
 const ap=[];if(f.year)ap.push(["Assessment Plan","academic_year","=",f.year]);if(f.program)ap.push(["Assessment Plan","program","=",f.program]);if(f.student_group)ap.push(["Assessment Plan","student_group","=",f.student_group]);
 const ar=[];if(f.year)ar.push(["Assessment Result","academic_year","=",f.year]);if(f.program)ar.push(["Assessment Result","program","=",f.program]);if(f.student_group)ar.push(["Assessment Result","student_group","=",f.student_group]);
 add("Assessment Plan",ap);add("Assessment Result",ar);
@@ -2213,7 +2234,7 @@ buttons.forEach(item=>item.classList.toggle("active",item===button));
 panels.forEach(panel=>panel.classList.toggle("hidden",panel.dataset.localPanel!==button.dataset.localTab));
 if(section?.dataset.panel&&["c512","c521","c522","c531"].includes(section.dataset.panel)){
 requestAnimationFrame(()=>setTimeout(()=>renderNewSection(section.dataset.panel),30));
-}else if(button.dataset.localTab!=="legend"){
+}else{
 requestAnimationFrame(()=>setTimeout(renderVisibleC511Charts,30));
 }
 }));

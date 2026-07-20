@@ -14,9 +14,12 @@ Purpose:
     Permission-aware migration API for Criterion 5 analytics.
 
 Current status:
-    Migration foundation. The consolidated v1.0.0 frontend preserves the
-    uploaded Criterion 5 v5.6.1 direct-client calculations for output parity.
-    Move one section at a time to this API and compare values before deleting
+    Migration foundation plus the first migrated capability: c511_hydrate
+    returns full Course and Program documents (child tables included) in one
+    call, replacing the frontend's per-record frappe.client.get hydration loop
+    for section 5.1.1. The client falls back to per-record hydration when this
+    action is unavailable, so deploying this script is safe either way.
+    Move remaining sections one at a time and compare values before deleting
     the matching JavaScript calculation.
 
 Deployment:
@@ -41,6 +44,7 @@ limit = max(1, min(limit, 1000))
 ALLOWED_ACTIONS = [
     "base",
     "overview",
+    "c511_hydrate",
     "c511_summary",
     "c511_proposals",
     "c511_modules",
@@ -118,6 +122,48 @@ if action not in ALLOWED_ACTIONS:
         "error_code": "UNSUPPORTED_ACTION",
         "message": "Unsupported Criterion 5 action.",
         "allowed_actions": ALLOWED_ACTIONS
+    }
+elif action == "c511_hydrate":
+    # Full documents (child tables included) for the 5.1.1 evidence checks,
+    # replacing up to 2 x limit per-record frappe.client.get round-trips with
+    # this single call. Permission-aware: get_list and get_doc both enforce
+    # the caller's read permissions.
+    data = {}
+    sources = {}
+    for doctype in ["Course", "Program"]:
+        try:
+            names = frappe.get_list(
+                doctype,
+                pluck="name",
+                limit_page_length=limit,
+                order_by="modified desc"
+            ) or []
+            documents = []
+            for name in names:
+                documents.append(frappe.get_doc(doctype, name).as_dict())
+            data[doctype] = documents
+            sources[doctype] = {"status": "Available", "count": len(documents)}
+        except Exception as error:
+            message = str(error)
+            lowered = message.lower()
+            status = "Not permitted" if (
+                "permission" in lowered
+                or "not permitted" in lowered
+                or "not allowed" in lowered
+            ) else "Unavailable"
+            data[doctype] = []
+            sources[doctype] = {"status": status, "count": 0, "error": message}
+
+    frappe.response["message"] = {
+        "ok": True,
+        "meta": {
+            "api_method": "ucc_analytics_criterion_5",
+            "dashboard": "criterion_5",
+            "action": action,
+            "generated_at": frappe.utils.now()
+        },
+        "data": data,
+        "sources": sources
     }
 else:
     data = {}

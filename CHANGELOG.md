@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.9.8-remove-legend (2026-07-20)
+
+- Removed the five "Legend & Definitions" sub-tabs and panels from Criterion 5 sections (~17 KB of HTML; archived in `custom-html-block/archive/HTML_archived_c5_cards_v1.9.8.html`) and the legend special-case in the local-tab handler.
+
+## v1.9.8-c511-server-hydrate (2026-07-20)
+
+- First step of the Criterion 5 server-side migration (per the migration plan in `server-scripts/UCC Analytics - Criterion 5.py`): new `c511_hydrate` action returns full Course and Program documents (child tables included) in one permission-aware call. The 5.1.1 loader now tries this first, replacing up to ~186 per-record `frappe.client.get` round-trips with a single API call; if the Server Script is not deployed or errors, it falls back to the existing per-record hydration automatically, so the frontend is safe to deploy before or after the script.
+- Requires re-deploying the **UCC Analytics - Criterion 5** Server Script in ERPNext (Script type: API, method `ucc_analytics_criterion_5`, Allow Guest disabled) for the fast path to activate. Verified in-harness: server path = 1 API call and zero Course/Program document fetches; fallback path errors cleanly into the old loop. Next migration targets: `loadC511Source` (Course Proposal / Course Review 300-record hydration) and the compute/QA logic itself.
+
+
 ## v1.9.8-remove-overview-tabs (2026-07-20)
 
 - Removed the redundant Criterion 5 "5.1 Overview", "5.2 Overview" and "5.3 Overview" sub-sections. Their panels duplicated what 5.1.1/5.1.2, 5.2.1/5.2.2 and 5.3.1 already show; the 5.3 overview had no charts at all. Removed: the three panels (archived in `custom-html-block/archive/HTML_archived_c5_cards_v1.9.8.html`), their "Overview" entries in the hover menus, the 4 overview-only charts (program-course, course-readiness, attendance-status, enrollment) and their render/QA/readiness/description code, the c51/c52 data-load branches, and `showTab` now redirects c51/c52/c53 to the first subcriterion so nothing can land on a missing panel.
