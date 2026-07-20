@@ -205,6 +205,10 @@ applyShellState();
 });
 let savedDashboard = "criterion_5";
 try { savedDashboard = localStorage.getItem("ucc.dashboard") || savedDashboard; } catch (error) {}
+try {
+const urlDashboard = new URLSearchParams(location.search).get("dashboard");
+if (urlDashboard) savedDashboard = urlDashboard;
+} catch (error) {}
 if (!["criterion_1", "criterion_2", "criterion_3", "criterion_4", "criterion_5", "criterion_6", "criterion_7"].includes(savedDashboard)) savedDashboard = "criterion_5";
 setWorkspace("analytics");
 setDashboard(savedDashboard);

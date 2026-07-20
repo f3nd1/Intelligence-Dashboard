@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.9.6-urlparam (2026-07-20)
+
+- Fixed direct-URL deep-linking to the wrong dashboard on first load. Navigating straight to a URL with `?dashboard=criterion_3` never worked; the page always showed whatever dashboard was last saved in `localStorage`, only appearing to "fix itself" after a reload because a manual `<select>` change had since overwritten that saved value. No code anywhere read the `dashboard` query parameter — it was write-only, produced only by the "copy link" actions. Now the parameter is read on load and passed through the same `setDashboard()` function the dashboard `<select>` already uses, taking priority over `localStorage` when present.
+
 ## v1.9.6-tabfix (2026-07-19)
 
 - Fixed sub-criterion tab navigation doing nothing for Criteria 1, 2, 3, 5, 6 and 7 (Criterion 4 was unaffected). The shared tab bar was being covered by the loading overlay while a section loaded, so clicks landed on the overlay instead of the tab. Raised the tab bar above the overlay (`.ucc-shared-tabs { position:relative; z-index:1000 }`) so clicks always reach the tab buttons, even mid-load.
