@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.9.8-remove-overview-tabs (2026-07-20)
+
+- Removed the redundant Criterion 5 "5.1 Overview", "5.2 Overview" and "5.3 Overview" sub-sections. Their panels duplicated what 5.1.1/5.1.2, 5.2.1/5.2.2 and 5.3.1 already show; the 5.3 overview had no charts at all. Removed: the three panels (archived in `custom-html-block/archive/HTML_archived_c5_cards_v1.9.8.html`), their "Overview" entries in the hover menus, the 4 overview-only charts (program-course, course-readiness, attendance-status, enrollment) and their render/QA/readiness/description code, the c51/c52 data-load branches, and `showTab` now redirects c51/c52/c53 to the first subcriterion so nothing can land on a missing panel.
+- Bonus dead code found during the sweep: `drill()` had zero callers (its `[data-drill]` buttons lived only in the removed 5.1 overview panel, and even before that the binder called `openDrill`, never `drill`); both functions and the binder removed.
+- Active C5 visual count is now 28 (was 32); `VERSION.json` and the validator updated. Verified in-browser: 5.1.1/5.2.1/5.3.1 open correctly from the hover menus, all remaining tabs cycle, 28 chart nodes, zero console errors.
+
+
 ## v1.9.8-prune-archived-html (2026-07-20)
 
 - Removed the 62 archived Criterion 5 visual cards that still shipped as hidden static markup in `HTML.html` (~43 KB, 16% of the file: 275,931 -> 232,227 bytes). They were invisible at runtime (hidden via `C5_DISABLED_VISUALS`) but downloaded by every visitor. The removed `<article>` blocks are preserved in `custom-html-block/archive/HTML_archived_c5_cards_v1.9.8.html` with restore instructions. The `C5_DISABLED_VISUALS` Set stays: it still guards the chart-call path and the Explore index, and degrades to a no-op for removed nodes.

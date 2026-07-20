@@ -288,17 +288,14 @@ Instructor:"Teacher"
 };
 const SECTION_REGISTRY={
 c51:{children:[
-{id:"c51",label:"5.1 Overview"},
 {id:"c511",label:"5.1.1 Course Design & Development"},
 {id:"c512",label:"5.1.2 Course Review"}
 ]},
 c52:{children:[
-{id:"c52",label:"5.2 Overview"},
 {id:"c521",label:"5.2.1 Course Planning"},
 {id:"c522",label:"5.2.2 Course Delivery"}
 ]},
 c53:{children:[
-{id:"c53",label:"5.3 Overview"},
 {id:"c531",label:"5.3.1 Partnerships"}
 ]}
 };
@@ -323,13 +320,10 @@ const set=(s,v)=>{const e=$(s);if(e)e.textContent=v};
 
 const C5_READINESS = Object.freeze({
 overview:{label:"Criterion 5 Overview",sources:["Academic Year","Student Group","Course","Program"],metrics:[["Courses in selected scope",["Course"]],["Module readiness",["Course"]],["Course-to-programme mapping",["Course","Program"]],["Source availability",[]],["Questions answered",[]],["Open exceptions",[]]]},
-c51:{label:"Criterion 5.1",sources:["Course","Program","Assessment Plan","Assessment Result"],metrics:[["Course mapping",["Course","Program"]],["Configuration readiness",["Course"]],["Assessment planning coverage",["Assessment Plan"]],["Assessment result coverage",["Assessment Result"]],["Evidence completeness",["Course"]],["Management questions",[]]]},
 c511:{label:"Criterion 5.1.1",sources:["Course","Program","Course Proposal","Course Review","Assessment Plan","Assessment Result"],metrics:[["Proposal approval",["Course Proposal"]],["Proposal decision time",["Course Proposal"]],["Module evidence completeness",["Course"]],["Learning outcomes coverage",["Course"]],["Lesson-plan coverage",["Course"]],["Assessment-design coverage",["Assessment Plan"]],["Review status",["Course Review"]],["Result coverage",["Assessment Result"]]]},
 c512:{label:"Criterion 5.1.2",sources:["Module Review","Course Review"],metrics:[["Module review coverage",["Module Review"]],["Course review coverage",["Course Review"]],["Review status",["Module Review","Course Review"]],["Overdue reviews",["Course Review"]],["Action-plan availability",["Module Review"]],["Recommendation follow-up",["Course Review"]]]},
-c52:{label:"Criterion 5.2",sources:["Course Schedule","Course Enrollment","Student Attendance"],metrics:[["Scheduled classes",["Course Schedule"]],["Enrollment coverage",["Course Enrollment"]],["Attendance coverage",["Student Attendance"]],["Teacher assignment",["Course Schedule"]],["Room readiness",["Course Schedule"]],["Delivery controls",["Course Schedule"]]]},
 c521:{label:"Criterion 5.2.1",sources:["Student Intake No","Module Class Details","Student Admission UCC","Course Schedule"],metrics:[["Intake readiness",["Student Intake No"]],["Module class readiness",["Module Class Details"]],["Admission coverage",["Student Admission UCC"]],["Schedule coverage",["Course Schedule"]],["Teacher assignment",["Module Class Details"]],["Contract date completeness",["Student Admission UCC"]]]},
 c522:{label:"Criterion 5.2.2",sources:["Module Class Details","Classroom Observation","Survey Response"],metrics:[["Delivery readiness",["Module Class Details"]],["Observation coverage",["Classroom Observation"]],["Observation ratings",["Classroom Observation"]],["Survey coverage",["Survey Response"]],["Delivery exceptions",["Classroom Observation"]],["Teacher coverage",["Module Class Details"]]]},
-c53:{label:"Criterion 5.3",sources:["Partnership Agreement","Partnerships Agreement Management","Supplier Rating"],metrics:[["Active agreements",["Partnership Agreement"]],["Agreement monitoring",["Partnerships Agreement Management"]],["Provider rating",["Supplier Rating"]],["Expiry coverage",["Partnership Agreement"]],["Evaluation coverage",["Partnerships Agreement Management"]],["Open partnership risks",[]]]},
 c531:{label:"Criterion 5.3.1",sources:["Partnership Agreement","Partnerships Agreement Management","Supplier Rating"],metrics:[["Agreement lifecycle",["Partnership Agreement"]],["Signature completion",["Partnership Agreement"]],["Monitoring frequency",["Partnerships Agreement Management"]],["Evaluation outcome",["Partnerships Agreement Management"]],["Provider rating",["Supplier Rating"]],["Renewal readiness",["Partnership Agreement","Supplier Rating"]]]},
 c54:{label:"Criterion 5.4",sources:["Survey Response","Course Schedule","Student Attendance"],metrics:[["Survey response coverage",["Survey Response"]],["Module survey score",["Survey Response"]],["Question-level score",["Survey Response"]],["Learning attendance",["Student Attendance"]],["Scheduled learning sessions",["Course Schedule"]],["At-risk indicators",["Student Attendance"]]]},
 c55:{label:"Criterion 5.5",sources:["Assessment Plan","Assessment Result","Course","Student Group"],metrics:[["Assessment-plan coverage",["Assessment Plan"]],["Assessment-result coverage",["Assessment Result"]],["Grade availability",["Assessment Result"]],["Examiner assignment",["Assessment Plan"]],["Room assignment",["Assessment Plan"]],["Course assessment coverage",["Course","Assessment Plan"]]]},
@@ -637,7 +631,7 @@ m.get(label).push(record);
 return [...m].map(([label,records])=>({label,value:records.length,records,doctype})).sort((a,b)=>b.value-a.value);
 }
 function badge(s){const c=s==="Good"?"good":s==="Warning"?"warn":"risk";return`<span class="badge ${c}">${esc(s)}</span>`}
-const C5_VISUAL_DESCRIPTIONS={"target-gaps":"Compares each academic system area against its target readiness level.","program-course":"Maps how each course maps to the modules that make it up.","course-readiness":"Gauges how many courses have their configuration fully completed.","c511-radar":"Compares evidence strength across every course design and development control area.","c511-heatmap":"Grids evidence coverage against each course design control area.","c511-proposal-donut":"Shows the current status mix of course proposals, from drafted to approved.","c511-review-donut":"Shows the current status mix of course reviews, from due to complete.","c511-gap-funnel":"Compares identified evidence gaps by how severe each one is.","c512-review-level":"Compares review coverage across the different review levels applied.","c512-module-status":"Shows the current status mix of module reviews, from due to complete.","c512-course-status":"Shows the current status mix of course reviews, from due to complete.","c512-recommendation-status":"Gauges what share of previous recommendations have been implemented.","attendance-status":"Shows the current status mix of student attendance records.","enrollment":"Compares student enrolment numbers across each course.","c521-intakes":"Gauges how ready each intake is ahead of its scheduled start.","c521-class-status":"Shows the current status mix of module classes, from planned to active.","c521-schedule":"Gauges what share of module classes have a completed schedule.","c521-teacher":"Gauges what share of module classes have a teacher assigned.","c522-coverage":"Gauges how much of scheduled delivery has a completed observation.","c522-observation-type":"Compares delivery observations across the different types conducted.","c522-ratings":"Compares observation ratings across each area being assessed.","c522-signoff":"Gauges what share of delivery observations have completed sign-off.","c531-status":"Shows the current status mix of partnership agreements.","c531-nda":"Gauges what share of partnerships have a completed NDA on file.","c531-monitoring":"Compares partnerships across the monitoring methods applied.","c531-evaluation":"Shows the outcome mix of completed partnership evaluations.","survey-module-score":"Compares survey scores achieved across each module.","survey-type-count":"Shows how student surveys are distributed across each survey type.","learning-risk":"Highlights students currently flagged as at academic risk.","assessment-trend":"Tracks the number of assessment plans created across recent months.","grade":"Shows how student grades are distributed across the grading scale.","assessment-controls":"Gauges how many assessment controls are documented and in place."};
+const C5_VISUAL_DESCRIPTIONS={"target-gaps":"Compares each academic system area against its target readiness level.","c511-radar":"Compares evidence strength across every course design and development control area.","c511-heatmap":"Grids evidence coverage against each course design control area.","c511-proposal-donut":"Shows the current status mix of course proposals, from drafted to approved.","c511-review-donut":"Shows the current status mix of course reviews, from due to complete.","c511-gap-funnel":"Compares identified evidence gaps by how severe each one is.","c512-review-level":"Compares review coverage across the different review levels applied.","c512-module-status":"Shows the current status mix of module reviews, from due to complete.","c512-course-status":"Shows the current status mix of course reviews, from due to complete.","c512-recommendation-status":"Gauges what share of previous recommendations have been implemented.","c521-intakes":"Gauges how ready each intake is ahead of its scheduled start.","c521-class-status":"Shows the current status mix of module classes, from planned to active.","c521-schedule":"Gauges what share of module classes have a completed schedule.","c521-teacher":"Gauges what share of module classes have a teacher assigned.","c522-coverage":"Gauges how much of scheduled delivery has a completed observation.","c522-observation-type":"Compares delivery observations across the different types conducted.","c522-ratings":"Compares observation ratings across each area being assessed.","c522-signoff":"Gauges what share of delivery observations have completed sign-off.","c531-status":"Shows the current status mix of partnership agreements.","c531-nda":"Gauges what share of partnerships have a completed NDA on file.","c531-monitoring":"Compares partnerships across the monitoring methods applied.","c531-evaluation":"Shows the outcome mix of completed partnership evaluations.","survey-module-score":"Compares survey scores achieved across each module.","survey-type-count":"Shows how student surveys are distributed across each survey type.","learning-risk":"Highlights students currently flagged as at academic risk.","assessment-trend":"Tracks the number of assessment plans created across recent months.","grade":"Shows how student grades are distributed across the grading scale.","assessment-controls":"Gauges how many assessment controls are documented and in place."};
 window.UCCC5VisualDescriptions=C5_VISUAL_DESCRIPTIONS;
 const C5_DISABLED_VISUALS=new Set(["assessment-quality","c511-decision-time","c511-gap-sunburst","c511-module-bubbles","c511-module-radial","c511-module-stream","c511-network","c511-proposal-bars","c511-review-actions","c511-review-timeline","c512-action-aging-v110","c512-actions","c512-actions-completion-v110","c512-coverage-v110","c512-cycle-v110","c512-evidence","c512-followup-v110","c512-missing-evidence-v110","c512-review-type","c512-schedule","c521-admission","c521-contract-exceptions-v110","c521-contract-vs-start-v110","c521-contracts","c521-date-completeness-v110","c521-flow","c521-room-clashes-v110","c521-schedule-completeness-v110","c521-session-readiness","c521-teacher-clashes-v110","c521-unscheduled-v110","c522-concerns","c522-delivery-exceptions-v110","c522-improvements-v110","c522-module-coverage-v110","c522-notice","c522-observation-mode-v110","c522-planned-delivered-v110","c522-platform","c522-rating-distribution-v110","c522-signoff-aging-v110","c522-strengths-v110","c522-survey-categories","c522-survey-volume-v110","c522-teacher-coverage-v110","c531-decisions-v110","c531-expiry","c531-lifecycle-v110","c531-missing-controls-v110","c531-monitoring-recency-v110","c531-monitoring-type","c531-quality-completeness-v110","c531-rating-stage","c531-risk-v110","c531-scores","c531-signature-v110","c531-threshold","c531-type","delivery-controls","learning-support","schedule","survey-question-score"]);
 window.UCCC5DisabledVisuals=C5_DISABLED_VISUALS;
@@ -879,17 +873,6 @@ const label=typeof record==="string"?record:(record.course_name||record.program_
 return `<tr><td>${esc(label)}</td><td>${esc(displayDoctype(recordDoctype||"—"))}</td><td>${recordDoctype&&name?`<a href="${doctypeRoute(recordDoctype,name)}" target="_blank" rel="noopener">Open in new tab ↗</a>`:"—"}</td></tr>`;
 }).join("")||'<tr><td colspan="3">No affected records.</td></tr>';
 if(typeof dialog.showModal==="function")dialog.showModal();
-}
-function openDrill(kind){
-const d=state.data;
-if(kind==="program-course"){
-const rows=(d.Program||[]).flatMap(program=>(program.courses||[]).map(item=>({
-name:item.course,label:`${program.program_name||program.name} → ${item.course_name||item.course}`
-})));
-return openAffected("Course → Module mapping","Course",rows);
-}
-if(kind==="course-readiness")return openAffected("Module readiness records","Course",d.Course||[]);
-if(kind==="schedule")return openAffected("Course Schedule records","Course Schedule",d["Course Schedule"]||[]);
 }
 function renderFallbackBars(name,rows,suffix="%"){
 const el=$(`[data-chart="${name}"]`);if(!el)return;
@@ -1374,9 +1357,6 @@ const rows=[
 ];
 state.qa=rows;
 renderOverviewQA();
-renderQATable("qa-c51",rows.filter(x=>x.criterion.startsWith("5.1")));
-renderQATable("qa-c52",rows.filter(x=>x.criterion.startsWith("5.2")));
-renderQATable("qa-c53",rows.filter(x=>x.criterion.startsWith("5.3")));
 renderQATable("qa-c54",rows.filter(x=>x.criterion==="5.4"));
 renderQATable("qa-c55",rows.filter(x=>x.criterion==="5.5"));
 renderQATable("qa-c512",rows.filter(x=>x.criterion==="5.1.2"));
@@ -1481,39 +1461,6 @@ label:x.question.replace("What proportion of ","").replace("?",""),
 value:Math.max(0,x.target-x.current)
 })));
 return;
-}
-if(tab==="c51"){
-const progs=(d.Program||[]).filter(p=>!currentFilters().program||p.name===currentFilters().program);
-bar("program-course",progs.map(p=>({
-label:p.program_name||p.name,
-value:(p.courses||[]).length
-})).filter(x=>x.value));
-bar("course-readiness",[
-{label:"Topics configured",value:c.topics},
-{label:"Topics missing",value:s.courses.length-c.topics},
-{label:"Criteria configured",value:c.criteria},
-{label:"Criteria missing",value:s.courses.length-c.criteria}
-]);
-}
-if(tab==="c52"){
-bar("schedule",group(s.schedules,"course").slice(0,15));
-const deliveryRows=metrics
-.filter(x=>x.criterion==="5.2")
-.map(x=>({
-label:x.question.includes("instructor")?"Instructor %":x.question.includes("room")?"Room %":"Attendance %",
-value:x.current
-}));
-bar("delivery-controls",deliveryRows);
-const deliveryBody=$('[data-table="delivery-controls"]');
-if(deliveryBody){
-deliveryBody.innerHTML=deliveryRows.length
-? deliveryRows.map(x=>`<tr><td>${esc(x.label)}</td><td>${x.value}%</td></tr>`).join("")
-: '<tr><td colspan="2">No delivery-control metrics available.</td></tr>';
-}
-bar("attendance-status",group(s.attendance,"status"));
-bar("enrollment",group(s.enroll,"course").slice(0,15));
-}
-if(tab==="c53"){
 }
 if(tab==="c54"){
 renderSurvey();
@@ -2109,21 +2056,14 @@ const tasks=[];
 const add=(dt,filters=[])=>tasks.push({dt,filters});
 if(tab==="overview"){
 }
-if(tab==="c51"||tab==="c511"||tab==="c55"){
-if(tab==="c51"||tab==="c511"){setProgress(5,"Loading detailed course and programme design");await hydrateDocuments("Course");await hydrateDocuments("Program");}
+if(tab==="c511"||tab==="c55"){
+if(tab==="c511"){setProgress(5,"Loading detailed course and programme design");await hydrateDocuments("Course");await hydrateDocuments("Program");}
 const ap=[];if(f.year)ap.push(["Assessment Plan","academic_year","=",f.year]);if(f.program)ap.push(["Assessment Plan","program","=",f.program]);if(f.student_group)ap.push(["Assessment Plan","student_group","=",f.student_group]);
 const ar=[];if(f.year)ar.push(["Assessment Result","academic_year","=",f.year]);if(f.program)ar.push(["Assessment Result","program","=",f.program]);if(f.student_group)ar.push(["Assessment Result","student_group","=",f.student_group]);
 add("Assessment Plan",ap);add("Assessment Result",ar);
 }
 if(tab==="c511"){
 for(const dt of Object.keys(C511_SOURCES)){setProgress(22,`Loading ${dt}`);state.data[dt]=await loadC511Source(dt);}
-}
-if(tab==="c52"){
-const cs=[["Course Schedule","schedule_date",">=",f.start],["Course Schedule","schedule_date","<=",f.end]];
-if(f.program)cs.push(["Course Schedule","program","=",f.program]);
-if(f.student_group)cs.push(["Course Schedule","student_group","=",f.student_group]);
-const ce=[];if(f.program)ce.push(["Course Enrollment","program","=",f.program]);
-add("Course Schedule",cs);add("Course Enrollment",ce);
 }
 if(tab==="c54"){
 const sf=[];
@@ -2170,7 +2110,7 @@ setProgress(8+(i/Math.max(tasks.length,1))*68,`Loading ${t.dt}`);
 state.data[t.dt]=await load(t.dt,t.filters);
 if(t.dt==="Survey Response")populateSurveyModuleFilter();
 }
-if(["c52","c54","quality"].includes(tab)){
+if(["c54","quality"].includes(tab)){
 const schedules=state.data["Course Schedule"]||[];
 const names=schedules.map(x=>x.name).filter(Boolean);
 let att=[];const chunks=[];
@@ -2227,6 +2167,7 @@ button.classList.toggle("active",button.dataset.tab===active);
 });
 }
 function showTab(tab){
+tab=({c51:"c511",c52:"c521",c53:"c531"})[tab]||tab;
 const parent=parentTab(tab);root.dataset.activeTab=tab;
 $$(".ucc-shared-tabs > [data-tab]").forEach(button=>{
 button.classList.toggle("active",button.dataset.tab===parent);
@@ -2234,41 +2175,6 @@ button.classList.toggle("active",button.dataset.tab===parent);
 $$("[data-panel]").forEach(panel=>panel.classList.toggle("hidden",panel.dataset.panel!==tab));
 renderSubnav(parent,tab);
 loadSection(tab);
-}
-function drill(kind){
-let rows=[],cols=[];
-const d=state.data;
-if(kind==="program-course"){
-rows=(d.Program||[]).flatMap(program=>(program.courses||[]).map(item=>({
-course_name:program.program_name||program.name,
-module:item.course,
-module_label:item.course_name,
-required:item.required
-})));
-cols=["course_name","module","module_label","required"];
-}else if(kind==="course-readiness"){
-rows=(d.Course||[]).map(course=>({
-module_name:course.course_name||course.name,
-department:course.department||"",
-topics:Array.isArray(course.topics)?course.topics.length:0,
-assessment_criteria:Array.isArray(course.assessment_criteria)?course.assessment_criteria.length:0,
-teaching_approach:Array.isArray(course.custom_teaching_approach)?course.custom_teaching_approach.length:0,
-lesson_plans:Array.isArray(course.custom_lesson_plans)?course.custom_lesson_plans.length:0
-}));
-cols=["module_name","department","topics","assessment_criteria","teaching_approach","lesson_plans"];
-}else if(kind==="schedule"){
-rows=d["Course Schedule"]||[];
-cols=["name","student_group","course","program","schedule_date","instructor","room"];
-}
-const dialog=$("[data-dialog]");
-if(!dialog)return;
-const title=$("[data-dialog-title]");
-if(title)title.textContent=kind==="program-course"?"Course-Module Mapping":kind==="course-readiness"?"Module Readiness Records":"Course Schedule Records";
-const head=$("[data-dialog-head]");
-const body=$("[data-dialog-body]");
-if(head)head.innerHTML="<tr>"+cols.map(col=>`<th>${esc(col)}</th>`).join("")+"</tr>";
-if(body)body.innerHTML=rows.slice(0,1000).map(row=>"<tr>"+cols.map(col=>`<td>${esc(/date/i.test(col)?formatDate(row[col]):row[col])}</td>`).join("")+"</tr>").join("");
-if(typeof dialog.showModal==="function")dialog.showModal();
 }
 function sortableValue(cell){
 const raw=(cell?.dataset.sortValue||cell?.textContent||"").trim();
@@ -2418,9 +2324,6 @@ field.addEventListener("change",loadAll);
 });
 const qaFilter=$("[data-qa-filter]");
 if(qaFilter)qaFilter.addEventListener("change",renderOverviewQA);
-$$("[data-drill]").forEach(button=>{
-button.addEventListener("click",()=>openDrill(button.dataset.drill));
-});
 const dialogClose=$("[data-dialog-close]");
 if(dialogClose)dialogClose.addEventListener("click",()=>{
 const dialog=$("[data-dialog]");

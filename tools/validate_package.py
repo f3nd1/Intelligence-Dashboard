@@ -22,7 +22,7 @@ EXPECTED_VISUALS = {
     "criterion_2": 30,
     "criterion_3": 30,
     "criterion_4": 30,
-    "criterion_5": 32,
+    "criterion_5": 28,
     "criterion_6": 30,
     "criterion_7": 30,
 }
