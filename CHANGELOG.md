@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.9.7-blank-guard-defer (2026-07-20)
+
+- Fixed visuals showing **"Visual could not be rendered — The diagram area remained blank after the section finished loading."** Investigation found this was **not** a data/DocType/permission problem and **not** related to the archived visuals. The background visual guard (`scanVisuals()` in `40-visual-navigation-runtime.js`) replaces any on-screen chart container that stays empty for 20s with that diagnostic — but since the click-to-render deferral work, chart containers are **intentionally empty until the user opens the Diagram view**. The guard had no awareness of deferral, so every un-clicked deferred chart that had been on-screen for 20s got false-flagged and destructively overwritten. Reproduced in-harness: 11 of 25 on-screen demo charts were wrongly replaced after 22s with zero user interaction.
+- Added a `deferredUnrendered(node)` check that skips charts still awaiting their first render, using each architecture's own render flag: demo `[data-demo-card][data-live-card-rendered]`, Criterion 4 `[data-c4-expanded-card][data-c4-card-rendered]`, and a new `data-c5-deferred` marker set on Criterion 5 chart nodes when deferred and cleared when the user opens them. The guard still fires on **genuinely** blank charts once they have rendered (verified: a rendered-then-emptied chart is still caught), so real render failures are still surfaced — only the false positives on not-yet-opened cards are suppressed.
+
 ## v1.9.7-inline-labels (2026-07-20)
 
 - Fixed the visual card/menu label layout. Titles, descriptions and the chart-type label used to stack awkwardly (title on one line, "Gauges how many courses..." on the next, then "chart"), leaving orphaned whitespace. Now each visual reads **"Title — Description"** inline on the heading line, with the chart-type label (`chart`/`donut`/etc.) right-aligned on the same row. Applied consistently across the menu list and all three card architectures (demo `liveChartCardMarkup`, Criterion 4 `c4ExpandedChartMarkup`, Criterion 5 `ensureCardDescription`).

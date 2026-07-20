@@ -1536,6 +1536,7 @@ state.c5PendingCharts.set(name,{realFn,args});
 ensureChartCompanion(name,[]);
 ensureCardDescription(name);
 const chart=chartNode(name);
+if(chart)chart.dataset.c5Deferred="1";
 const panel=chart&&chart.closest(".panel");
 const toggle=panel&&panel.querySelector("[data-card-toggle]");
 if(toggle&&!toggle.dataset.deferBound){
@@ -1543,6 +1544,7 @@ toggle.dataset.deferBound="1";
 toggle.querySelectorAll("[data-card-view]").forEach(btn=>btn.addEventListener("click",()=>{
 if(state.c5RequestedCharts.has(name))return;
 state.c5RequestedCharts.add(name);
+if(chart)delete chart.dataset.c5Deferred;
 const pending=state.c5PendingCharts.get(name);
 if(pending)pending.realFn(name,...pending.args);
 }));

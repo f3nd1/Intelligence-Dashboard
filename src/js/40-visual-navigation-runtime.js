@@ -376,10 +376,18 @@ function meaningfulVisual(node) {
 if (node.querySelector("svg,canvas,img,.ucc-demo-bars,.ucc-live-empty,.empty-state,.ucc-visual-diagnostic")) return true;
 return clean(node.textContent).length > 12;
 }
+function deferredUnrendered(node) {
+// Click-to-render charts are intentionally empty until the user opens the Diagram view. Don't flag them as failed renders.
+const demoCard = node.closest("[data-demo-card]");
+if (demoCard) return demoCard.dataset.liveCardRendered !== "1";
+const c4Card = node.closest("[data-c4-expanded-card]");
+if (c4Card) return c4Card.dataset.c4CardRendered !== "1";
+return node.dataset.c5Deferred === "1";
+}
 function scanVisuals() {
 const now = Date.now();
 platform.querySelectorAll("[data-c4-visual],[data-c4-expanded-chart],[data-chart],[data-demo-chart]").forEach(node => {
-if (!node.isConnected || node.getClientRects().length === 0 || isLoading(node)) return;
+if (!node.isConnected || node.getClientRects().length === 0 || isLoading(node) || deferredUnrendered(node)) return;
 const invalid = invalidSvgReason(node);
 if (invalid) {
 recordIssue(node, invalid);
