@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.9.7-strip-archived (2026-07-20)
+
+- Physically removed the 415 archived (disabled) visual definitions from the live build so `custom-html-block/JAVASCRIPT.js` is actually smaller: **520,744 -> 453,614 bytes (-67 KB, ~13%)**. Step #4 had only flagged them `enabled:false`, so their full definitions still shipped.
+- Removed 299 entries from `LIVE_VISUAL_EXPANSION`, 54 from `C4_VISUAL_EXPANSION`, and 62 disabled entries from `C5_VISUAL_DESCRIPTIONS`. The full definitions are preserved in a new **`custom-html-block/archive/JAVASCRIPT_archived_v1.9.7.js`** (not loaded by the block) with per-criterion structure and restore instructions, cross-referencing `documentation/archived-visuals.md`.
+- Critical correctness detail: the demo (`metricRows`) and Criterion 4 (`c4ExpandedRows`) renderers window into the API metrics by each visual's **array index**, so deleting entries would have shifted the kept visuals' indices and changed their displayed data. To prevent that, each kept entry now carries its original index as an `i` field, and the two render call sites use `chart.i` instead of the array position. Verified against the pre-change build: **0 of 180 kept visuals had an index mismatch** — every active visual's metric window is byte-identical.
+- Criterion 5's archived visuals are static HTML cards (still in `HTML.html`, hidden via `C5_DISABLED_VISUALS`); only their now-unused JS descriptions were removed. Active counts unchanged (30/30/30/30/32/30/30); click-to-render, drill-downs, alphabetical sort, menu descriptions and all prior fixes re-verified, no console errors.
+
 ## v1.9.7-parallel-hydration (2026-07-20)
 
 - Sped up Criterion 5's section loading (the "~186 steps" slow load). Investigation found the step explosion was **not** related to the archived visuals: Criteria 1/2/3/6/7 and Criterion 4 make one Server Script call per section that serves every visual (so archiving cards removed zero calls), and Criterion 5 loads data per section-source, not per-visual. The real cost was Criterion 5's per-record document hydration: 10 of its 20 DocTypes are `full:true`, and `load()`/`loadC511Source()`/`hydrateDocuments()` fetched each record with a **sequential** `await doc()` in a loop (up to 500/300 records), so a data-rich section became ~186 one-at-a-time round-trips.
