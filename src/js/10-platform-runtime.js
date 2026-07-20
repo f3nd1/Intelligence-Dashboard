@@ -292,12 +292,12 @@ const issues=(sourceTotal-readiness.availableSources)+(metricTotal-readiness.ava
 notice.hidden=false;notice.dataset.dismissed="0";notice.dataset.status=issues?"warning":"available";
 const title=notice.querySelector("[data-c5-readiness-title]"),copy=notice.querySelector("[data-c5-readiness-copy]");
 if(title)title.textContent=issues?"Criterion 5 live analytics active with limitations.":"Criterion 5 live analytics active.";
-if(copy)copy.textContent=readiness.definition.label+" · Policy code not configured · "+readiness.availableSources+"/"+sourceTotal+" sources available · "+readiness.availableMetrics+"/"+metricTotal+" metrics available"+(issues?" · "+issues+" item(s) require review":"");
+if(copy)copy.textContent="Live data connected · "+readiness.availableSources+" of "+sourceTotal+" sources available · "+readiness.availableMetrics+" of "+metricTotal+" metrics available"+(issues?" · "+issues+" item"+(issues===1?"":"s")+" need review":"");
 }
 function openC5ReadinessDetails(){
 const readiness=c5ReadinessState();let overlay=root.querySelector("[data-c5-readiness-dialog]");
 if(!overlay){overlay=document.createElement("div");overlay.className="ucc-readiness-dialog";overlay.dataset.c5ReadinessDialog="1";root.appendChild(overlay);}
-overlay.innerHTML=`<div class="ucc-readiness-dialog-card" role="dialog" aria-modal="true"><header><div><strong>${esc(readiness.definition.label)}</strong><span>Policy code not configured</span></div><button type="button" data-c5-readiness-close>×</button></header><div class="ucc-readiness-dialog-body"><section><h3>Sources</h3><div class="table-wrap"><table><thead><tr><th>Source</th><th>Status</th></tr></thead><tbody>${readiness.sourceRows.map(function(row){return`<tr><td>${esc(row.name)}</td><td>${badge(row.available?"Good":"Warning")} ${esc(row.status)}</td></tr>`;}).join("")}</tbody></table></div></section><section><h3>Metrics</h3><div class="table-wrap"><table><thead><tr><th>Metric</th><th>Required source</th><th>Status</th></tr></thead><tbody>${readiness.metricRows.map(function(row){return`<tr><td>${esc(row.name)}</td><td>${esc(row.dependencies.join(" / ")||"Calculated in browser")}</td><td>${badge(row.available?"Good":"Warning")}</td></tr>`;}).join("")}</tbody></table></div></section></div></div>`;
+overlay.innerHTML=`<div class="ucc-readiness-dialog-card" role="dialog" aria-modal="true"><header><div><strong>${esc(readiness.definition.label)}</strong><span>Source and metric readiness</span></div><button type="button" data-c5-readiness-close>×</button></header><div class="ucc-readiness-dialog-body"><section><h3>Sources</h3><div class="table-wrap"><table><thead><tr><th>Source</th><th>Status</th></tr></thead><tbody>${readiness.sourceRows.map(function(row){return`<tr><td>${esc(row.name)}</td><td>${badge(row.available?"Good":"Warning")} ${esc(row.status)}</td></tr>`;}).join("")}</tbody></table></div></section><section><h3>Metrics</h3><div class="table-wrap"><table><thead><tr><th>Metric</th><th>Required source</th><th>Status</th></tr></thead><tbody>${readiness.metricRows.map(function(row){return`<tr><td>${esc(row.name)}</td><td>${esc(row.dependencies.join(" / ")||"Calculated in browser")}</td><td>${badge(row.available?"Good":"Warning")}</td></tr>`;}).join("")}</tbody></table></div></section></div></div>`;
 overlay.hidden=false;overlay.querySelector("[data-c5-readiness-close]")?.addEventListener("click",function(){overlay.hidden=true;});overlay.addEventListener("click",function(event){if(event.target===overlay)overlay.hidden=true;},{once:true});
 }
 
@@ -311,7 +311,6 @@ if(strong)strong.textContent=noticeStatus==="loading"?"Loading Criterion 5 analy
 if(copy)copy.textContent=message;
 }
 const status=m=>{
-set("[data-status]",m);
 const text=String(m||"");
 const noticeStatus=/error|failed|unavailable|permission/i.test(text)
 ?"error"
@@ -4982,9 +4981,8 @@ tbody.innerHTML=(result.sources||[]).map(source=>`
     `).join("")||'<tr><td colspan="4">No source registry rows were returned.</td></tr>';
 const badge=$(`[data-c4-policy-badge="${CSS.escape(tab)}"]`);
 if(badge){
-const policy=result.policy||{};
 const summary=result.source_summary||{};
-badge.textContent=`${policy.policy||TAB_MAP[tab]} v${policy.version||""} · ${summary.available||0}/${summary.total||0} sources available`;
+badge.textContent=`Live data connected · ${summary.available||0} of ${summary.total||0} sources available`;
 }
 }
 function renderExceptionRows(tab,result){
@@ -5146,10 +5144,10 @@ const metricSummary=result.metric_summary||{};
 const policy=result.policy||{};
 const issueCount=(sourceSummary.issues||0)+(metricSummary.issues||0);
 setNotice(
-`${policy.policy||TAB_MAP[tab]} v${policy.version||""} · `
-+`${sourceSummary.available||0}/${sourceSummary.total||0} sources available · `
-+`${metricSummary.available||0}/${metricSummary.total||0} metrics available`
-+(issueCount?` · ${issueCount} data issue(s)`:""),
+`Live data connected · `
++`${sourceSummary.available||0} of ${sourceSummary.total||0} sources available · `
++`${metricSummary.available||0} of ${metricSummary.total||0} metrics available`
++(issueCount?` · ${issueCount} item${issueCount===1?"":"s"} need review`:""),
 issueCount?"warning":"available"
 );
 }
