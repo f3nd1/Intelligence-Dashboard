@@ -51,7 +51,7 @@ function activeSection(dashboard){return dashboard.dataset.demoActiveTab||"overv
 function sectionCode(config,tab){if(tab==="overview")return`C${config.number}-OVERVIEW`;if(tab==="quality")return`C${config.number}-QUALITY`;if(tab==="sources")return`C${config.number}-SOURCES`;return`C${config.number}-${tab}`;}
 function sectionDefinition(config,tab){const key=(config.panelMap&&config.panelMap[tab])||tab;return config.sections[tab]||config.sections[key]||config.sections.overview;}
 function liveChartCardMarkup(chart){
-return`<article class="panel ucc-shared-panel ucc-demo-visual-card ucc-live-generated-card" data-demo-card="${esc(chart.id)}"><div class="panel-head"><h2>${esc(chart.title)}</h2><div class="mini-toggle" data-demo-view-toggle="${esc(chart.id)}"><button type="button" class="active" data-demo-view="diagram">Diagram</button><button type="button" data-demo-view="table">Table</button></div></div><p class="ucc-card-description">${esc(chart.description||"Permission-aware live metrics. Use Diagram/Table and drill-down controls.")}</p><div class="chart ucc-demo-chart" data-demo-chart="${esc(chart.id)}" data-demo-chart-title="${esc(chart.title)}" data-demo-chart-type="${esc(chart.type||"bar")}"></div><div class="table-wrap hidden" data-demo-chart-table="${esc(chart.id)}"><table><thead><tr><th>Metric</th><th>Live value</th><th>Status</th></tr></thead><tbody data-demo-chart-table-body="${esc(chart.id)}"></tbody></table></div><button type="button" data-demo-drill="${esc(chart.id)}">View underlying records</button></article>`;
+return`<article class="panel ucc-shared-panel ucc-demo-visual-card ucc-live-generated-card" data-demo-card="${esc(chart.id)}"><div class="panel-head"><h2>${esc(chart.title)}<span class="ucc-card-desc-inline"> — ${esc(chart.description||"Permission-aware live metrics.")}</span></h2><div class="mini-toggle" data-demo-view-toggle="${esc(chart.id)}"><button type="button" class="active" data-demo-view="diagram">Diagram</button><button type="button" data-demo-view="table">Table</button></div></div><div class="chart ucc-demo-chart" data-demo-chart="${esc(chart.id)}" data-demo-chart-title="${esc(chart.title)}" data-demo-chart-type="${esc(chart.type||"bar")}"></div><div class="table-wrap hidden" data-demo-chart-table="${esc(chart.id)}"><table><thead><tr><th>Metric</th><th>Live value</th><th>Status</th></tr></thead><tbody data-demo-chart-table-body="${esc(chart.id)}"></tbody></table></div><button type="button" data-demo-drill="${esc(chart.id)}">View underlying records</button></article>`;
 }
 function panelInsertPoint(panel){
 return Array.from(panel.children).find(function(child){return/Management Questions and Data-Based Answers/i.test(child.textContent||"");})||null;
@@ -232,7 +232,7 @@ function renderLiveChartCard(dashboard,chart,index,result){
 const chartNode=dashboard.querySelector(`[data-demo-chart="${CSS.escape(chart.id)}"]`);
 const card=chartNode?.closest("[data-demo-card]");
 const heading=card?.querySelector("h2");
-if(heading)heading.textContent=chart.title;
+if(heading)heading.innerHTML=esc(chart.title)+(chart.description?'<span class="ucc-card-desc-inline"> — '+esc(chart.description)+'</span>':'');
 if(card){
 card._liveCardPending={chart,index,result};
 card.dataset.liveCardRendered="";

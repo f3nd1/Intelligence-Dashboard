@@ -125,7 +125,7 @@ trigger.setAttribute("aria-expanded", "true");
 menuTitle.textContent = tabLabel(trigger);
 menuCount.textContent = entries.length + " visual" + (entries.length === 1 ? "" : "s");
 menuList.innerHTML = entries.length
-? entries.map(entry => '<button type="button" data-visual-entry="' + esc(entry.key) + '"><span><strong>' + esc(entry.title) + '</strong>' + (entry.description ? '<small class="ucc-visual-menu-desc">' + esc(entry.description) + '</small>' : '') + '</span><small>' + esc(entry.type) + '</small></button>').join("")
+? entries.map(entry => '<button type="button" data-visual-entry="' + esc(entry.key) + '"><span class="ucc-visual-hover-menu-label"><strong>' + esc(entry.title) + '</strong>' + (entry.description ? '<span class="ucc-visual-menu-desc"> — ' + esc(entry.description) + '</span>' : '') + '</span><small class="ucc-visual-menu-type">' + esc(entry.type) + '</small></button>').join("")
 : '<div class="ucc-visual-diagnostic"><strong>No visual is registered for this section</strong><span>Use Source Mapping Report to check whether a DocType, permission or field mapping prevented the visual catalogue from loading.</span><button type="button" data-ucc-open-mapping>Source mapping report</button></div>';
 placeMenu(trigger);
 menu.hidden = false;

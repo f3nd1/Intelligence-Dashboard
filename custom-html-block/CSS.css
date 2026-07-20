@@ -1241,8 +1241,10 @@
   border-color:#d9c39f;
   background:#fbf5ec;
 }
-.ucc-visual-hover-menu button strong{font-size:11px;line-height:1.35}
-.ucc-visual-hover-menu button small{flex:0 0 auto;color:#7a8495;font-size:9px}
+.ucc-visual-hover-menu button{align-items:baseline}
+.ucc-visual-hover-menu-label{min-width:0;line-height:1.4}
+.ucc-visual-hover-menu button strong{font-size:11px;line-height:1.4}
+.ucc-visual-hover-menu button small.ucc-visual-menu-type{flex:0 0 auto;color:#7a8495;font-size:9px}
 .ucc-visual-hover-menu-footer{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px;border-top:1px solid #e3e7ef;background:#fafbfc}
 .ucc-visual-hover-menu-footer button{justify-content:center;border-color:#d9deea;font-weight:800}
 .ucc-tab-visual-count{
@@ -1317,7 +1319,9 @@
 .ucc-platform .ucc-live-expanded-grid[hidden]{display:none !important}
 
 .ucc-platform .ucc-visual-archived{display:none !important}
-.ucc-demo-visual-card .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:0}
+.ucc-demo-visual-card .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:0}
 .ucc-demo-visual-card .panel-head h2{margin:0}
 .ucc-card-description{margin:8px 0 12px;color:var(--ucc-muted);font-size:12.5px;line-height:1.45}
-.ucc-visual-menu-desc{display:block;margin-top:2px;font-size:9px;color:#7a8495;font-weight:400}
+.ucc-visual-menu-desc{font-size:11px;color:#7a8495;font-weight:400}
+.ucc-card-desc-inline{font-weight:400;font-size:13px;color:var(--ucc-muted)}
+.ucc-demo-visual-card .panel-head h2,.ucc-c4-expanded-card .panel-head h2{font-weight:800}

@@ -1520,14 +1520,12 @@ bindChartDrills(root);
 function ensureCardDescription(chartId){
 const chart=chartNode(chartId);if(!chart)return;
 const panel=chart.closest(".panel");if(!panel)return;
-if(panel.querySelector(":scope > .ucc-card-description"))return;
+const h2=panel.querySelector("h2");if(!h2||h2.querySelector(".ucc-card-desc-inline"))return;
 const description=C5_VISUAL_DESCRIPTIONS[chartId];if(!description)return;
-const head=panel.querySelector(".panel-head");
-const p=document.createElement("p");
-p.className="ucc-card-description";
-p.textContent=description;
-if(head)head.insertAdjacentElement("afterend",p);
-else panel.insertBefore(p,panel.firstChild);
+const span=document.createElement("span");
+span.className="ucc-card-desc-inline";
+span.textContent=" — "+description;
+h2.appendChild(span);
 }
 state.c5RequestedCharts=state.c5RequestedCharts||new Set();
 state.c5PendingCharts=state.c5PendingCharts||new Map();
@@ -5045,13 +5043,12 @@ return rows;
 function c4ExpandedChartMarkup(chart){
 return`<article class="panel ucc-c4-expanded-card" data-c4-expanded-card="${escapeHtml(chart.id)}">
 <div class="panel-head">
-<h2>${escapeHtml(chart.title)}</h2>
+<h2>${escapeHtml(chart.title)}<span class="ucc-card-desc-inline"> — ${escapeHtml(chart.description||"Live Criterion 4 API metrics.")}</span></h2>
 <div class="mini-toggle">
 <button type="button" class="active" data-c4-expanded-view="diagram">Diagram</button>
 <button type="button" data-c4-expanded-view="table">Table</button>
 </div>
 </div>
-<p class="ucc-card-description">${escapeHtml(chart.description||"Live Criterion 4 API metrics. Use Table for the same values and source links.")}</p>
 <div class="chart ucc-c4-expanded-chart" data-c4-expanded-chart="${escapeHtml(chart.id)}"></div>
 <div class="table-wrap hidden" data-c4-expanded-table="${escapeHtml(chart.id)}">
 <table><thead><tr><th>Measure</th><th>Live value</th><th>Source / Calculation</th><th>Records</th></tr></thead><tbody></tbody></table>

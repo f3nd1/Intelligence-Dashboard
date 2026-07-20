@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.9.7-inline-labels (2026-07-20)
+
+- Fixed the visual card/menu label layout. Titles, descriptions and the chart-type label used to stack awkwardly (title on one line, "Gauges how many courses..." on the next, then "chart"), leaving orphaned whitespace. Now each visual reads **"Title — Description"** inline on the heading line, with the chart-type label (`chart`/`donut`/etc.) right-aligned on the same row. Applied consistently across the menu list and all three card architectures (demo `liveChartCardMarkup`, Criterion 4 `c4ExpandedChartMarkup`, Criterion 5 `ensureCardDescription`).
+- The description moved from a separate `<p class="ucc-card-description">` into an inline `<span class="ucc-card-desc-inline">` appended to the `<h2>`; menu entries carry the description inline in `.ucc-visual-menu-desc` next to the title. Panel-head alignment switched to `flex-start` so the type/toggle stays on the heading's baseline.
+- Correctness fix: `renderLiveChartCard` rebuilt the demo card heading with `heading.textContent = chart.title` on every render, which wiped the inline description span. It now sets `heading.innerHTML` to the title plus the inline description span, so the description survives click-to-render. Verified in-harness: the inline span persists after diagram render with the toggle on the same row and no console errors.
+
 ## v1.9.7-strip-archived (2026-07-20)
 
 - Physically removed the 415 archived (disabled) visual definitions from the live build so `custom-html-block/JAVASCRIPT.js` is actually smaller: **520,744 -> 453,614 bytes (-67 KB, ~13%)**. Step #4 had only flagged them `enabled:false`, so their full definitions still shipped.
