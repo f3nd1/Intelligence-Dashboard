@@ -359,6 +359,10 @@ error:e=>{const message=errText(e);addLog("ERROR","request","request_failed",{id
 }
 async function list(dt,fields,filters=[]){return call("frappe.client.get_list",{doctype:dt,fields,filters,limit_page_length:MAX,order_by:"modified desc"},{doctype:dt,operation:"list",fields,filters})}
 async function doc(dt,name){return call("frappe.client.get",{doctype:dt,name},{doctype:dt,operation:"get",name})}
+// Bounded-concurrency map: runs fn over items in batches of `limit` in parallel,
+// preserving order. Replaces per-record sequential hydration so a section's
+// document loads run concurrently instead of one round-trip at a time.
+async function mapLimit(items,limit,fn){const out=new Array(items.length);for(let i=0;i<items.length;i+=limit){const batch=items.slice(i,i+limit),res=await Promise.all(batch.map((it,j)=>fn(it,i+j)));for(let j=0;j<res.length;j++)out[i+j]=res[j];}return out;}
 async function resolveDoctype(canonical){
 if(state.resolvedDoctypes[canonical])return state.resolvedDoctypes[canonical];
 const candidates=SOURCE_ALIASES[canonical]||[canonical];
@@ -394,7 +398,7 @@ const attempted=SOURCE_ALIASES[dt]||[dt];
 try{
 const resolved=await resolveDoctype(dt);
 let rows=await safeList(dt,resolved,c,filters);
-if(c.full){const full=[];for(const r of rows.slice(0,500)){try{full.push(await doc(resolved,r.name))}catch(error){addLog("WARN","source","document_hydration_failed",{canonical:dt,resolved,name:r.name,error:error.message});full.push(r)}}rows=full}
+if(c.full){rows=await mapLimit(rows.slice(0,500),8,async r=>{try{return await doc(resolved,r.name)}catch(error){addLog("WARN","source","document_hydration_failed",{canonical:dt,resolved,name:r.name,error:error.message});return r}})}
 state.sources[dt]={status:"Available",purpose:c.purpose,count:rows.length,resolved,attempted,route:SOURCE_ROUTES[resolved]||resolved.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")};
 addLog("INFO","source","source_loaded",{canonical:dt,resolved,count:rows.length,filters,full:!!c.full});
 return rows;
@@ -406,24 +410,19 @@ return[]
 }
 }
 async function hydrateDocuments(dt){
-const rows=state.data[dt]||[],full=[];
-for(let index=0;index<rows.length;index++){
-const row=rows[index];
-setProgress(Math.min(90,8+Math.round((index/Math.max(rows.length,1))*70)),`Loading ${dt} details ${index+1}/${rows.length}`);
-if(row.topics||row.courses||Object.keys(row).length>8){full.push(row);continue}
-try{full.push(await doc(state.resolvedDoctypes[dt]||dt,row.name))}catch(error){addLog("WARN","source","document_hydration_failed",{canonical:dt,name:row.name,error:error.message});full.push(row)}
-}
-state.data[dt]=full;
+const rows=state.data[dt]||[];
+setProgress(Math.min(90,8),`Loading ${dt} details (${rows.length})`);
+state.data[dt]=await mapLimit(rows,8,async row=>{
+if(row.topics||row.courses||Object.keys(row).length>8)return row;
+try{return await doc(state.resolvedDoctypes[dt]||dt,row.name)}catch(error){addLog("WARN","source","document_hydration_failed",{canonical:dt,name:row.name,error:error.message});return row}
+});
 }
 async function loadC511Source(dt){
 const cfg=C511_SOURCES[dt];
 try{
-const rows=await list(dt,cfg.fields),full=[];
-for(let index=0;index<rows.slice(0,300).length;index++){
-const row=rows[index];
-setProgress(Math.min(94,20+Math.round((index/Math.max(rows.length,1))*70)),`Loading ${dt} ${index+1}/${Math.min(rows.length,300)}`);
-try{full.push(await doc(dt,row.name))}catch{full.push(row)}
-}
+const rows=await list(dt,cfg.fields);
+setProgress(Math.min(94,20),`Loading ${dt} (${Math.min(rows.length,300)})`);
+const full=await mapLimit(rows.slice(0,300),8,async row=>{try{return await doc(dt,row.name)}catch{return row}});
 state.sources[dt]={status:"Available",count:full.length,purpose:cfg.purpose};return full;
 }catch(e){state.sources[dt]={status:/not found|does not exist|doctype .* not found|404/i.test(e.message)?"Not installed":/permission|forbidden|not permitted/i.test(e.message)?"Permission denied":"Unavailable",count:0,error:e.message,purpose:cfg.purpose};return[]}
 }

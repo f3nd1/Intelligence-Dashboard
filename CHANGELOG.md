@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.9.7-parallel-hydration (2026-07-20)
+
+- Sped up Criterion 5's section loading (the "~186 steps" slow load). Investigation found the step explosion was **not** related to the archived visuals: Criteria 1/2/3/6/7 and Criterion 4 make one Server Script call per section that serves every visual (so archiving cards removed zero calls), and Criterion 5 loads data per section-source, not per-visual. The real cost was Criterion 5's per-record document hydration: 10 of its 20 DocTypes are `full:true`, and `load()`/`loadC511Source()`/`hydrateDocuments()` fetched each record with a **sequential** `await doc()` in a loop (up to 500/300 records), so a data-rich section became ~186 one-at-a-time round-trips.
+- Added a bounded-concurrency `mapLimit(items, limit, fn)` helper and converted all three hydration loops to run in **batches of 8 in parallel**, preserving order and the same per-record error fallback. Exactly the same records/fields are loaded (no data or mapping change) - they now load 8-concurrent instead of one-at-a-time. Verified: identical call structure, max in-flight requests rose from 1 to 8, and the per-record progress steps (the visible "186") collapse to one update per source.
+- No active visual behaviour changed; reduction counts (30/30/30/30/32/30/30) and the Criterion 5 chart-consistency work remain intact.
+
 ## v1.9.7-merge-sources-quality (2026-07-20)
 
 - Consolidated each dashboard's separate "Data Quality" and "Sources" tabs into a single "Sources & Data Quality" tab, so source and data-quality information lives together in one place instead of being scattered across two tabs. A shared `window.__uccMergeSourcesQuality(dash, tabAttr, panelAttr)` helper moves the Data Quality panel's content into the Sources panel and removes the Data Quality tab button; it is applied uniformly across all three dashboard architectures (Criteria 1/2/3/6/7 `data-demo-tab`, Criterion 4 `data-c4-tab`, Criterion 5 `data-tab`).
