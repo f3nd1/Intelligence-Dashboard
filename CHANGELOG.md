@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.9.6-cardsort (2026-07-20)
+
+- Sorted the chart-card grid alphabetically by visual name, matching the visual navigation menu's existing order. The menu list was already alphabetical (`entries.sort()` in `20-explore-runtime.js`'s `buildRegistry()`), but the actual rendered cards on each subcriterion tab were a separate code path that built cards straight from the raw config order, so scanning down the page didn't match scanning the menu. Fixed for Criteria 1, 2, 3, 6 and 7 (`ensureLiveSectionCards` in `30-live-foundation-runtime.js`), Criterion 4 (`ensureC4ExpandedVisuals` in `10-platform-runtime.js`, preserving each visual's original data-window index so its live metrics are unchanged), and Criterion 5 (a one-time DOM reorder of its static chart cards, scoped within each existing card group so the nested 5.1.1-style sub-tab structure isn't disturbed).
+
 ## v1.9.6-urlparam (2026-07-20)
 
 - Fixed direct-URL deep-linking to the wrong dashboard on first load. Navigating straight to a URL with `?dashboard=criterion_3` never worked; the page always showed whatever dashboard was last saved in `localStorage`, only appearing to "fix itself" after a reload because a manual `<select>` change had since overwritten that saved value. No code anywhere read the `dashboard` query parameter — it was write-only, produced only by the "copy link" actions. Now the parameter is read on load and passed through the same `setDashboard()` function the dashboard `<select>` already uses, taking priority over `localStorage` when present.

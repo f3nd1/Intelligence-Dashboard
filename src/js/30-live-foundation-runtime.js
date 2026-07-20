@@ -71,7 +71,7 @@ grid.dataset.liveSection=sectionKey;
 panel.insertBefore(grid,panelInsertPoint(panel));
 }
 if(!grid.dataset.liveCardsMounted){
-grid.innerHTML=(definitions[sectionKey]||[]).map(liveChartCardMarkup).join("");
+grid.innerHTML=(definitions[sectionKey]||[]).slice().sort((a,b)=>(a.title||"").localeCompare(b.title||"",undefined,{sensitivity:"base"})).map(liveChartCardMarkup).join("");
 grid.dataset.liveCardsMounted="1";
 }
 }

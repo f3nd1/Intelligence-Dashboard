@@ -2585,6 +2585,24 @@ changelogBody.innerHTML=CHANGELOG
 }
 }
 function ensureD3(cb){if(window.d3)return cb();const s=document.createElement("script");s.src="https://d3js.org/d3.v7.min.js";s.onload=cb;s.onerror=()=>status("D3 could not load");document.head.appendChild(s)}
+function sortChartCardsAlphabetically(){
+const groups=new Map();
+$$("article.panel").forEach(article=>{
+if(article.querySelector("article.panel"))return;
+if(!article.querySelector("[data-chart]"))return;
+const parent=article.parentElement;
+if(!parent)return;
+if(!groups.has(parent))groups.set(parent,[]);
+groups.get(parent).push(article);
+});
+groups.forEach(articles=>{
+articles
+.map(article=>({article,title:(article.querySelector("h2")?.textContent||"").trim()}))
+.sort((a,b)=>a.title.localeCompare(b.title,undefined,{sensitivity:"base"}))
+.forEach(({article})=>article.parentElement.appendChild(article));
+});
+}
+sortChartCardsAlphabetically();
 bind();addLog("INFO","lifecycle","d3_initialization_started",{present:!!window.d3});ensureD3(async()=>{addLog("INFO","lifecycle","d3_ready",{version:window.d3?.version});await loadBase();await loadSection("overview",true);addLog("INFO","lifecycle","initialization_completed",{sources:state.sources,resolved_doctypes:state.resolvedDoctypes})});
 })();
 (function () {
@@ -5208,7 +5226,7 @@ grid.className="grid2 ucc-c4-expanded-grid";
 const qa=Array.from(panel.children).find(child=>/Management Questions and Data-Based Answers/i.test(child.textContent||""));
 panel.insertBefore(grid,qa||null);
 }
-definitions.forEach((chart,index)=>{
+definitions.map((chart,index)=>({chart,index})).sort((a,b)=>(a.chart.title||"").localeCompare(b.chart.title||"",undefined,{sensitivity:"base"})).forEach(({chart,index})=>{
 if(!grid.querySelector(`[data-c4-expanded-card="${CSS.escape(chart.id)}"]`)){
 grid.insertAdjacentHTML("beforeend",c4ExpandedChartMarkup(chart));
 }
@@ -5918,7 +5936,7 @@ grid.dataset.liveSection=sectionKey;
 panel.insertBefore(grid,panelInsertPoint(panel));
 }
 if(!grid.dataset.liveCardsMounted){
-grid.innerHTML=(definitions[sectionKey]||[]).map(liveChartCardMarkup).join("");
+grid.innerHTML=(definitions[sectionKey]||[]).slice().sort((a,b)=>(a.title||"").localeCompare(b.title||"",undefined,{sensitivity:"base"})).map(liveChartCardMarkup).join("");
 grid.dataset.liveCardsMounted="1";
 }
 }

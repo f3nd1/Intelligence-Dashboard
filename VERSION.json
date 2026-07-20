@@ -75,7 +75,7 @@
     "ucc_analytics_criterion_7": "1.9.5"
   },
   "generated_at_utc": "2026-07-19T15:00:00+00:00",
-  "notes": "Fixed direct-URL deep-linking: the ?dashboard= query parameter was never read on page load, so navigating straight to a URL with that parameter left whatever dashboard was last saved in localStorage active instead of switching. Also fixed scoped Source Mapping Report styling, exact visual catalogue ownership and counts, slow-load blank detection, and confirmed UCC DocType mappings.",
+  "notes": "Sorted the chart-card grid alphabetically by visual name for every criterion and subcriterion, matching the visual navigation menu's existing alphabetical order (the menu was already sorted; the actual rendered cards were not). Fixed direct-URL deep-linking: the ?dashboard= query parameter was never read on page load, so navigating straight to a URL with that parameter left whatever dashboard was last saved in localStorage active instead of switching. Also fixed scoped Source Mapping Report styling, exact visual catalogue ownership and counts, slow-load blank detection, and confirmed UCC DocType mappings.",
   "policy_registries": {
     "criterion_1": [
       "PPD-SGL-CG-1.1.1 v2.2",
