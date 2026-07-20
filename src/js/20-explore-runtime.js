@@ -104,7 +104,8 @@ panel: kind === "demo" ? panelNode?.dataset.demoPanel || "overview" : dashboard 
 c511Panel: node.closest("[data-c511-panel]")?.dataset.c511Panel || "",
 localPanel: node.closest("[data-local-panel]")?.dataset.localPanel || "",
 type: kind === "demo" ? node.dataset.demoChartType || "live-foundation" : inferType(id, title),
-source: kind === "demo" ? "Permission-aware live API foundation" : sourceHint(node)
+source: kind === "demo" ? "Permission-aware live API foundation" : sourceHint(node),
+description: kind === "c5" ? text((global.UCCC5VisualDescriptions || {})[id] || "") : ""
 };
 entry.section = sectionLabel(entry);
 return entry;

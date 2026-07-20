@@ -585,6 +585,8 @@ m.get(label).push(record);
 return [...m].map(([label,records])=>({label,value:records.length,records,doctype})).sort((a,b)=>b.value-a.value);
 }
 function badge(s){const c=s==="Good"?"good":s==="Warning"?"warn":"risk";return`<span class="badge ${c}">${esc(s)}</span>`}
+const C5_VISUAL_DESCRIPTIONS={"target-gaps":"Compares each academic system area against its target readiness level.","program-course":"Maps how each course maps to the modules that make it up.","course-readiness":"Gauges how many courses have their configuration fully completed.","c511-radar":"Compares evidence strength across every course design and development control area.","c511-heatmap":"Grids evidence coverage against each course design control area.","c511-network":"Maps how courses connect to the modules that make them up.","c511-proposal-donut":"Shows the current status mix of course proposals, from drafted to approved.","c511-decision-time":"Tracks how long proposal decisions take across recent years.","c511-proposal-bars":"Compares how complete supporting evidence is across course proposals.","c511-module-bubbles":"Compares evidence strength across modules, sized by how much evidence exists.","c511-module-radial":"Gauges what share of modules have complete design evidence.","c511-module-stream":"Tracks module design evidence activity across recent periods.","c511-review-donut":"Shows the current status mix of course reviews, from due to complete.","c511-review-timeline":"Tracks course reviews from scheduled through to completed over time.","c511-review-actions":"Compares how complete supporting evidence is across course reviews.","c511-gap-funnel":"Compares identified evidence gaps by how severe each one is.","c511-gap-sunburst":"Grids evidence gaps against the record type each one was found in.","c512-review-level":"Compares review coverage across the different review levels applied.","c512-schedule":"Tracks upcoming course and module reviews against their scheduled dates.","c512-module-status":"Shows the current status mix of module reviews, from due to complete.","c512-course-status":"Shows the current status mix of course reviews, from due to complete.","c512-review-type":"Compares how reviews are distributed across the different review types.","c512-actions":"Shows the status mix of action plans raised from course reviews.","c512-recommendation-status":"Gauges what share of previous recommendations have been implemented.","c512-evidence":"Gauges how complete module review evidence is across the catalogue.","c512-cycle-v110":"Tracks the review cycle from due through to fully completed.","c512-coverage-v110":"Compares how much module review coverage feeds into course review.","c512-action-aging-v110":"Tracks how long open review action plans have been outstanding.","c512-actions-completion-v110":"Compares completed action plans against those still pending.","c512-missing-evidence-v110":"Highlights reviews that are missing required supporting evidence.","c512-followup-v110":"Tracks how implementation of review recommendations has trended over time.","schedule":"Compares scheduled classes across each course offered.","delivery-controls":"Gauges how many delivery controls are in place for scheduled classes.","attendance-status":"Shows the current status mix of student attendance records.","enrollment":"Compares student enrolment numbers across each course.","c521-intakes":"Gauges how ready each intake is ahead of its scheduled start.","c521-flow":"Tracks a course through each stage of the planning process.","c521-class-status":"Shows the current status mix of module classes, from planned to active.","c521-schedule":"Gauges what share of module classes have a completed schedule.","c521-admission":"Shows the current status mix of admissions feeding into course planning.","c521-teacher":"Gauges what share of module classes have a teacher assigned.","c521-session-readiness":"Gauges how ready room and timing arrangements are for scheduled sessions.","c521-contracts":"Gauges what share of teaching contracts have complete date information.","c521-date-completeness-v110":"Tracks how complete intake date records are across the catalogue.","c521-unscheduled-v110":"Highlights module classes that still have no schedule assigned.","c521-schedule-completeness-v110":"Gauges how complete class schedules are across the catalogue.","c521-room-clashes-v110":"Highlights where room and time bookings clash with each other.","c521-teacher-clashes-v110":"Highlights where a teacher's timetable has conflicting bookings.","c521-contract-vs-start-v110":"Compares teaching contract dates against each course's commencement date.","c521-contract-exceptions-v110":"Highlights teaching contracts that are unsigned or not yet sent.","c522-coverage":"Gauges how much of scheduled delivery has a completed observation.","c522-observation-type":"Compares delivery observations across the different types conducted.","c522-platform":"Shows how delivery sessions are distributed across each platform used.","c522-ratings":"Compares observation ratings across each area being assessed.","c522-survey-categories":"Shows how survey responses are distributed across each category.","c522-notice":"Gauges what share of observations were conducted with prior notice given.","c522-signoff":"Gauges what share of delivery observations have completed sign-off.","c522-concerns":"Compares delivery concerns raised across observation records.","c522-planned-delivered-v110":"Compares planned delivery sessions against sessions actually delivered.","c522-teacher-coverage-v110":"Compares observation coverage across each teacher delivering sessions.","c522-module-coverage-v110":"Compares observation coverage across each module being delivered.","c522-observation-mode-v110":"Shows the split between scheduled and ad-hoc delivery observations.","c522-signoff-aging-v110":"Tracks how long delivery observations have waited for sign-off.","c522-rating-distribution-v110":"Shows how delivery observation ratings are distributed overall.","c522-strengths-v110":"Compares the most commonly noted strengths across delivery observations.","c522-improvements-v110":"Compares the most commonly noted improvement areas across observations.","c522-survey-volume-v110":"Tracks survey response volume for delivered sessions over time.","c522-delivery-exceptions-v110":"Highlights delivery records with an outstanding exception to resolve.","c531-status":"Shows the current status mix of partnership agreements.","c531-type":"Compares partnerships across each type of agreement in place.","c531-expiry":"Groups partnership agreements by how soon they are due to expire.","c531-nda":"Gauges what share of partnerships have a completed NDA on file.","c531-monitoring":"Compares partnerships across the monitoring methods applied.","c531-monitoring-type":"Shows how partnership monitoring activity is distributed by type.","c531-evaluation":"Shows the outcome mix of completed partnership evaluations.","c531-scores":"Compares identification scores across candidate partnerships.","c531-rating-stage":"Shows how partnerships are distributed across the provider rating stages.","c531-threshold":"Gauges how many candidate partnerships met the selection threshold.","c531-lifecycle-v110":"Maps a partnership agreement from proposed through to active.","c531-signature-v110":"Gauges what share of partnership agreements have completed signature.","c531-risk-v110":"Shows how partnership risk levels are distributed across the portfolio.","c531-monitoring-recency-v110":"Tracks how recently each partnership was last monitored.","c531-decisions-v110":"Shows the split of continuation decisions reached for partnerships.","c531-missing-controls-v110":"Highlights partnerships missing required monitoring or evaluation records.","c531-quality-completeness-v110":"Gauges how complete quality-related records are across partnerships.","survey-module-score":"Compares survey scores achieved across each module.","survey-type-count":"Shows how student surveys are distributed across each survey type.","survey-question-score":"Compares survey scores across each individual question asked.","learning-support":"Tracks learning support interventions raised for students.","learning-risk":"Highlights students currently flagged as at academic risk.","assessment-trend":"Tracks the number of assessment plans created across recent months.","grade":"Shows how student grades are distributed across the grading scale.","assessment-controls":"Gauges how many assessment controls are documented and in place.","assessment-quality":"Gauges how complete and reliable the underlying assessment data is."};
+window.UCCC5VisualDescriptions=C5_VISUAL_DESCRIPTIONS;
 function chartNode(n){return $(`[data-chart="${n}"]`)}
 function openChartDrill(key,index){
 const row=(state.chartDrills?.[key]||[])[Number(index)];
@@ -609,30 +611,37 @@ const chart=chartNode(name);if(!chart)return;
 const panel=chart.closest(".panel");if(!panel)return;
 state.chartDrills=state.chartDrills||{};
 state.chartDrills[name]=Array.isArray(rows)?rows:[];
-if(panel.querySelector(`[data-card-toggle="${name}-auto-card"]`)||panel.querySelector(`[data-card-toggle]`))return;
+if(panel.querySelector(`[data-card-toggle]`)&&!panel.querySelector(`[data-card-toggle="${name}-auto-card"]`))return;
+let toggle=panel.querySelector(`[data-card-toggle="${name}-auto-card"]`),diagram,table;
+if(!toggle){
 let head=panel.querySelector(".panel-head");
 if(!head){
 const h=panel.querySelector("h2");
 head=document.createElement("div");head.className="panel-head";
 if(h){h.parentNode.insertBefore(head,h);head.appendChild(h)}else panel.insertBefore(head,panel.firstChild);
 }
-const toggle=document.createElement("div");toggle.className="mini-toggle";toggle.dataset.cardToggle=`${name}-auto-card`;
+toggle=document.createElement("div");toggle.className="mini-toggle";toggle.dataset.cardToggle=`${name}-auto-card`;
 toggle.innerHTML='<button type="button" class="active" data-card-view="diagram">Diagram</button><button type="button" data-card-view="table">Table</button>';
 head.appendChild(toggle);
-const diagram=document.createElement("div");diagram.dataset.cardPanel=`${name}-auto-card-diagram`;
+diagram=document.createElement("div");diagram.dataset.cardPanel=`${name}-auto-card-diagram`;
 chart.parentNode.insertBefore(diagram,chart);diagram.appendChild(chart);
-const table=document.createElement("div");table.dataset.cardPanel=`${name}-auto-card-table`;table.className="hidden";
+table=document.createElement("div");table.dataset.cardPanel=`${name}-auto-card-table`;table.className="hidden";
 table.innerHTML='<div class="table-wrap"><table><thead><tr><th>Label</th><th>Value</th></tr></thead><tbody></tbody></table></div>';
 diagram.parentNode.insertBefore(table,diagram.nextSibling);
-const body=table.querySelector("tbody");
-const safeRows=Array.isArray(rows)?rows:[];
-body.innerHTML=safeRows.length?safeRows.map((x,index)=>`<tr><td>${esc(x.label??x.name??"—")}</td><td>${drillValue(name,index,x)}</td></tr>`).join(""):'<tr><td colspan="2">No records found in the selected scope.</td></tr>';
-bindChartDrills(table);
 toggle.querySelectorAll("[data-card-view]").forEach(btn=>btn.addEventListener("click",()=>{
 toggle.querySelectorAll("[data-card-view]").forEach(x=>x.classList.toggle("active",x===btn));
 diagram.classList.toggle("hidden",btn.dataset.cardView!=="diagram");
 table.classList.toggle("hidden",btn.dataset.cardView!=="table");
 }));
+}else{
+diagram=chart.parentNode;
+table=diagram.nextElementSibling;
+}
+if(!table)return;
+const body=table.querySelector("tbody");
+const safeRows=Array.isArray(rows)?rows:[];
+body.innerHTML=safeRows.length?safeRows.map((x,index)=>`<tr><td>${esc(x.label??x.name??"—")}</td><td>${drillValue(name,index,x)}</td></tr>`).join(""):'<tr><td colspan="2">No records found in the selected scope.</td></tr>';
+bindChartDrills(table);
 }
 function empty(n,msg){const e=chartNode(n);if(e)e.innerHTML=`<div class="empty">${esc(msg)}</div>`}
 function bar(n,rows){
@@ -1547,7 +1556,7 @@ if(tab==="c53"){
 }
 if(tab==="c54"){
 renderSurvey();
-empty("learning-support","No confirmed learning-intervention source is available in the current Criterion 5 data scope.");
+empty("learning-support","No confirmed learning-intervention source is available in the current Criterion 5 data scope.");ensureCardDescription("learning-support");
 bar("learning-risk",[
 {label:"Absent",value:s.attendance.filter(x=>x.status==="Absent").length},
 {label:"Late",value:s.attendance.filter(x=>x.status==="Late").length}
@@ -1587,6 +1596,50 @@ bar(key,safeRows);
 tbody(key,safeRows.map((x,index)=>`<tr><td>${esc(x.label)}</td><td>${drillValue(key,index,x)}</td></tr>`),2);
 bindChartDrills(root);
 }
+function ensureCardDescription(chartId){
+const chart=chartNode(chartId);if(!chart)return;
+const panel=chart.closest(".panel");if(!panel)return;
+if(panel.querySelector(":scope > .ucc-card-description"))return;
+const description=C5_VISUAL_DESCRIPTIONS[chartId];if(!description)return;
+const head=panel.querySelector(".panel-head");
+const p=document.createElement("p");
+p.className="ucc-card-description";
+p.textContent=description;
+if(head)head.insertAdjacentElement("afterend",p);
+else panel.insertBefore(p,panel.firstChild);
+}
+state.c5RequestedCharts=state.c5RequestedCharts||new Set();
+state.c5PendingCharts=state.c5PendingCharts||new Map();
+function deferredChartCall(realFn,name,args){
+if(state.c5RequestedCharts.has(name)){realFn(name,...args);return;}
+state.c5PendingCharts.set(name,{realFn,args});
+ensureChartCompanion(name,[]);
+ensureCardDescription(name);
+const chart=chartNode(name);
+const panel=chart&&chart.closest(".panel");
+const toggle=panel&&panel.querySelector("[data-card-toggle]");
+if(toggle&&!toggle.dataset.deferBound){
+toggle.dataset.deferBound="1";
+toggle.querySelectorAll("[data-card-view]").forEach(btn=>btn.addEventListener("click",()=>{
+if(state.c5RequestedCharts.has(name))return;
+state.c5RequestedCharts.add(name);
+const pending=state.c5PendingCharts.get(name);
+if(pending)pending.realFn(name,...pending.args);
+}));
+}
+}
+const __c5Bar=bar;bar=function(n,rows){deferredChartCall(__c5Bar,n,[rows]);};
+const __c5Line=line;line=function(n,rows){deferredChartCall(__c5Line,n,[rows]);};
+const __c5RadarChart=radarChart;radarChart=function(n,rows){deferredChartCall(__c5RadarChart,n,[rows]);};
+const __c5HeatmapChart=heatmapChart;heatmapChart=function(n,rows){deferredChartCall(__c5HeatmapChart,n,[rows]);};
+const __c5NetworkChart=networkChart;networkChart=function(n,programs){deferredChartCall(__c5NetworkChart,n,[programs]);};
+const __c5DonutChart=donutChart;donutChart=function(n,rows,centerLabel){deferredChartCall(__c5DonutChart,n,[rows,centerLabel]);};
+const __c5BubbleChart=bubbleChart;bubbleChart=function(n,rows){deferredChartCall(__c5BubbleChart,n,[rows]);};
+const __c5FunnelChart=funnelChart;funnelChart=function(n,rows){deferredChartCall(__c5FunnelChart,n,[rows]);};
+const __c5RadialBars=radialBars;radialBars=function(n,rows){deferredChartCall(__c5RadialBars,n,[rows]);};
+const __c5TimelineChart=timelineChart;timelineChart=function(n,rows){deferredChartCall(__c5TimelineChart,n,[rows]);};
+const __c5LabelledBar=labelledBar;labelledBar=function(n,rows,suffix){deferredChartCall(__c5LabelledBar,n,[rows,suffix]);};
+const __c5ChartAndTable=chartAndTable;chartAndTable=function(key,rows){deferredChartCall(__c5ChartAndTable,key,[rows]);};
 function numericRating(v){
 const n=Number(v);if(!Number.isFinite(n))return null;
 return n<=1?n*5:n;
