@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.9.8-prune-archived-html (2026-07-20)
+
+- Removed the 62 archived Criterion 5 visual cards that still shipped as hidden static markup in `HTML.html` (~43 KB, 16% of the file: 275,931 -> 232,227 bytes). They were invisible at runtime (hidden via `C5_DISABLED_VISUALS`) but downloaded by every visitor. The removed `<article>` blocks are preserved in `custom-html-block/archive/HTML_archived_c5_cards_v1.9.8.html` with restore instructions. The `C5_DISABLED_VISUALS` Set stays: it still guards the chart-call path and the Explore index, and degrades to a no-op for removed nodes.
+- Updated `tools/validate_package.py`'s Criterion 5 count check, which assumed archived cards remain in the HTML. Verified in-browser: all 9 C5 tabs cycle with exactly the 32 active chart nodes, click-to-render fills charts, zero console errors.
+
+
 ## v1.9.8-remove-changelog (2026-07-20)
 
 - **Removed the in-app Criterion 5 changelog feature entirely** (the `CHANGELOG` array, both dialog implementations, the version-pill trigger, and all styling). Root cause of the user's repeated failed removal attempts: the feature existed in **two independent implementations** in the source (`openChangelogDialog` + `<dialog data-changelog-dialog>` and `openChangelog` + `[data-changelog-overlay]` sheet, each with its own click handler on the same `[data-action="show-changelog"]` button), and edits made directly to the built/deployed `JAVASCRIPT.js` were silently reverted by the next `tools/build_custom_block.py` run, which regenerates it from `src/`. This removal is in the source files, so it survives rebuilds. Verified: zero `changelog` references remain in any of the three built files.

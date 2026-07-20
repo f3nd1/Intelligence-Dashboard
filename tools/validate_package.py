@@ -134,8 +134,10 @@ def main() -> int:
     c5_total = len(set(re.findall(r'data-chart="([^"]+)"', source_html)))
     c5_disabled_match = re.search(r"const C5_DISABLED_VISUALS=new Set\((\[.*?\])\)", source_js, re.S)
     c5_disabled = set(json.loads(c5_disabled_match.group(1))) if c5_disabled_match else set()
-    c5_count = c5_total - len(c5_disabled)
-    checks.append(report(c5_count == EXPECTED_VISUALS["criterion_5"], f"criterion_5 has {c5_count} active live visual definitions ({len(c5_disabled)} archived)"))
+    # Archived C5 cards were physically removed from HTML in v1.9.8, so every
+    # remaining data-chart node is active; none may be on the disabled list.
+    c5_count = c5_total - len(c5_disabled & set(re.findall(r'data-chart="([^"]+)"', source_html)))
+    checks.append(report(c5_count == EXPECTED_VISUALS["criterion_5"], f"criterion_5 has {c5_count} active live visual definitions ({len(c5_disabled)} archived, removed from HTML)"))
 
     checks.append(report("UCCC4VisualDefinitions" in source_js, "Criterion 4 visual definitions are exposed to the universal navigator"))
     checks.append(report("visual-navigator" in source_html and "source-mapping" in source_html, "View tools contains functional visual and source actions"))
