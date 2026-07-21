@@ -55,7 +55,8 @@ ALLOWED_ACTIONS = [
     "c511_proposals",
     "c511_modules",
     "c511_reviews",
-    "c511_gaps"
+    "c511_gaps",
+    "c5_qa"
 ]
 
 SOURCE_MAP = {
@@ -1077,6 +1078,308 @@ def compute_c5_summary(data, active_filters):
     quality = [{"check": c, "count": n, "source": s, "status": ("Risk" if n else "Good")} for c, n, s in raw_quality]
     return metrics, quality
 
+# ---- makeQA server port (compute_c5_qa) ----
+# Faithful port of the client makeQA(); proven byte-identical to the JavaScript
+# across main + partial-sources + filtered + survey-filter + empty fixtures.
+# Answer text is gated on the client-supplied source availability so the
+# rendered QA rows match the live client exactly regardless of load state.
+def qa_group(rows, key):
+    m = {}
+    for r in (rows or []):
+        k = (r.get(key) if r else None) or "Not Set"
+        m[k] = m.get(k, 0) + 1
+    out = [{"label": k, "value": v} for k, v in m.items()]
+    out.sort(key=lambda x: -x["value"])
+    return out
+
+def group_join(rows, key):
+    return ", ".join("{0}: {1}".format(g["label"], g["value"]) for g in qa_group(rows, key))
+
+def dedup_names(*lists):
+    seen = set(); out = []
+    for lst in lists:
+        for x in lst:
+            n = x.get("name")
+            if n not in seen:
+                seen.add(n); out.append(n)
+    return out
+
+def name_list(lst):
+    return [x.get("name") for x in lst]
+
+def compute_c5_qa(data, filters, sources, survey_filter, nowdate, in90date):
+    def ready(dt):
+        return sources.get(dt) == "Available"
+    s = scoped_rows(data, filters)
+    metrics, quality = compute_c5_summary(data, filters)
+    survey = build_survey_analytics(data, survey_filter)
+    courses = s["courses"]
+    topics = len([x for x in courses if x.get("topics")])
+    criteria = len([x for x in courses if x.get("assessment_criteria")])
+    d = data
+    fmonth = filters.get("month") or ""
+
+    missingTopics = [x for x in courses if not (x.get("topics") or [])]
+    missingCriteria = [x for x in courses if not (x.get("assessment_criteria") or [])]
+    mappedCourseNames = set()
+    for p in (d.get("Program") or []):
+        for x in (p.get("courses") or []):
+            if x.get("course"):
+                mappedCourseNames.add(x.get("course"))
+    unmappedCourses = [x for x in courses if x.get("name") not in mappedCourseNames]
+    coursesWithPlans = set(x.get("course") for x in s["plans"] if x.get("course"))
+    coursesWithoutPlans = [x for x in courses if x.get("name") not in coursesWithPlans]
+    schedules = s["schedules"] or []
+    missingInstructor = [x for x in schedules if not x.get("instructor")]
+    missingRoom = [x for x in schedules if not x.get("room")]
+    schedNames = set(x.get("name") for x in schedules)
+    attendedScheduleNames = set(x.get("course_schedule") for x in s["attendance"] if x.get("course_schedule") in schedNames)
+    schedulesNoAttendance = [x for x in schedules if x.get("name") not in attendedScheduleNames]
+    attendanceByStatus = qa_group(s["attendance"], "status")
+    attendanceText = group_join(s["attendance"], "status") if attendanceByStatus else "No attendance records in the selected scope."
+    absent = len([x for x in s["attendance"] if x.get("status") == "Absent"])
+    late = len([x for x in s["attendance"] if x.get("status") == "Late"])
+    plansMissingExaminer = [x for x in s["plans"] if not x.get("examiner")]
+    plansMissingSupervisor = [x for x in s["plans"] if not x.get("supervisor")]
+    plansMissingRoom = [x for x in s["plans"] if not x.get("room")]
+    plansMissingDate = [x for x in s["plans"] if not x.get("schedule_date")]
+    planNames = set(x.get("name") for x in s["plans"])
+    resultPlanNames = set(x.get("assessment_plan") for x in s["results"] if x.get("assessment_plan") in planNames)
+    plansWithoutResults = [x for x in s["plans"] if x.get("name") not in resultPlanNames]
+    gradeDistribution = qa_group(s["results"], "grade")
+
+    def is_result_check(c):
+        cl = c.lower()
+        return ("result" in cl) or ("score" in cl) or ("grade" in cl) or ("duplicate" in cl)
+    resultErrors = sum(x["count"] for x in quality if is_result_check(x["check"]))
+
+    mr = d.get("Module Review") or []
+    cr = d.get("Course Review") or []
+    overdueReviews = [x for x in cr if x.get("next_review_date") and x.get("next_review_date") <= nowdate]
+    pendingRecommendations = [x for x in (mr + cr) if x.get("recommendation_implementation_status") == "Not Implemented"]
+    actionRows = []
+    for parent in cr:
+        for action in (parent.get("actionplan_progress") or []):
+            actionRows.append(action)
+    mr_fields = ["rating_duration", "rating_pedagogy", "rating_assessment", "rating_learning_outcomes", "rating_lesson_plan", "rating_resource", "recommendation"]
+    incompleteModuleReviews = [x for x in mr if any(not x.get(fld) for fld in mr_fields)]
+    intakes = d.get("Student Intake No") or []
+    classes = d.get("Module Class Details") or []
+    admissions = d.get("Student Admission UCC") or []
+    intakeGaps = [x for x in intakes if not x.get("program") or not x.get("course_start_date") or not x.get("course_end_date")]
+    classesNoTeacher = [x for x in classes if not x.get("custom_instructor")]
+    classesNoSchedule = [x for x in classes if not (x.get("schedules") or [])]
+    incompleteContracts = [x for x in admissions if not x.get("contract_start") or not x.get("contract_end")]
+    admissionsNoIntake = [x for x in admissions if not x.get("student_batch")]
+    observations = d.get("Classroom Observation") or []
+    observedClassNames = set(x.get("module_class_details") for x in observations if x.get("module_class_details"))
+    classesNoObservation = [x for x in classes if x.get("name") not in observedClassNames]
+    unsignedObservations = [x for x in observations if not x.get("observers_signature") or not x.get("teachers_signature")]
+    concernObservations = [x for x in observations if strip_tags(x.get("areas_text") or "").strip()]
+    observationTypes = group_join(observations, "type_of_observation")
+    noticeTypes = group_join(observations, "prior_notice")
+    agreements = d.get("Partnership Agreement") or []
+    managed = d.get("Partnerships Agreement Management") or []
+    supplierRatings = d.get("Supplier Rating") or []
+    expiredAgreements = [x for x in agreements if x.get("end_date") and x.get("end_date") <= nowdate]
+    expiringAgreements = [x for x in agreements if x.get("end_date") and x.get("end_date") > nowdate and x.get("end_date") <= in90date]
+    ndaIncomplete = [x for x in agreements if x.get("requires_nda") and not x.get("nda_acknowledged")]
+    monitoring = []
+    for parent in managed:
+        for r in (parent.get("monitoring_childtable") or []):
+            monitoring.append(r)
+    evaluations = []
+    for parent in managed:
+        for r in (parent.get("table_luoo") or []):
+            evaluations.append(r)
+    belowThreshold = [x for x in managed if js_number(x.get("average_identification_and_selection_score")) > 0 and js_number(x.get("average_identification_and_selection_score")) < 70]
+
+    ELL = "…"
+    ready_readiness = pct(topics + criteria, len(courses) * 2)
+
+    # survey row helpers
+    sc = survey["scored"]; cm = survey["comments"]
+    mod_list = [x for x in survey["moduleScores"] if any(it["module"] == x["label"] and it["survey_type"] == "End of Module" for it in sc)]
+    def fmt_avg(g):
+        return "{0}: {1}".format(g["label"], num_fmt(g["value"]))
+    q_low = sorted(survey["questionScores"], key=lambda g: g["value"])[:5]
+
+    def types_line():
+        parts = []
+        for t in ["End of Module", "End of Course", "Graduate Survey"]:
+            n = len([x for x in sc if x["survey_type"] == t]) + len([x for x in cm if x["survey_type"] == t])
+            parts.append("{0}: {1}".format(t, n))
+        return ", ".join(parts)
+
+    def g_join_list(lst):
+        return ", ".join(fmt_avg(g) for g in lst)
+
+    rows = []
+    def R(criterion, question, answer, source, doctypes, doctype=None, records=None, status="Good"):
+        row = {"criterion": criterion, "question": question, "answer": answer, "source": source, "doctypes": doctypes, "status": status}
+        if doctype is not None:
+            row["doctype"] = doctype
+            row["records"] = records if records is not None else []
+        rows.append(row)
+
+    # 5.1.1
+    R("5.1.1", "Which Modules are missing curriculum topics?",
+      ("{0} Module(s): {1}{2}".format(len(missingTopics), ", ".join((x.get("course_name") or x.get("name")) for x in missingTopics[:8]), ELL if len(missingTopics) > 8 else "") if missingTopics else "No scoped Modules are missing curriculum topics."),
+      "Course.topics child table on scoped Module records.", ["Course"], "Course", name_list(missingTopics), "Risk" if missingTopics else "Good")
+    R("5.1.1", "Which Modules are missing assessment criteria?",
+      ("{0} Module(s) are missing assessment criteria.".format(len(missingCriteria)) if missingCriteria else "No scoped Modules are missing assessment criteria."),
+      "Course.assessment_criteria child table.", ["Course"], "Course", name_list(missingCriteria), "Risk" if missingCriteria else "Good")
+    R("5.1.1", "How complete is the Course-to-Module mapping?",
+      "{0} unique Module(s) are mapped; {1} scoped Module(s) are not found in a readable Course mapping.".format(len(mappedCourseNames), len(unmappedCourses)),
+      "Program.courses compared with scoped Course.name.", ["Program", "Course"], "Course", name_list(unmappedCourses), "Warning" if unmappedCourses else "Good")
+    R("5.1.1", "Which Modules do not have an Assessment Plan?",
+      ("{0} Module(s) have no Assessment Plan.".format(len(coursesWithoutPlans)) if coursesWithoutPlans else "Every scoped Module has at least one Assessment Plan."),
+      "Course.name compared with Assessment Plan.course.", ["Course", "Assessment Plan"], "Course", name_list(coursesWithoutPlans), "Risk" if coursesWithoutPlans else "Good")
+    R("5.1.1", "What is the overall Module-design readiness?",
+      "{0}% across curriculum topics and assessment criteria for {1} scoped Module(s).".format(ready_readiness, len(courses)),
+      "(Modules with topics + Modules with criteria) ÷ (Module count × 2).", ["Course"], "Course", dedup_names(missingTopics, missingCriteria),
+      "Good" if ready_readiness >= 100 else ("Warning" if ready_readiness >= 90 else "Risk"))
+
+    # 5.1.2
+    R("5.1.2", "What is the Module Review approval status?",
+      ((group_join(mr, "status") or "No Module Review records.") if ready("Module Review") else "Open 5.1.2 to load Module Review data."),
+      "Module Review.status.", ["Module Review"], "Module Review", name_list(mr),
+      "Warning" if not ready("Module Review") else ("Warning" if any(x.get("status") != "Approved" for x in mr) else "Good"))
+    R("5.1.2", "Which Course Reviews are overdue?",
+      ("{0} Course Review(s) have a next review date before today.".format(len(overdueReviews)) if ready("Course Review") else "Open 5.1.2 to load Course Review data."),
+      "Course Review.next_review_date compared with today.", ["Course Review"], "Course Review", name_list(overdueReviews), "Risk" if overdueReviews else "Good")
+    R("5.1.2", "Are scheduled and ad-hoc reviews identifiable?",
+      (group_join([{"kind": (x.get("type_of_review") or "Not Set")} for x in mr] + [{"kind": (x.get("review_type") or "Not Set")} for x in cr], "kind") if (ready("Module Review") or ready("Course Review")) else "Open 5.1.2 to load review data."),
+      "Module Review.type_of_review and Course Review.review_type.", ["Module Review", "Course Review"], None, None, "Good" if (mr or cr) else "Warning")
+    R("5.1.2", "Which previous recommendations remain unimplemented?",
+      ("{0} review record(s) are marked Not Implemented.".format(len(pendingRecommendations)) if (ready("Module Review") or ready("Course Review")) else "Open 5.1.2 to load review data."),
+      "recommendation_implementation_status.", ["Module Review", "Course Review"], "Module Review", name_list(pendingRecommendations), "Risk" if pendingRecommendations else "Good")
+    R("5.1.2", "What is the Course Review action-plan status?",
+      ((group_join(actionRows, "status") or "No action-plan rows.") if ready("Course Review") else "Open 5.1.2 to load Course Review data."),
+      "Course Review.actionplan_progress.status.", ["Course Review"], None, None, "Warning" if any(x.get("status") not in ("Completed", "In Effect") for x in actionRows) else "Good")
+    R("5.1.2", "Which Module Reviews have incomplete core evidence?",
+      ("{0} Module Review(s) have one or more core evidence fields empty.".format(len(incompleteModuleReviews)) if ready("Module Review") else "Open 5.1.2 to load Module Review data."),
+      "Core rating and recommendation fields in Module Review.", ["Module Review"], "Module Review", name_list(incompleteModuleReviews), "Warning" if incompleteModuleReviews else "Good")
+
+    # 5.2.1
+    R("5.2.1", "How many scheduled Module sessions are in the selected period?",
+      "{0} Module Schedule record(s) for {1}.".format(len(schedules), fmonth),
+      "Course Schedule.schedule_date filtered by selected period and scope.", ["Course Schedule"], "Course Schedule", name_list(schedules), "Good" if schedules else "Warning")
+    R("5.2.1", "Which scheduled sessions have no Teacher?",
+      ("{0} session(s) lack a Teacher.".format(len(missingInstructor)) if missingInstructor else "All selected sessions have a Teacher."),
+      "Course Schedule.instructor.", ["Course Schedule"], "Course Schedule", name_list(missingInstructor), "Risk" if missingInstructor else "Good")
+    R("5.2.1", "Which scheduled sessions have no room or venue?",
+      ("{0} session(s) lack a room.".format(len(missingRoom)) if missingRoom else "All selected sessions have a room."),
+      "Course Schedule.room.", ["Course Schedule"], "Course Schedule", name_list(missingRoom), "Warning" if missingRoom else "Good")
+    R("5.2.1", "Which Intakes are missing core planning dates or Course?",
+      ("{0} Intake(s) have missing Course/start/end information.".format(len(intakeGaps)) if ready("Student Intake No") else "Open 5.2.1 to load Intake data."),
+      "Student Intake No.program, course_start_date and course_end_date.", ["Student Intake No"], "Student Intake No", name_list(intakeGaps), "Risk" if intakeGaps else "Good")
+    R("5.2.1", "Which Module Classes have no assigned Teacher or schedule?",
+      ("{0} lack a Teacher; {1} have no schedule rows.".format(len(classesNoTeacher), len(classesNoSchedule)) if ready("Module Class Details") else "Open 5.2.1 to load Module Class Details."),
+      "Module Class Details.custom_instructor and schedules.", ["Module Class Details"], "Module Class Details", dedup_names(classesNoTeacher, classesNoSchedule), "Risk" if (classesNoTeacher or classesNoSchedule) else "Good")
+    R("5.2.1", "Which Shortlisted Applicants have incomplete Intake or contract dates?",
+      ("{0} lack Intake No; {1} have incomplete contract dates.".format(len(admissionsNoIntake), len(incompleteContracts)) if ready("Student Admission UCC") else "Open 5.2.1 to load Shortlisted Applicants."),
+      "Student Admission UCC.student_batch, contract_start and contract_end.", ["Student Admission UCC"], "Student Admission UCC", dedup_names(admissionsNoIntake, incompleteContracts), "Warning" if (admissionsNoIntake or incompleteContracts) else "Good")
+
+    # 5.2.2
+    cap = pct(len(attendedScheduleNames), len(schedNames))
+    R("5.2.2", "What percentage of scheduled lessons have attendance captured?",
+      "{0}% ({1} of {2} distinct schedules).".format(cap, len(attendedScheduleNames), len(schedNames)),
+      "Distinct Student Attendance.course_schedule ÷ Course Schedule.name.", ["Student Attendance", "Course Schedule"], "Course Schedule", name_list(schedulesNoAttendance),
+      "Good" if cap >= 100 else ("Warning" if cap >= 90 else "Risk"))
+    R("5.2.2", "What is the attendance status distribution?",
+      attendanceText, "Student Attendance.status.", ["Student Attendance"], None, None, "Good" if s["attendance"] else "Warning")
+    R("5.2.2", "Which Module Classes have no Classroom Observation?",
+      ("{0} Module Class(es) have no linked observation.".format(len(classesNoObservation)) if ready("Classroom Observation") else "Open 5.2.2 to load observation data."),
+      "Module Class Details.name compared with Classroom Observation.module_class_details.", ["Module Class Details", "Classroom Observation"], "Module Class Details", name_list(classesNoObservation), "Warning" if classesNoObservation else "Good")
+    R("5.2.2", "What observation types were conducted?",
+      ((observationTypes or "No observations.") if ready("Classroom Observation") else "Open 5.2.2 to load observation data."),
+      "Classroom Observation.type_of_observation.", ["Classroom Observation"], "Classroom Observation", name_list(observations), "Good" if observations else "Warning")
+    R("5.2.2", "Which observations are missing Observer or Teacher sign-off?",
+      ("{0} observation(s) have incomplete signatures.".format(len(unsignedObservations)) if ready("Classroom Observation") else "Open 5.2.2 to load observation data."),
+      "Classroom Observation.observers_signature and teachers_signature.", ["Classroom Observation"], "Classroom Observation", name_list(unsignedObservations), "Warning" if unsignedObservations else "Good")
+    R("5.2.2", "Which observations record areas for improvement?",
+      ("{0} observation(s) contain areas for improvement.".format(len(concernObservations)) if ready("Classroom Observation") else "Open 5.2.2 to load observation data."),
+      "Classroom Observation.areas_text.", ["Classroom Observation"], "Classroom Observation", name_list(concernObservations), "Warning" if concernObservations else "Good")
+    R("5.2.2", "Were observations conducted with or without prior notice?",
+      ((noticeTypes or "No observations.") if ready("Classroom Observation") else "Open 5.2.2 to load observation data."),
+      "Classroom Observation.prior_notice.", ["Classroom Observation"], None, None, "Good" if observations else "Warning")
+
+    # 5.3.1
+    R("5.3.1", "How many signed partnership agreements are active, upcoming or expired?",
+      ("{0} agreement(s); expired: {1}; expiring within 90 days: {2}.".format(len(agreements), len(expiredAgreements), len(expiringAgreements)) if ready("Partnership Agreement") else "Open 5.3.1 to load Partnership Agreement data."),
+      "Partnership Agreement.start_date and end_date.", ["Partnership Agreement"], "Partnership Agreement", name_list(agreements), "Warning" if expiredAgreements else "Good")
+    R("5.3.1", "Which agreements require an NDA that is not acknowledged?",
+      ("{0} agreement(s) require NDA follow-up.".format(len(ndaIncomplete)) if ready("Partnership Agreement") else "Open 5.3.1 to load Partnership Agreement data."),
+      "Partnership Agreement.requires_nda and nda_acknowledged.", ["Partnership Agreement", "Non Disclosure Agreement"], "Partnership Agreement", name_list(ndaIncomplete), "Risk" if ndaIncomplete else "Good")
+    R("5.3.1", "How many partnership monitoring activities are recorded?",
+      ("{0} monitoring row(s) across {1} managed partnership record(s).".format(len(monitoring), len(managed)) if ready("Partnerships Agreement Management") else "Open 5.3.1 to load management data."),
+      "Partnerships Agreement Management.monitoring_childtable.", ["Partnerships Agreement Management"], "Partnerships Agreement Management", name_list([x for x in managed if (x.get("monitoring_childtable") or [])]), "Good" if monitoring else "Warning")
+    R("5.3.1", "What monitoring methods are being used?",
+      ((group_join(monitoring, "monitoring_details") or "No monitoring entries.") if ready("Partnerships Agreement Management") else "Open 5.3.1 to load management data."),
+      "Partnerships Monitoring Childtable.monitoring_details.", ["Partnerships Agreement Management"], None, None, "Good" if monitoring else "Warning")
+    R("5.3.1", "What decisions resulted from partnership evaluations?",
+      ((group_join(evaluations, "evaluation_outcome") or "No evaluation entries.") if ready("Partnerships Agreement Management") else "Open 5.3.1 to load management data."),
+      "Partnerships Evaluation Childtable.evaluation_outcome.", ["Partnerships Agreement Management"], None, None, "Good" if evaluations else "Warning")
+    R("5.3.1", "Which managed partnerships are below the 70/100 selection threshold?",
+      ("{0} managed partnership(s) are below threshold.".format(len(belowThreshold)) if ready("Partnerships Agreement Management") else "Open 5.3.1 to load management data."),
+      "average_identification_and_selection_score compared with 70/100.", ["Partnerships Agreement Management"], "Partnerships Agreement Management", name_list(belowThreshold), "Risk" if belowThreshold else "Good")
+    R("5.3.1", "What Provider Rating stages are recorded?",
+      ((group_join(supplierRatings, "evaluation_stage") or "No Provider Rating records.") if ready("Supplier Rating") else "Open 5.3.1 to load Provider Rating data."),
+      "Supplier Rating.evaluation_stage. Display term: Provider Rating.", ["Supplier Rating"], "Supplier Rating", name_list(supplierRatings), "Good" if supplierRatings else "Warning")
+
+    # 5.4
+    R("5.4", "What is the average End of Module Survey score for each Module?",
+      (g_join_list(mod_list[:8]) if mod_list else "No scored End of Module Survey responses were classified in the selected scope."),
+      "Survey Response.course plus scored child response rows.", ["Survey Response"], None, None, "Good" if survey["moduleScores"] else "Warning")
+    R("5.4", "How many survey responses exist by survey type?",
+      types_line(), "Survey type classified from title, category and question text.", ["Survey Response"], None, None, "Good" if (d.get("Survey Response") or []) else "Warning")
+    R("5.4", "Which survey questions have the lowest scores?",
+      (g_join_list(q_low) if q_low else "No scored survey questions were available."),
+      "Average parsed score grouped by child question.", ["Survey Response"], None, None, "Warning")
+    R("5.4", "What open-ended responses were submitted?",
+      "{0} open-ended/non-numeric response(s) are available.".format(len(cm)),
+      "Survey Response child rows not parsed as numeric/Likert scores.", ["Survey Response"], None, None, "Good" if cm else "Warning")
+    R("5.4", "What attendance-risk indicators are visible alongside survey feedback?",
+      "{0} Absent record(s) and {1} Late record(s) in the selected schedule scope.".format(absent, late),
+      "Student Attendance.status linked to selected Module Schedule records.", ["Student Attendance"], None, None, "Warning" if (absent or late) else "Good")
+
+    # 5.5
+    R("5.5", "Which Assessment Plans are missing examiner or supervisor?",
+      "{0} plan(s) lack examiner and {1} lack supervisor.".format(len(plansMissingExaminer), len(plansMissingSupervisor)),
+      "Assessment Plan.examiner and supervisor.", ["Assessment Plan"], "Assessment Plan", dedup_names(plansMissingExaminer, plansMissingSupervisor), "Warning" if (plansMissingExaminer or plansMissingSupervisor) else "Good")
+    R("5.5", "Which Assessment Plans have no linked results?",
+      ("{0} plan(s) have no linked Assessment Result.".format(len(plansWithoutResults)) if plansWithoutResults else "Every selected Assessment Plan has at least one linked result."),
+      "Assessment Plan.name compared with Assessment Result.assessment_plan.", ["Assessment Plan", "Assessment Result"], "Assessment Plan", name_list(plansWithoutResults), "Risk" if plansWithoutResults else "Good")
+    R("5.5", "What is the grade distribution?",
+      (group_join(s["results"], "grade") if gradeDistribution else "No graded Assessment Result records in the selected scope."),
+      "Assessment Result.grade.", ["Assessment Result"], None, None, "Good" if gradeDistribution else "Warning")
+    R("5.5", "How complete are assessment control fields?",
+      "Missing room: {0}; missing schedule date: {1}; missing examiner: {2}; missing supervisor: {3}.".format(len(plansMissingRoom), len(plansMissingDate), len(plansMissingExaminer), len(plansMissingSupervisor)),
+      "Assessment Plan control fields.", ["Assessment Plan"], None, None, "Warning" if (plansMissingRoom or plansMissingDate or plansMissingExaminer or plansMissingSupervisor) else "Good")
+    R("5.5", "Are there assessment-result data errors requiring correction?",
+      "{0} result-quality exception(s) across score-above-maximum, missing grade and duplicate-result checks.".format(resultErrors),
+      "Assessment Result data-quality rules.", ["Assessment Result"], None, None, "Risk" if resultErrors else "Good")
+
+    exceptions = []
+    for x in metrics:
+        if x["status"] != "Good":
+            exceptions.append({"criterion": x["criterion"], "issue": x["question"], "value": "{0}%".format(x["current"]), "target": "{0}%".format(x["target"]), "status": x["status"]})
+    for x in quality:
+        if x["count"]:
+            exceptions.append({"criterion": "Data Quality", "issue": x["check"], "value": x["count"], "target": 0, "status": "Risk"})
+    for x in rows:
+        if x["status"] == "Risk":
+            exceptions.append({"criterion": x["criterion"], "issue": x["question"], "value": x["answer"], "target": "Follow-up required", "status": "Risk"})
+
+    return {"rows": rows, "exceptions": exceptions}
+
+def num_fmt(v):
+    # JS number formatting: integers render without .0
+    if isinstance(v, float) and v.is_integer():
+        return int(v)
+    return v
+
 SUMMARY_LIST_SOURCES = [
     ("Student Group", ["name", "student_group_name", "academic_year", "program", "course", "disabled"]),
     ("Course Schedule", ["name", "student_group", "instructor", "course", "schedule_date", "room", "program"]),
@@ -1439,6 +1742,97 @@ elif action == "c511_hydrate":
         },
         "data": data,
         "sources": sources
+    }
+elif action == "c5_qa":
+    # Full makeQA() model, server-side. Faithful port proven byte-identical to the
+    # JavaScript across main + partial-sources + filtered + survey-filter + empty
+    # fixtures. Child-table doctypes are fetched as full documents; flat doctypes
+    # as field lists. Answer text is gated on the client-supplied source
+    # availability (payload.sources) so the rendered rows match the live client
+    # exactly regardless of which sections the user has opened. Permission-aware.
+    survey_filter = payload.get("survey_filter") or {}
+    client_sources = payload.get("sources") or {}
+    data = {}
+    fetch_status = {}
+    full_doctypes = ["Program", "Course", "Course Review", "Module Class Details",
+                     "Classroom Observation", "Survey Response",
+                     "Partnerships Agreement Management", "Module Review"]
+    list_fields = {
+        "Student Group": ["name", "academic_year", "program", "course"],
+        "Course Schedule": ["name", "student_group", "program", "course", "instructor", "room", "schedule_date"],
+        "Student Attendance": ["name", "course_schedule", "status", "student"],
+        "Assessment Plan": ["name", "course", "program", "academic_year", "student_group", "examiner", "supervisor", "room", "schedule_date"],
+        "Assessment Result": ["name", "assessment_plan", "program", "academic_year", "student_group", "student", "grade", "total_score", "maximum_score"],
+        "Course Enrollment": ["name", "program", "course"],
+        "Student Intake No": ["name", "program", "course_start_date", "course_end_date"],
+        "Student Admission UCC": ["name", "student_batch", "contract_start", "contract_end"],
+        "Partnership Agreement": ["name", "start_date", "end_date", "requires_nda", "nda_acknowledged"],
+    }
+    for doctype in full_doctypes:
+        try:
+            row_names = frappe.get_list(doctype, pluck="name", limit_page_length=500, order_by="modified desc") or []
+            data[doctype] = [frappe.get_doc(doctype, nm).as_dict() for nm in row_names]
+            fetch_status[doctype] = {"status": "Available", "count": len(data[doctype])}
+        except Exception as error:
+            message = str(error)
+            lowered = message.lower()
+            status = "Not permitted" if ("permission" in lowered or "not permitted" in lowered or "not allowed" in lowered) else "Unavailable"
+            data[doctype] = []
+            fetch_status[doctype] = {"status": status, "count": 0, "error": message}
+    for doctype in list_fields:
+        try:
+            data[doctype] = frappe.get_list(doctype, fields=list_fields[doctype], limit_page_length=500, order_by="modified desc") or []
+            fetch_status[doctype] = {"status": "Available", "count": len(data[doctype])}
+        except Exception as error:
+            message = str(error)
+            lowered = message.lower()
+            status = "Not permitted" if ("permission" in lowered or "not permitted" in lowered or "not allowed" in lowered) else "Unavailable"
+            data[doctype] = []
+            fetch_status[doctype] = {"status": status, "count": 0, "error": message}
+    # Provider/Supplier Rating resolved with frappe.db.exists FIRST (permanent fix).
+    rating_doctype = None
+    for candidate in ["Provider Rating", "Supplier Rating"]:
+        if frappe.db.exists("DocType", candidate):
+            rating_doctype = candidate
+            break
+    if not rating_doctype:
+        data["Supplier Rating"] = []
+        fetch_status["Supplier Rating"] = {"status": "Not installed", "count": 0, "attempted": ["Provider Rating", "Supplier Rating"]}
+    else:
+        try:
+            data["Supplier Rating"] = frappe.get_list(rating_doctype, fields=["name", "evaluation_stage"], limit_page_length=500, order_by="modified desc") or []
+        except Exception:
+            try:
+                data["Supplier Rating"] = frappe.get_list(rating_doctype, fields=["name", "modified"], limit_page_length=500, order_by="modified desc") or []
+            except Exception:
+                data["Supplier Rating"] = []
+        fetch_status["Supplier Rating"] = {"status": "Available", "count": len(data["Supplier Rating"]), "resolved": rating_doctype}
+
+    today = frappe.utils.nowdate()
+    in90 = frappe.utils.add_days(today, 90)
+    qa = compute_c5_qa(data, filters, client_sources, survey_filter, today, in90)
+    # Record pools for client re-hydration (row.records carries name strings).
+    pool_doctypes = ["Course", "Module Review", "Course Review", "Course Schedule",
+                     "Student Intake No", "Module Class Details", "Student Admission UCC",
+                     "Classroom Observation", "Partnership Agreement",
+                     "Partnerships Agreement Management", "Supplier Rating", "Assessment Plan"]
+    records_pool = {}
+    for doctype in pool_doctypes:
+        records_pool[doctype] = data.get(doctype) or []
+    frappe.response["message"] = {
+        "ok": True,
+        "meta": {
+            "api_method": "ucc_analytics_criterion_5",
+            "dashboard": "criterion_5",
+            "action": action,
+            "section": "makeQA",
+            "as_of": today,
+            "generated_at": frappe.utils.now()
+        },
+        "filters": filters,
+        "model": {"rows": qa["rows"], "exceptions": qa["exceptions"]},
+        "records": records_pool,
+        "sources": fetch_status
     }
 else:
     data = {}
