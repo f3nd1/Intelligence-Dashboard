@@ -983,7 +983,7 @@ def build_survey_analytics(data, survey_filter):
         for r in rows:
             k = r.get(key) or "Not Set"
             v = m.get(k) or {"sum": 0, "count": 0}
-            v["sum"] += r["score"]; v["count"] += 1; m[k] = v
+            v["sum"] = v["sum"] + r["score"]; v["count"] = v["count"] + 1; m[k] = v
         out = [{"label": label, "value": js_round2(v["sum"] / v["count"]), "count": v["count"]} for label, v in m.items()]
         out.sort(key=lambda x: -x["value"])
         return out
