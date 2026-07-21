@@ -282,12 +282,12 @@ root.dataset.demoDashboard="criterion_5";
 root.dataset.demoActiveTab="overview";
 const sections=[
 ["overview","Overview"],
-["5.1.1","5.1.1 Course Design & Development"],
+["5.1.1","5.1.1 Course Design and Development"],
 ["5.1.2","5.1.2 Course Review"],
 ["5.2.1","5.2.1 Course Planning"],
 ["5.2.2","5.2.2 Course Delivery"],
-["5.3.1","5.3.1 Partnerships"],
-["5.4","5.4 Student Feedback & Learning Support"],
+["5.3.1","5.3.1 Partnership Management"],
+["5.4","5.4 Student Learning"],
 ["5.5","5.5 Assessment"],
 ["quality","Data Quality"],
 ["sources","Sources"]
@@ -301,11 +301,11 @@ return '<section class="panel ucc-shared-panel '+(key==="overview"?'':'hidden')+
 const panels=sections.map(function(item){return panel(item[0],item[1]);}).join("");
 const menu='<nav class="tabs ucc-shared-tabs ucc-c5-hierarchical-tabs" aria-label="Criterion 5 sections">'
 +'<button type="button" class="active" data-demo-tab="overview">Overview</button>'
-+'<button type="button" data-demo-tab="5.1.1">5.1.1</button>'
-+'<button type="button" data-demo-tab="5.1.2">5.1.2</button>'
-+'<button type="button" data-demo-tab="5.2.1">5.2.1</button>'
-+'<button type="button" data-demo-tab="5.2.2">5.2.2</button>'
-+'<button type="button" data-demo-tab="5.3.1">5.3.1</button>'
++'<button type="button" data-demo-tab="5.1.1">5.1.1 Course Design and Development</button>'
++'<button type="button" data-demo-tab="5.1.2">5.1.2 Course Review</button>'
++'<button type="button" data-demo-tab="5.2.1">5.2.1 Course Planning</button>'
++'<button type="button" data-demo-tab="5.2.2">5.2.2 Course Delivery</button>'
++'<button type="button" data-demo-tab="5.3.1">5.3.1 Partnership Management</button>'
 +'<button type="button" data-demo-tab="5.4">5.4 Student Learning</button>'
 +'<button type="button" data-demo-tab="5.5">5.5 Assessment</button>'
 +'<button type="button" data-demo-tab="quality" hidden>Data Quality</button>'
