@@ -469,6 +469,30 @@ addLog("WARN","source","c521_server_model_unavailable",{error:error.message});
 return null;
 }
 }
+// Section 5.2.2 model from the server (c522_analytics), re-hydrated into the
+// exact buildC522() shape; null when unavailable so the caller falls back.
+async function fetchC522Model(){
+try{
+const message=await new Promise((resolve,reject)=>frappe.call({
+method:"ucc_analytics_criterion_5",
+args:{payload:JSON.stringify({action:"c522_analytics",filters:currentFilters()})},
+callback:response=>resolve(response?.message),
+error:reject
+}));
+if(!message||message.ok!==true||!message.model||!message.records)throw new Error(message?.message||"c522_analytics is unavailable");
+const rec=message.records,m=message.model;
+const obs=rec.obs||[],surveys=rec.surveys||[];
+const byName=new Map([...obs,...(rec.classes||[]),...surveys].map(r=>[r.name,r]));
+const hydrate=ds=>(ds||[]).map(e=>{const out={label:e.label,value:e.value,records:(e.records||[]).map(n=>byName.get(n)||{name:n})};if(e.doctype!==undefined)out.doctype=e.doctype;return out;});
+addLog("INFO","source","c522_server_model_used",{observations:obs.length,surveys:surveys.length});
+const out={obs,surveys,kpis:m.kpis};
+["coverage","observationType","platform","ratings","surveyCategories","notice","signoff","concerns","plannedDelivered","teacherCoverage","moduleCoverage","observationMode","signoffAging","ratingDistribution","strengths","improvements","surveyVolume","deliveryExceptions"].forEach(k=>out[k]=hydrate(m[k]));
+return out;
+}catch(error){
+addLog("WARN","source","c522_server_model_unavailable",{error:error.message});
+return null;
+}
+}
 async function hydrateDocuments(dt){
 const rows=state.data[dt]||[];
 setProgress(Math.min(90,8),`Loading ${(UCC_TERMS[dt]||dt).toLowerCase()} design details…`);
@@ -1809,6 +1833,122 @@ contractExceptions:[
 exceptions
 };
 }
+// Section 5.2.2 compute, extracted from the render branch so it can be ported to
+// the server (c522_analytics) and wired with this as the fallback. Rating averages
+// are returned RAW; the render branch applies toFixed so both the server and
+// fallback paths format identically in the browser.
+function buildC522(d,today){
+const obs=d["Classroom Observation"]||[],classes=d["Module Class Details"]||[],surveys=d["Survey Response"]||[],schedules=d["Course Schedule"]||[];
+const ratingFields={
+"Preparation":["availability_of_learning_materials_likert","lesson_aligned_likert","lesson_plan_alignment_likert","lesson_objective_likert"],
+"Delivery":["relevance_likert","mastery_likert","transition_likert","pacing_likert","educational_tools_likert","teaching_style_likert"],
+"Class dynamics":["able_to_maintain_order_in_class_likert","good_rapport_with_students_likert","teacher_attentive_likert","timely_likert"],
+"Communication":["simple_language_likert","teacher_confident_likert","good_balance_likert","vocal_likert","teacher_encourage_likert","non_verbal_likert"]
+};
+const flatRatingFields=Object.values(ratingFields).flat();
+const allRatings=obs.flatMap(o=>flatRatingFields.map(f=>numericRating(o[f])).filter(v=>v!==null));
+const observedClassNames=new Set(obs.map(x=>x.module_class_details).filter(Boolean));
+const observedClasses=classes.filter(x=>observedClassNames.has(x.name)),unobservedClasses=classes.filter(x=>!observedClassNames.has(x.name));
+const areaRows=Object.entries(ratingFields).map(([label,fields])=>{
+const vals=obs.flatMap(o=>fields.map(f=>numericRating(o[f])).filter(v=>v!==null));
+return{label,value:vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0,records:obs,doctype:"Classroom Observation"};
+});
+const categoryMap=new Map;
+surveys.forEach(survey=>(survey.response||[]).forEach(response=>{
+const label=response.category||"Uncategorised";
+if(!categoryMap.has(label))categoryMap.set(label,new Map);
+categoryMap.get(label).set(survey.name,survey);
+}));
+const bothSigned=obs.filter(x=>x.observers_signature&&x.teachers_signature),observerOnly=obs.filter(x=>x.observers_signature&&!x.teachers_signature),teacherOnly=obs.filter(x=>!x.observers_signature&&x.teachers_signature),unsigned=obs.filter(x=>!x.observers_signature&&!x.teachers_signature);
+const concerns=obs.filter(x=>String(x.areas_text||"").replace(/<[^>]*>/g,"").trim()),noConcerns=obs.filter(x=>!concerns.includes(x));
+const attendance=d["Student Attendance"]||[];
+const deliveredScheduleNames=new Set(attendance.map(x=>x.course_schedule).filter(Boolean));
+const deliveredSchedules=schedules.filter(x=>deliveredScheduleNames.has(x.name));
+const undeliveredSchedules=schedules.filter(x=>!deliveredScheduleNames.has(x.name));
+const teachers=[...new Set(classes.map(x=>x.custom_instructor_full_name||x.custom_instructor).filter(Boolean))];
+const observedTeachers=new Set(obs.map(x=>x.name_of_teacher).filter(Boolean));
+const scheduledObs=obs.filter(x=>/scheduled|formal/i.test(String(x.type_of_observation||""))||x.course_schedule);
+const adhocObs=obs.filter(x=>!scheduledObs.includes(x));
+const unsignedObs=obs.filter(x=>!(x.observers_signature&&x.teachers_signature));
+const signoffAgeGroups=[
+{label:"0–7 days",records:unsignedObs.filter(x=>{const dd=x.date_of_observation?Math.floor((today-new Date(x.date_of_observation))/86400000):null;return dd!==null&&dd<=7})},
+{label:"8–30 days",records:unsignedObs.filter(x=>{const dd=x.date_of_observation?Math.floor((today-new Date(x.date_of_observation))/86400000):null;return dd>7&&dd<=30})},
+{label:"31+ days",records:unsignedObs.filter(x=>{const dd=x.date_of_observation?Math.floor((today-new Date(x.date_of_observation))/86400000):null;return dd>30})},
+{label:"No observation date",records:unsignedObs.filter(x=>!x.date_of_observation)}
+];
+const observationAverages=obs.map(record=>{
+const vals=flatRatingFields.map(f=>numericRating(record[f])).filter(v=>v!==null);
+return {...record,_average:vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null};
+});
+const ratingBands=[
+{label:"4.0–5.0",records:observationAverages.filter(x=>x._average>=4)},
+{label:"3.0–3.9",records:observationAverages.filter(x=>x._average>=3&&x._average<4)},
+{label:"Below 3.0",records:observationAverages.filter(x=>x._average!==null&&x._average<3)},
+{label:"Not rated",records:observationAverages.filter(x=>x._average===null)}
+];
+const belowThreshold=observationAverages.filter(x=>x._average!==null&&x._average<3);
+const textPresent=(x,fields)=>fields.some(f=>String(x[f]||"").replace(/<[^>]+>/g,"").trim());
+const strengthFields=["strengths","strengths_text","positive_observations","good_practices"];
+const improvementFields=["areas_text","areas_for_improvement","improvement_areas","recommendations"];
+const strengthRows=obs.filter(x=>textPresent(x,strengthFields));
+const improvementRows=obs.filter(x=>textPresent(x,improvementFields));
+const surveyMonths=new Map;
+surveys.forEach(x=>{const month=String(x.posting_date||x.modified||"No date").slice(0,7);if(!surveyMonths.has(month))surveyMonths.set(month,[]);surveyMonths.get(month).push(x)});
+return{
+obs,classes,schedules,surveys,
+kpis:{observations:obs.length,observationScoreAvg:allRatings.length?allRatings.reduce((a,b)=>a+b,0)/allRatings.length:null,surveys:surveys.length,unobserved:unobservedClasses.length},
+coverage:[
+{label:"Observed Module classes",value:observedClasses.length,records:observedClasses,doctype:"Module Class Details"},
+{label:"Without observation",value:unobservedClasses.length,records:unobservedClasses,doctype:"Module Class Details"}
+],
+observationType:groupRecords(obs,"type_of_observation","Classroom Observation"),
+platform:groupRecords(obs,"platform_delivery","Classroom Observation"),
+ratings:areaRows,
+surveyCategories:[...categoryMap].map(([label,map])=>({label,value:[...map.values()].reduce((sum,survey)=>sum+(survey.response||[]).filter(row=>(row.category||"Uncategorised")===label).length,0),records:[...map.values()],doctype:"Survey Response"})).sort((a,b)=>b.value-a.value),
+notice:groupRecords(obs,"prior_notice","Classroom Observation"),
+signoff:[
+{label:"Both signed",value:bothSigned.length,records:bothSigned,doctype:"Classroom Observation"},
+{label:"Observer only",value:observerOnly.length,records:observerOnly,doctype:"Classroom Observation"},
+{label:"Teacher only",value:teacherOnly.length,records:teacherOnly,doctype:"Classroom Observation"},
+{label:"Unsigned",value:unsigned.length,records:unsigned,doctype:"Classroom Observation"}
+],
+concerns:[
+{label:"Areas for improvement recorded",value:concerns.length,records:concerns,doctype:"Classroom Observation"},
+{label:"No areas recorded",value:noConcerns.length,records:noConcerns,doctype:"Classroom Observation"}
+],
+plannedDelivered:[
+{label:"Planned sessions",value:schedules.length,records:schedules,doctype:"Course Schedule"},
+{label:"Delivered / attendance captured",value:deliveredSchedules.length,records:deliveredSchedules,doctype:"Course Schedule"},
+{label:"No delivery evidence",value:undeliveredSchedules.length,records:undeliveredSchedules,doctype:"Course Schedule"}
+],
+teacherCoverage:[
+{label:"Teachers observed",value:teachers.filter(x=>observedTeachers.has(x)).length,records:obs.filter(x=>observedTeachers.has(x.name_of_teacher)),doctype:"Classroom Observation"},
+{label:"Teachers not observed",value:teachers.filter(x=>!observedTeachers.has(x)).length,records:classes.filter(x=>!observedTeachers.has(x.custom_instructor_full_name||x.custom_instructor)),doctype:"Module Class Details"}
+],
+moduleCoverage:groupRecords(obs,"module_name","Classroom Observation"),
+observationMode:[
+{label:"Scheduled / formal",value:scheduledObs.length,records:scheduledObs,doctype:"Classroom Observation"},
+{label:"Ad-hoc / other",value:adhocObs.length,records:adhocObs,doctype:"Classroom Observation"}
+],
+signoffAging:signoffAgeGroups.map(x=>({label:x.label,value:x.records.length,records:x.records,doctype:"Classroom Observation"})),
+ratingDistribution:ratingBands.map(x=>({label:x.label,value:x.records.length,records:x.records,doctype:"Classroom Observation"})),
+strengths:[
+{label:"Strengths recorded",value:strengthRows.length,records:strengthRows,doctype:"Classroom Observation"},
+{label:"No strengths recorded",value:obs.length-strengthRows.length,records:obs.filter(x=>!strengthRows.includes(x)),doctype:"Classroom Observation"}
+],
+improvements:[
+{label:"Improvement areas recorded",value:improvementRows.length,records:improvementRows,doctype:"Classroom Observation"},
+{label:"No improvement area recorded",value:obs.length-improvementRows.length,records:obs.filter(x=>!improvementRows.includes(x)),doctype:"Classroom Observation"}
+],
+surveyVolume:[...surveyMonths].sort((a,b)=>a[0].localeCompare(b[0])).map(([label,records])=>({label,value:records.reduce((sum,x)=>sum+Math.max(1,(x.response||[]).length),0),records,doctype:"Survey Response"})),
+deliveryExceptions:[
+{label:"Module classes without observation",value:unobservedClasses.length,records:unobservedClasses,doctype:"Module Class Details"},
+{label:"Observations awaiting full sign-off",value:unsignedObs.length,records:unsignedObs,doctype:"Classroom Observation"},
+{label:"Observations below rating threshold",value:belowThreshold.length,records:belowThreshold,doctype:"Classroom Observation"},
+{label:"No delivery evidence",value:undeliveredSchedules.length,records:undeliveredSchedules,doctype:"Course Schedule"}
+]
+};
+}
 function renderNewSection(tab){
 const d=state.data||{},today=new Date();today.setHours(0,0,0,0);
 const in90=new Date(today.getTime()+90*86400000);
@@ -1858,116 +1998,30 @@ chartAndTable("c521-contract-exceptions-v110",b.contractExceptions);
 tbody("c521-exceptions",b.exceptions.map(x=>`<tr><td>${esc(x[0])}</td><td>${esc(displayDoctype(x[1]))}</td><td>${esc(x[2])}</td><td>${recordLink(x[1],x[0])}</td></tr>`),4);
 }
 if(tab==="c522"){
-const obs=d["Classroom Observation"]||[],classes=d["Module Class Details"]||[],surveys=d["Survey Response"]||[],schedules=d["Course Schedule"]||[];
-const ratingFields={
-"Preparation":["availability_of_learning_materials_likert","lesson_aligned_likert","lesson_plan_alignment_likert","lesson_objective_likert"],
-"Delivery":["relevance_likert","mastery_likert","transition_likert","pacing_likert","educational_tools_likert","teaching_style_likert"],
-"Class dynamics":["able_to_maintain_order_in_class_likert","good_rapport_with_students_likert","teacher_attentive_likert","timely_likert"],
-"Communication":["simple_language_likert","teacher_confident_likert","good_balance_likert","vocal_likert","teacher_encourage_likert","non_verbal_likert"]
-};
-const allRatings=obs.flatMap(o=>Object.values(ratingFields).flat().map(f=>numericRating(o[f])).filter(v=>v!==null));
-const observedClassNames=new Set(obs.map(x=>x.module_class_details).filter(Boolean));
-const observedClasses=classes.filter(x=>observedClassNames.has(x.name)),unobservedClasses=classes.filter(x=>!observedClassNames.has(x.name));
-setNewKpi("observations",obs.length);setNewKpi("observation-score",allRatings.length?(allRatings.reduce((a,b)=>a+b,0)/allRatings.length).toFixed(1)+"/5":"—");
-setNewKpi("surveys",surveys.length);setNewKpi("unobserved",unobservedClasses.length);
-chartAndTable("c522-coverage",[
-{label:"Observed Module classes",value:observedClasses.length,records:observedClasses,doctype:"Module Class Details"},
-{label:"Without observation",value:unobservedClasses.length,records:unobservedClasses,doctype:"Module Class Details"}
-]);
-chartAndTable("c522-observation-type",groupRecords(obs,"type_of_observation","Classroom Observation"));
-chartAndTable("c522-platform",groupRecords(obs,"platform_delivery","Classroom Observation"));
-const areaRows=Object.entries(ratingFields).map(([label,fields])=>{
-const vals=obs.flatMap(o=>fields.map(f=>numericRating(o[f])).filter(v=>v!==null));
-return{label,value:vals.length?Number((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2)):0,records:obs,doctype:"Classroom Observation"};
-});
-chartAndTable("c522-ratings",areaRows);
-const categoryMap=new Map;
-surveys.forEach(survey=>(survey.response||[]).forEach(response=>{
-const label=response.category||"Uncategorised";
-if(!categoryMap.has(label))categoryMap.set(label,new Map);
-categoryMap.get(label).set(survey.name,survey);
-}));
-chartAndTable("c522-survey-categories",[...categoryMap].map(([label,map])=>({label,value:[...map.values()].reduce((sum,survey)=>sum+(survey.response||[]).filter(row=>(row.category||"Uncategorised")===label).length,0),records:[...map.values()],doctype:"Survey Response"})).sort((a,b)=>b.value-a.value));
-chartAndTable("c522-notice",groupRecords(obs,"prior_notice","Classroom Observation"));
-const bothSigned=obs.filter(x=>x.observers_signature&&x.teachers_signature),observerOnly=obs.filter(x=>x.observers_signature&&!x.teachers_signature),teacherOnly=obs.filter(x=>!x.observers_signature&&x.teachers_signature),unsigned=obs.filter(x=>!x.observers_signature&&!x.teachers_signature);
-chartAndTable("c522-signoff",[
-{label:"Both signed",value:bothSigned.length,records:bothSigned,doctype:"Classroom Observation"},
-{label:"Observer only",value:observerOnly.length,records:observerOnly,doctype:"Classroom Observation"},
-{label:"Teacher only",value:teacherOnly.length,records:teacherOnly,doctype:"Classroom Observation"},
-{label:"Unsigned",value:unsigned.length,records:unsigned,doctype:"Classroom Observation"}
-]);
-const concerns=obs.filter(x=>String(x.areas_text||"").replace(/<[^>]*>/g,"").trim()),noConcerns=obs.filter(x=>!concerns.includes(x));
-chartAndTable("c522-concerns",[
-{label:"Areas for improvement recorded",value:concerns.length,records:concerns,doctype:"Classroom Observation"},
-{label:"No areas recorded",value:noConcerns.length,records:noConcerns,doctype:"Classroom Observation"}
-]);
-const attendance=d["Student Attendance"]||[];
-const deliveredScheduleNames=new Set(attendance.map(x=>x.course_schedule).filter(Boolean));
-const deliveredSchedules=schedules.filter? schedules.filter(x=>deliveredScheduleNames.has(x.name)) : [];
-const undeliveredSchedules=schedules.filter? schedules.filter(x=>!deliveredScheduleNames.has(x.name)) : [];
-chartAndTable("c522-planned-delivered-v110",[
-{label:"Planned sessions",value:schedules.length,records:schedules,doctype:"Course Schedule"},
-{label:"Delivered / attendance captured",value:deliveredSchedules.length,records:deliveredSchedules,doctype:"Course Schedule"},
-{label:"No delivery evidence",value:undeliveredSchedules.length,records:undeliveredSchedules,doctype:"Course Schedule"}
-]);
-const teachers=[...new Set(classes.map(x=>x.custom_instructor_full_name||x.custom_instructor).filter(Boolean))];
-const observedTeachers=new Set(obs.map(x=>x.name_of_teacher).filter(Boolean));
-chartAndTable("c522-teacher-coverage-v110",[
-{label:"Teachers observed",value:teachers.filter(x=>observedTeachers.has(x)).length,records:obs.filter(x=>observedTeachers.has(x.name_of_teacher)),doctype:"Classroom Observation"},
-{label:"Teachers not observed",value:teachers.filter(x=>!observedTeachers.has(x)).length,records:classes.filter(x=>!observedTeachers.has(x.custom_instructor_full_name||x.custom_instructor)),doctype:"Module Class Details"}
-]);
-chartAndTable("c522-module-coverage-v110",groupRecords(obs,"module_name","Classroom Observation"));
-const scheduledObs=obs.filter(x=>/scheduled|formal/i.test(String(x.type_of_observation||""))||x.course_schedule);
-const adhocObs=obs.filter(x=>!scheduledObs.includes(x));
-chartAndTable("c522-observation-mode-v110",[
-{label:"Scheduled / formal",value:scheduledObs.length,records:scheduledObs,doctype:"Classroom Observation"},
-{label:"Ad-hoc / other",value:adhocObs.length,records:adhocObs,doctype:"Classroom Observation"}
-]);
-const unsignedObs=obs.filter(x=>!(x.observers_signature&&x.teachers_signature));
-const signoffAgeGroups=[
-{label:"0–7 days",records:unsignedObs.filter(x=>{const d=x.date_of_observation?Math.floor((today-new Date(x.date_of_observation))/86400000):null;return d!==null&&d<=7})},
-{label:"8–30 days",records:unsignedObs.filter(x=>{const d=x.date_of_observation?Math.floor((today-new Date(x.date_of_observation))/86400000):null;return d>7&&d<=30})},
-{label:"31+ days",records:unsignedObs.filter(x=>{const d=x.date_of_observation?Math.floor((today-new Date(x.date_of_observation))/86400000):null;return d>30})},
-{label:"No observation date",records:unsignedObs.filter(x=>!x.date_of_observation)}
-];
-chartAndTable("c522-signoff-aging-v110",signoffAgeGroups.map(x=>({label:x.label,value:x.records.length,records:x.records,doctype:"Classroom Observation"})));
-const observationAverages=obs.map(record=>{
-const vals=Object.values(ratingFields).flat().map(f=>numericRating(record[f])).filter(v=>v!==null);
-return {...record,_average:vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null};
-});
-const ratingBands=[
-{label:"4.0–5.0",records:observationAverages.filter(x=>x._average>=4)},
-{label:"3.0–3.9",records:observationAverages.filter(x=>x._average>=3&&x._average<4)},
-{label:"Below 3.0",records:observationAverages.filter(x=>x._average!==null&&x._average<3)},
-{label:"Not rated",records:observationAverages.filter(x=>x._average===null)}
-];
-chartAndTable("c522-rating-distribution-v110",ratingBands.map(x=>({label:x.label,value:x.records.length,records:x.records,doctype:"Classroom Observation"})));
-const textPresent=(x,fields)=>fields.some(f=>String(x[f]||"").replace(/<[^>]+>/g,"").trim());
-const strengthFields=["strengths","strengths_text","positive_observations","good_practices"];
-const improvementFields=["areas_text","areas_for_improvement","improvement_areas","recommendations"];
-const strengthRows=obs.filter(x=>textPresent(x,strengthFields));
-const improvementRows=obs.filter(x=>textPresent(x,improvementFields));
-chartAndTable("c522-strengths-v110",[
-{label:"Strengths recorded",value:strengthRows.length,records:strengthRows,doctype:"Classroom Observation"},
-{label:"No strengths recorded",value:obs.length-strengthRows.length,records:obs.filter(x=>!strengthRows.includes(x)),doctype:"Classroom Observation"}
-]);
-chartAndTable("c522-improvements-v110",[
-{label:"Improvement areas recorded",value:improvementRows.length,records:improvementRows,doctype:"Classroom Observation"},
-{label:"No improvement area recorded",value:obs.length-improvementRows.length,records:obs.filter(x=>!improvementRows.includes(x)),doctype:"Classroom Observation"}
-]);
-const surveyMonths=new Map;
-surveys.forEach(x=>{const month=String(x.posting_date||x.modified||"No date").slice(0,7);if(!surveyMonths.has(month))surveyMonths.set(month,[]);surveyMonths.get(month).push(x)});
-chartAndTable("c522-survey-volume-v110",[...surveyMonths].sort((a,b)=>a[0].localeCompare(b[0])).map(([label,records])=>({label,value:records.reduce((sum,x)=>sum+Math.max(1,(x.response||[]).length),0),records,doctype:"Survey Response"})));
-const deliveryExceptions=[...unobservedClasses,...unsignedObs,...observationAverages.filter(x=>x._average!==null&&x._average<3)];
-chartAndTable("c522-delivery-exceptions-v110",[
-{label:"Module classes without observation",value:unobservedClasses.length,records:unobservedClasses,doctype:"Module Class Details"},
-{label:"Observations awaiting full sign-off",value:unsignedObs.length,records:unsignedObs,doctype:"Classroom Observation"},
-{label:"Observations below rating threshold",value:observationAverages.filter(x=>x._average!==null&&x._average<3).length,records:observationAverages.filter(x=>x._average!==null&&x._average<3),doctype:"Classroom Observation"},
-{label:"No delivery evidence",value:undeliveredSchedules.length,records:undeliveredSchedules,doctype:"Course Schedule"}
-]);
+const b=state.c522Server||buildC522(d,today);
+setNewKpi("observations",b.kpis.observations);setNewKpi("observation-score",b.kpis.observationScoreAvg!==null?b.kpis.observationScoreAvg.toFixed(1)+"/5":"—");
+setNewKpi("surveys",b.kpis.surveys);setNewKpi("unobserved",b.kpis.unobserved);
+chartAndTable("c522-coverage",b.coverage);
+chartAndTable("c522-observation-type",b.observationType);
+chartAndTable("c522-platform",b.platform);
+chartAndTable("c522-ratings",b.ratings.map(x=>({...x,value:Number(Number(x.value).toFixed(2))})));
+chartAndTable("c522-survey-categories",b.surveyCategories);
+chartAndTable("c522-notice",b.notice);
+chartAndTable("c522-signoff",b.signoff);
+chartAndTable("c522-concerns",b.concerns);
+chartAndTable("c522-planned-delivered-v110",b.plannedDelivered);
+chartAndTable("c522-teacher-coverage-v110",b.teacherCoverage);
+chartAndTable("c522-module-coverage-v110",b.moduleCoverage);
+chartAndTable("c522-observation-mode-v110",b.observationMode);
+chartAndTable("c522-signoff-aging-v110",b.signoffAging);
+chartAndTable("c522-rating-distribution-v110",b.ratingDistribution);
+chartAndTable("c522-strengths-v110",b.strengths);
+chartAndTable("c522-improvements-v110",b.improvements);
+chartAndTable("c522-survey-volume-v110",b.surveyVolume);
+chartAndTable("c522-delivery-exceptions-v110",b.deliveryExceptions);
 const recordRows=[
-...obs.map(x=>`<tr><td>${esc(x.name)}</td><td>Classroom Observation</td><td>${esc(x.course||"—")}</td><td>${esc(x.module_name||"—")}</td><td>${esc(formatDate(x.date_of_observation))}</td><td>${recordLink("Classroom Observation",x.name)}</td></tr>`),
-...surveys.map(x=>`<tr><td>${esc(x.name)}</td><td>Survey Response</td><td>${esc(x.program||"—")}</td><td>${esc(x.course||"—")}</td><td>${esc(formatDate(x.posting_date))}</td><td>${recordLink("Survey Response",x.name)}</td></tr>`)
+...b.obs.map(x=>`<tr><td>${esc(x.name)}</td><td>Classroom Observation</td><td>${esc(x.course||"—")}</td><td>${esc(x.module_name||"—")}</td><td>${esc(formatDate(x.date_of_observation))}</td><td>${recordLink("Classroom Observation",x.name)}</td></tr>`),
+...b.surveys.map(x=>`<tr><td>${esc(x.name)}</td><td>Survey Response</td><td>${esc(x.program||"—")}</td><td>${esc(x.course||"—")}</td><td>${esc(formatDate(x.posting_date))}</td><td>${recordLink("Survey Response",x.name)}</td></tr>`)
 ];
 tbody("c522-records",recordRows,6);
 }
@@ -2184,6 +2238,7 @@ if(t.dt==="Survey Response")populateSurveyModuleFilter();
 }
 if(tab==="c512"){setProgress(78,"Computing 5.1.2 analytics");state.c512Server=await fetchC512Model();}
 if(tab==="c521"){setProgress(78,"Computing 5.2.1 analytics");state.c521Server=await fetchC521Model();}
+if(tab==="c522"){setProgress(78,"Computing 5.2.2 analytics");state.c522Server=await fetchC522Model();}
 if(["c54","quality"].includes(tab)){
 const schedules=state.data["Course Schedule"]||[];
 const names=schedules.map(x=>x.name).filter(Boolean);

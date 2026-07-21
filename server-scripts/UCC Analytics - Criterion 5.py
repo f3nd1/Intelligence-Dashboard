@@ -48,6 +48,7 @@ ALLOWED_ACTIONS = [
     "c511_analytics",
     "c512_analytics",
     "c521_analytics",
+    "c522_analytics",
     "c511_hydrate",
     "c511_summary",
     "c511_proposals",
@@ -557,6 +558,178 @@ def compute_c521(d):
         "apps": [x.get("name") for x in apps],
     }
 
+def numeric_rating(v):
+    if v is None or v == "":
+        n = 0.0
+    elif v is True:
+        n = 1.0
+    elif v is False:
+        n = 0.0
+    else:
+        try:
+            n = float(v)
+        except (TypeError, ValueError):
+            n = float("nan")
+    if n != n:
+        return None
+    return n * 5 if n <= 1 else n
+
+RATING_FIELDS = {
+    "Preparation": ["availability_of_learning_materials_likert", "lesson_aligned_likert", "lesson_plan_alignment_likert", "lesson_objective_likert"],
+    "Delivery": ["relevance_likert", "mastery_likert", "transition_likert", "pacing_likert", "educational_tools_likert", "teaching_style_likert"],
+    "Class dynamics": ["able_to_maintain_order_in_class_likert", "good_rapport_with_students_likert", "teacher_attentive_likert", "timely_likert"],
+    "Communication": ["simple_language_likert", "teacher_confident_likert", "good_balance_likert", "vocal_likert", "teacher_encourage_likert", "non_verbal_likert"],
+}
+RATING_ORDER = ["Preparation", "Delivery", "Class dynamics", "Communication"]
+FLAT_RATING_FIELDS = [f for g in RATING_ORDER for f in RATING_FIELDS[g]]
+
+def compute_c522(d, today):
+    obs = d.get("Classroom Observation") or []
+    classes = d.get("Module Class Details") or []
+    surveys = d.get("Survey Response") or []
+    schedules = d.get("Course Schedule") or []
+    attendance = d.get("Student Attendance") or []
+
+    def ratings_of(o, fields):
+        out = []
+        for f in fields:
+            r = numeric_rating(o.get(f))
+            if r is not None:
+                out.append(r)
+        return out
+    all_ratings = []
+    for o in obs:
+        all_ratings.extend(ratings_of(o, FLAT_RATING_FIELDS))
+    observed_class_names = set(x.get("module_class_details") for x in obs if x.get("module_class_details"))
+    observed_classes = [x for x in classes if x.get("name") in observed_class_names]
+    unobserved_classes = [x for x in classes if x.get("name") not in observed_class_names]
+    area_rows = []
+    for label in RATING_ORDER:
+        vals = []
+        for o in obs:
+            vals.extend(ratings_of(o, RATING_FIELDS[label]))
+        area_rows.append({"label": label, "value": (sum(vals) / len(vals) if vals else 0), "records": obs, "doctype": "Classroom Observation"})
+
+    category_map = {}
+    for survey in surveys:
+        for response in (survey.get("response") or []):
+            label = response.get("category") or "Uncategorised"
+            category_map.setdefault(label, {})[survey.get("name")] = survey
+    survey_categories = []
+    for label, m in category_map.items():
+        val = 0
+        for survey in m.values():
+            val += len([row for row in (survey.get("response") or []) if (row.get("category") or "Uncategorised") == label])
+        survey_categories.append({"label": label, "value": val, "records": list(m.values()), "doctype": "Survey Response"})
+    survey_categories.sort(key=lambda x: -x["value"])
+
+    both_signed = [x for x in obs if x.get("observers_signature") and x.get("teachers_signature")]
+    observer_only = [x for x in obs if x.get("observers_signature") and not x.get("teachers_signature")]
+    teacher_only = [x for x in obs if not x.get("observers_signature") and x.get("teachers_signature")]
+    unsigned = [x for x in obs if not x.get("observers_signature") and not x.get("teachers_signature")]
+
+    def strip_tags(v):
+        s = str(v); out = []; i = 0; n = len(s)
+        while i < n:
+            if s[i] == "<":
+                j = s.find(">", i + 1)
+                if j != -1 and j > i + 1:
+                    i = j + 1; continue
+            out.append(s[i]); i += 1
+        return "".join(out)
+    concerns = [x for x in obs if strip_tags(x.get("areas_text") or "").strip()]
+    concern_names = set(x.get("name") for x in concerns)
+    no_concerns = [x for x in obs if x.get("name") not in concern_names]
+
+    delivered_schedule_names = set(x.get("course_schedule") for x in attendance if x.get("course_schedule"))
+    delivered_schedules = [x for x in schedules if x.get("name") in delivered_schedule_names]
+    undelivered_schedules = [x for x in schedules if x.get("name") not in delivered_schedule_names]
+
+    teachers = []
+    seen_t = set()
+    for x in classes:
+        t = x.get("custom_instructor_full_name") or x.get("custom_instructor")
+        if t and t not in seen_t:
+            seen_t.add(t); teachers.append(t)
+    observed_teachers = set(x.get("name_of_teacher") for x in obs if x.get("name_of_teacher"))
+
+    def is_scheduled(x):
+        t = str(x.get("type_of_observation") or "").lower()
+        return ("scheduled" in t) or ("formal" in t) or bool(x.get("course_schedule"))
+    scheduled_obs = [x for x in obs if is_scheduled(x)]
+    scheduled_names = set(x.get("name") for x in scheduled_obs)
+    adhoc_obs = [x for x in obs if x.get("name") not in scheduled_names]
+
+    unsigned_obs = [x for x in obs if not (x.get("observers_signature") and x.get("teachers_signature"))]
+    def age(x):
+        if not x.get("date_of_observation"):
+            return None
+        return frappe.utils.date_diff(today, x.get("date_of_observation"))
+    signoff_aging = [
+        {"label": "0–7 days", "records": [x for x in unsigned_obs if age(x) is not None and age(x) <= 7]},
+        {"label": "8–30 days", "records": [x for x in unsigned_obs if age(x) is not None and 7 < age(x) <= 30]},
+        {"label": "31+ days", "records": [x for x in unsigned_obs if age(x) is not None and age(x) > 30]},
+        {"label": "No observation date", "records": [x for x in unsigned_obs if not x.get("date_of_observation")]},
+    ]
+    observation_averages = []
+    for record in obs:
+        vals = ratings_of(record, FLAT_RATING_FIELDS)
+        avg = (sum(vals) / len(vals)) if vals else None
+        observation_averages.append((record, avg))
+    band_45 = [r for r, a in observation_averages if a is not None and a >= 4]
+    band_34 = [r for r, a in observation_averages if a is not None and a >= 3 and a < 4]
+    band_below = [r for r, a in observation_averages if a is not None and a < 3]
+    band_none = [r for r, a in observation_averages if a is None]
+
+    def text_present(x, fields):
+        return any(strip_tags(x.get(f) or "").strip() for f in fields)
+    strength_fields = ["strengths", "strengths_text", "positive_observations", "good_practices"]
+    improvement_fields = ["areas_text", "areas_for_improvement", "improvement_areas", "recommendations"]
+    strength_rows = [x for x in obs if text_present(x, strength_fields)]
+    strength_names = set(x.get("name") for x in strength_rows)
+    improvement_rows = [x for x in obs if text_present(x, improvement_fields)]
+    improvement_names = set(x.get("name") for x in improvement_rows)
+
+    survey_months = {}
+    for x in surveys:
+        month = str(x.get("posting_date") or x.get("modified") or "No date")[:7]
+        survey_months.setdefault(month, []).append(x)
+    survey_volume = []
+    for month in sorted(survey_months.keys()):
+        recs = survey_months[month]
+        survey_volume.append({"label": month, "value": sum(max(1, len(x.get("response") or [])) for x in recs), "records": recs, "doctype": "Survey Response"})
+
+    def slim(rows):
+        out = []
+        for x in rows:
+            e = {"label": x["label"], "value": x["value"], "records": [r.get("name") for r in x.get("records", [])]}
+            if x.get("doctype") is not None: e["doctype"] = x["doctype"]
+            out.append(e)
+        return out
+    return {
+        "kpis": {"observations": len(obs), "observationScoreAvg": (sum(all_ratings) / len(all_ratings) if all_ratings else None), "surveys": len(surveys), "unobserved": len(unobserved_classes)},
+        "coverage": slim([{"label": "Observed Module classes", "value": len(observed_classes), "records": observed_classes, "doctype": "Module Class Details"}, {"label": "Without observation", "value": len(unobserved_classes), "records": unobserved_classes, "doctype": "Module Class Details"}]),
+        "observationType": slim(group_records(obs, "type_of_observation", "Classroom Observation")),
+        "platform": slim(group_records(obs, "platform_delivery", "Classroom Observation")),
+        "ratings": slim(area_rows),
+        "surveyCategories": slim(survey_categories),
+        "notice": slim(group_records(obs, "prior_notice", "Classroom Observation")),
+        "signoff": slim([{"label": "Both signed", "value": len(both_signed), "records": both_signed, "doctype": "Classroom Observation"}, {"label": "Observer only", "value": len(observer_only), "records": observer_only, "doctype": "Classroom Observation"}, {"label": "Teacher only", "value": len(teacher_only), "records": teacher_only, "doctype": "Classroom Observation"}, {"label": "Unsigned", "value": len(unsigned), "records": unsigned, "doctype": "Classroom Observation"}]),
+        "concerns": slim([{"label": "Areas for improvement recorded", "value": len(concerns), "records": concerns, "doctype": "Classroom Observation"}, {"label": "No areas recorded", "value": len(no_concerns), "records": no_concerns, "doctype": "Classroom Observation"}]),
+        "plannedDelivered": slim([{"label": "Planned sessions", "value": len(schedules), "records": schedules, "doctype": "Course Schedule"}, {"label": "Delivered / attendance captured", "value": len(delivered_schedules), "records": delivered_schedules, "doctype": "Course Schedule"}, {"label": "No delivery evidence", "value": len(undelivered_schedules), "records": undelivered_schedules, "doctype": "Course Schedule"}]),
+        "teacherCoverage": slim([{"label": "Teachers observed", "value": len([x for x in teachers if x in observed_teachers]), "records": [x for x in obs if x.get("name_of_teacher") in observed_teachers], "doctype": "Classroom Observation"}, {"label": "Teachers not observed", "value": len([x for x in teachers if x not in observed_teachers]), "records": [x for x in classes if (x.get("custom_instructor_full_name") or x.get("custom_instructor")) not in observed_teachers], "doctype": "Module Class Details"}]),
+        "moduleCoverage": slim(group_records(obs, "module_name", "Classroom Observation")),
+        "observationMode": slim([{"label": "Scheduled / formal", "value": len(scheduled_obs), "records": scheduled_obs, "doctype": "Classroom Observation"}, {"label": "Ad-hoc / other", "value": len(adhoc_obs), "records": adhoc_obs, "doctype": "Classroom Observation"}]),
+        "signoffAging": slim([{"label": g["label"], "value": len(g["records"]), "records": g["records"], "doctype": "Classroom Observation"} for g in signoff_aging]),
+        "ratingDistribution": slim([{"label": "4.0–5.0", "value": len(band_45), "records": band_45, "doctype": "Classroom Observation"}, {"label": "3.0–3.9", "value": len(band_34), "records": band_34, "doctype": "Classroom Observation"}, {"label": "Below 3.0", "value": len(band_below), "records": band_below, "doctype": "Classroom Observation"}, {"label": "Not rated", "value": len(band_none), "records": band_none, "doctype": "Classroom Observation"}]),
+        "strengths": slim([{"label": "Strengths recorded", "value": len(strength_rows), "records": strength_rows, "doctype": "Classroom Observation"}, {"label": "No strengths recorded", "value": len(obs) - len(strength_rows), "records": [x for x in obs if x.get("name") not in strength_names], "doctype": "Classroom Observation"}]),
+        "improvements": slim([{"label": "Improvement areas recorded", "value": len(improvement_rows), "records": improvement_rows, "doctype": "Classroom Observation"}, {"label": "No improvement area recorded", "value": len(obs) - len(improvement_rows), "records": [x for x in obs if x.get("name") not in improvement_names], "doctype": "Classroom Observation"}]),
+        "surveyVolume": slim(survey_volume),
+        "deliveryExceptions": slim([{"label": "Module classes without observation", "value": len(unobserved_classes), "records": unobserved_classes, "doctype": "Module Class Details"}, {"label": "Observations awaiting full sign-off", "value": len(unsigned_obs), "records": unsigned_obs, "doctype": "Classroom Observation"}, {"label": "Observations below rating threshold", "value": len(band_below), "records": band_below, "doctype": "Classroom Observation"}, {"label": "No delivery evidence", "value": len(undelivered_schedules), "records": undelivered_schedules, "doctype": "Course Schedule"}]),
+        "obs": [x.get("name") for x in obs],
+        "surveys": [x.get("name") for x in surveys],
+    }
+
 def compute_c5_summary(data, active_filters):
     # Faithful port of the client compute() + buildQuality() shared core.
     # Proven byte-identical to the JavaScript across 6 filter permutations.
@@ -706,6 +879,62 @@ elif action == "c511_analytics":
             "courses": data["Course"],
             "programs": data["Program"],
             "plans": data["Assessment Plan"]
+        },
+        "sources": sources
+    }
+elif action == "c522_analytics":
+    # Section 5.2.2 model, server-side. Faithful port of the client buildC522();
+    # proven byte-identical to the JavaScript. Classroom Observation (likert +
+    # signature fields), Module Class Details and Survey Response (response child
+    # table) need full documents; Survey Response is programme-filtered like the
+    # client. The client's c522 branch does not load Course Schedule or Student
+    # Attendance, so those are left empty to match the fresh-load client exactly.
+    f5 = filters or {}
+    program = f5.get("program")
+    data = {}
+    sources = {}
+    for doctype in ["Classroom Observation", "Module Class Details"]:
+        try:
+            names = frappe.get_list(doctype, pluck="name", limit_page_length=500, order_by="modified desc") or []
+            data[doctype] = [frappe.get_doc(doctype, name).as_dict() for name in names]
+            sources[doctype] = {"status": "Available", "count": len(data[doctype])}
+        except Exception as error:
+            message = str(error)
+            lowered = message.lower()
+            status = "Not permitted" if ("permission" in lowered or "not permitted" in lowered or "not allowed" in lowered) else "Unavailable"
+            data[doctype] = []
+            sources[doctype] = {"status": status, "count": 0, "error": message}
+    survey_filters = {}
+    if program:
+        survey_filters["program"] = program
+    try:
+        survey_names = frappe.get_list("Survey Response", filters=survey_filters, pluck="name", limit_page_length=500, order_by="modified desc") or []
+        data["Survey Response"] = [frappe.get_doc("Survey Response", name).as_dict() for name in survey_names]
+        sources["Survey Response"] = {"status": "Available", "count": len(data["Survey Response"])}
+    except Exception as error:
+        data["Survey Response"] = []
+        sources["Survey Response"] = {"status": "Unavailable", "count": 0, "error": str(error)}
+    data["Course Schedule"] = []
+    data["Student Attendance"] = []
+
+    today = frappe.utils.nowdate()
+    model = compute_c522(data, today)
+    frappe.response["message"] = {
+        "ok": True,
+        "meta": {
+            "api_method": "ucc_analytics_criterion_5",
+            "dashboard": "criterion_5",
+            "action": action,
+            "section": "5.2.2",
+            "as_of": today,
+            "generated_at": frappe.utils.now()
+        },
+        "filters": filters,
+        "model": model,
+        "records": {
+            "obs": data["Classroom Observation"],
+            "classes": data["Module Class Details"],
+            "surveys": data["Survey Response"]
         },
         "sources": sources
     }
