@@ -610,6 +610,30 @@ addLog("WARN","source","c531_server_model_unavailable",{error:error.message});
 return null;
 }
 }
+async function fetchC5QAModel(){
+try{
+const srcMap={};Object.keys(state.sources||{}).forEach(k=>{srcMap[k]=state.sources[k].status;});
+const message=await new Promise((resolve,reject)=>frappe.call({
+method:"ucc_analytics_criterion_5",
+args:{payload:JSON.stringify({action:"c5_qa",filters:currentFilters(),survey_filter:surveyFilters(),sources:srcMap})},
+callback:response=>resolve(response?.message),
+error:reject
+}));
+if(!message||message.ok!==true||!message.model||!message.records)throw new Error(message?.message||"c5_qa is unavailable");
+const pool=new Map();
+Object.values(message.records).forEach(list=>(list||[]).forEach(r=>{if(r&&r.name&&!pool.has(r.name))pool.set(r.name,r);}));
+const rows=(message.model.rows||[]).map(row=>{
+const out={...row};
+if(Array.isArray(row.records))out.records=row.records.map(n=>pool.get(n)||{name:n});
+return out;
+});
+addLog("INFO","source","c5_qa_server_model_used",{rows:rows.length,pool:pool.size});
+return{rows,exceptions:message.model.exceptions||[]};
+}catch(error){
+addLog("WARN","source","c5_qa_server_model_unavailable",{error:error.message});
+return null;
+}
+}
 async function hydrateDocuments(dt){
 const rows=state.data[dt]||[];
 setProgress(Math.min(90,8),`Loading ${(UCC_TERMS[dt]||dt).toLowerCase()} design details…`);
@@ -1417,6 +1441,23 @@ else if(actionDoctype)window.open(doctypeListRoute(actionDoctype),"_blank","noop
 }
 function sourceReady(dt){return state.sources?.[dt]?.status==="Available"}
 function makeQA(c){
+const srv=state.c5qaServer;
+const rows=srv&&Array.isArray(srv.rows)?srv.rows:buildQARows(c);
+state.qa=rows;
+renderOverviewQA();
+renderQATable("qa-c54",rows.filter(x=>x.criterion==="5.4"));
+renderQATable("qa-c55",rows.filter(x=>x.criterion==="5.5"));
+renderQATable("qa-c512",rows.filter(x=>x.criterion==="5.1.2"));
+renderQATable("qa-c521",rows.filter(x=>x.criterion==="5.2.1"));
+renderQATable("qa-c522",rows.filter(x=>x.criterion==="5.2.2"));
+renderQATable("qa-c531",rows.filter(x=>x.criterion==="5.3.1"));
+state.exceptions=srv&&Array.isArray(srv.exceptions)?srv.exceptions:[
+...c.metrics.filter(x=>x.status!=="Good").map(x=>({criterion:x.criterion,issue:x.question,value:`${x.current}%`,target:`${x.target}%`,status:x.status})),
+...state.quality.filter(x=>x.count).map(x=>({criterion:"Data Quality",issue:x.check,value:x.count,target:0,status:"Risk"})),
+...rows.filter(x=>x.status==="Risk").map(x=>({criterion:x.criterion,issue:x.question,value:x.answer,target:"Follow-up required",status:"Risk"}))
+];
+}
+function buildQARows(c){
 const {s,metrics,topics,criteria}=c,f=currentFilters(),d=state.data;
 const missingTopics=s.courses.filter(x=>!(x.topics?.length));
 const missingCriteria=s.courses.filter(x=>!(x.assessment_criteria?.length));
@@ -1517,19 +1558,7 @@ const rows=[
 {criterion:"5.5",question:"How complete are assessment control fields?",answer:`Missing room: ${plansMissingRoom.length}; missing schedule date: ${plansMissingDate.length}; missing examiner: ${plansMissingExaminer.length}; missing supervisor: ${plansMissingSupervisor.length}.`,source:"Assessment Plan control fields.",doctypes:["Assessment Plan"],status:(plansMissingRoom.length||plansMissingDate.length||plansMissingExaminer.length||plansMissingSupervisor.length)?"Warning":"Good"},
 {criterion:"5.5",question:"Are there assessment-result data errors requiring correction?",answer:`${resultErrors} result-quality exception(s) across score-above-maximum, missing grade and duplicate-result checks.`,source:"Assessment Result data-quality rules.",doctypes:["Assessment Result"],status:resultErrors?"Risk":"Good"}
 ];
-state.qa=rows;
-renderOverviewQA();
-renderQATable("qa-c54",rows.filter(x=>x.criterion==="5.4"));
-renderQATable("qa-c55",rows.filter(x=>x.criterion==="5.5"));
-renderQATable("qa-c512",rows.filter(x=>x.criterion==="5.1.2"));
-renderQATable("qa-c521",rows.filter(x=>x.criterion==="5.2.1"));
-renderQATable("qa-c522",rows.filter(x=>x.criterion==="5.2.2"));
-renderQATable("qa-c531",rows.filter(x=>x.criterion==="5.3.1"));
-state.exceptions=[
-...metrics.filter(x=>x.status!=="Good").map(x=>({criterion:x.criterion,issue:x.question,value:`${x.current}%`,target:`${x.target}%`,status:x.status})),
-...state.quality.filter(x=>x.count).map(x=>({criterion:"Data Quality",issue:x.check,value:x.count,target:0,status:"Risk"})),
-...rows.filter(x=>x.status==="Risk").map(x=>({criterion:x.criterion,issue:x.question,value:x.answer,target:"Follow-up required",status:"Risk"}))
-];
+return rows;
 }
 function setKpi(slot,label,value,note){set(`[data-kpi-label="${slot}"]`,label);set(`[data-kpi="${slot}"]`,value);set(`[data-kpi-note="${slot}"]`,note)}
 function avg(values){const v=values.filter(Number.isFinite);return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length*100)/100:null}
@@ -2296,7 +2325,7 @@ setOptions('[data-filter="program"]',programs.map(x=>x.name),"All Programmes",pr
 setProgress(90,"Preparing overview");
 state.loadedSections=state.loadedSections||{};
 state.loadedSections.base=true;
-const baseCalc=compute();buildQuality(baseCalc);makeQA(baseCalc);renderKpis("overview",baseCalc);
+const baseCalc=compute();buildQuality(baseCalc);state.c5qaServer=await fetchC5QAModel();makeQA(baseCalc);renderKpis("overview",baseCalc);
 renderSources();
 updateAudit();
 setProgress(100,"Complete");
@@ -2311,7 +2340,7 @@ hideProgress();
 async function loadSection(tab, force=false){
 state.loadedSections=state.loadedSections||{};
 if(state.loadedSections[tab]&&!force){
-const c=compute();buildQuality(c);makeQA(c);renderCharts(tab,c);if(tab==="c511")renderC511();renderNewSection(tab);renderKpis(tab==="c511"?"c51":tab,c);renderSources();updateAudit();
+const c=compute();buildQuality(c);state.c5qaServer=await fetchC5QAModel();makeQA(c);renderCharts(tab,c);if(tab==="c511")renderC511();renderNewSection(tab);renderKpis(tab==="c511"?"c51":tab,c);renderSources();updateAudit();
 return;
 }
 if(state.loading)return;
@@ -2398,6 +2427,8 @@ setProgress(94,"Calculating answers and charts");
 state.loadedSections[tab]=true;
 const c=compute();
 buildQuality(c);
+setProgress(96,"Computing Criterion 5 answers");
+state.c5qaServer=await fetchC5QAModel();
 makeQA(c);
 renderCharts(tab,c);
 if(tab==="c511")renderC511();
@@ -2602,9 +2633,9 @@ if(dialogClose)dialogClose.addEventListener("click",()=>{
 const dialog=$("[data-dialog]");
 if(dialog)dialog.close();
 });
-$$("[data-survey-filter]").forEach(field=>field.addEventListener("change",()=>{const c=compute();buildQuality(c);makeQA(c);renderSurvey();renderKpis("c54",c)}));
+$$("[data-survey-filter]").forEach(field=>field.addEventListener("change",async()=>{const c=compute();buildQuality(c);state.c5qaServer=await fetchC5QAModel();makeQA(c);renderSurvey();renderKpis("c54",c)}));
 const clearSurvey=$('[data-action="clear-survey-filters"]');
-if(clearSurvey)clearSurvey.addEventListener("click",()=>{const t=$('[data-survey-filter="type"]'),m=$('[data-survey-filter="module"]');if(t)t.value="";if(m)m.value="";const c=compute();buildQuality(c);makeQA(c);renderSurvey();renderKpis("c54",c)});
+if(clearSurvey)clearSurvey.addEventListener("click",async()=>{const t=$('[data-survey-filter="type"]'),m=$('[data-survey-filter="module"]');if(t)t.value="";if(m)m.value="";const c=compute();buildQuality(c);state.c5qaServer=await fetchC5QAModel();makeQA(c);renderSurvey();renderKpis("c54",c)});
 $$("[data-visual-card]").forEach(card=>{
 card.querySelectorAll("[data-card-view]").forEach(button=>button.addEventListener("click",()=>{
 const view=button.dataset.cardView;
