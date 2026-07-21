@@ -47,6 +47,7 @@ ALLOWED_ACTIONS = [
     "summary",
     "c511_analytics",
     "c512_analytics",
+    "c521_analytics",
     "c511_hydrate",
     "c511_summary",
     "c511_proposals",
@@ -427,6 +428,135 @@ def compute_c512(data, today):
         "cr": [x.get("name") for x in cr],
     }
 
+def compute_c521(d):
+    intakes = d.get("Student Intake No") or []
+    classes = d.get("Module Class Details") or []
+    schedules = d.get("Course Schedule") or []
+    apps = d.get("Student Admission UCC") or []
+
+    ready = [x for x in intakes if x.get("program") and x.get("course_start_date") and x.get("course_end_date")]
+    ready_names = set(x.get("name") for x in ready)
+    not_ready = [x for x in intakes if x.get("name") not in ready_names]
+    assigned = [x for x in classes if x.get("custom_instructor")]
+    unassigned = [x for x in classes if not x.get("custom_instructor")]
+    session_ready = [x for x in schedules if x.get("instructor") and x.get("room") and x.get("from_time") and x.get("to_time")]
+    missing_teacher = [x for x in schedules if not x.get("instructor")]
+    missing_room = [x for x in schedules if not x.get("room")]
+    missing_timing = [x for x in schedules if not x.get("from_time") or not x.get("to_time")]
+    complete_contracts = [x for x in apps if x.get("contract_start") and x.get("contract_end")]
+    incomplete_contracts = [x for x in apps if not x.get("contract_start") or not x.get("contract_end")]
+    schedule_class_names = set((x.get("student_group") or x.get("module_class_details")) for x in schedules if (x.get("student_group") or x.get("module_class_details")))
+    unscheduled_classes = [x for x in classes if x.get("name") not in schedule_class_names]
+    scheduled_classes = [x for x in classes if x.get("name") in schedule_class_names]
+
+    def to_minutes(value):
+        if value is None or value == "":
+            return None
+        parts = str(value).split(":")
+        def num(s):
+            try: return float(s)
+            except (TypeError, ValueError): return None
+        p0 = num(parts[0])
+        if p0 is None:
+            return None
+        p1 = num(parts[1]) if len(parts) > 1 else None
+        p1v = p1 if (p1 is not None and p1 != 0) else 0
+        return p0 * 60 + p1v
+    def overlap(a, b):
+        if str(a.get("schedule_date") or "") != str(b.get("schedule_date") or ""):
+            return False
+        af = to_minutes(a.get("from_time")); at = to_minutes(a.get("to_time"))
+        bf = to_minutes(b.get("from_time")); bt = to_minutes(b.get("to_time"))
+        return af is not None and at is not None and bf is not None and bt is not None and af < bt and bf < at
+    def clash_records(field):
+        found = {}
+        for i in range(len(schedules)):
+            a = schedules[i]
+            for b in schedules[i + 1:]:
+                if a.get(field) and a.get(field) == b.get(field) and overlap(a, b):
+                    found[a.get("name")] = a
+                    found[b.get("name")] = b
+        return list(found.values())
+    room_clashes = clash_records("room")
+    teacher_clashes = clash_records("instructor")
+    room_clash_names = set(x.get("name") for x in room_clashes)
+    teacher_clash_names = set(x.get("name") for x in teacher_clashes)
+
+    intake_by_name = {}
+    for x in intakes: intake_by_name[x.get("name")] = x
+    contract_before = []; contract_after = []; contract_unknown = []
+    for app in apps:
+        intake = intake_by_name.get(app.get("student_batch"))
+        commencement = app.get("actual_commencement_date") or app.get("course_commencement_date") or (intake.get("course_start_date") if intake else None)
+        if not commencement or not app.get("contract_start"):
+            contract_unknown.append(app); continue
+        if str(app.get("contract_start")) <= str(commencement):
+            contract_before.append(app)
+        else:
+            contract_after.append(app)
+
+    signature_fields = ["contract_signed", "is_contract_signed", "signed_contract", "student_signature"]
+    sent_fields = ["contract_sent", "is_contract_sent", "sent_to_student", "contract_email_sent"]
+    signature_supported = any(any(f in x for f in signature_fields) for x in apps)
+    sent_supported = any(any(f in x for f in sent_fields) for x in apps)
+    def truthy_field(x, fields):
+        for f in fields:
+            v = x.get(f)
+            if v == 1 or v is True or str(v).lower() == "yes":
+                return True
+        return False
+    unsigned = [x for x in apps if not truthy_field(x, signature_fields)] if signature_supported else []
+    unsent = [x for x in apps if not truthy_field(x, sent_fields)] if sent_supported else []
+
+    exceptions = []
+    for x in intakes:
+        if not x.get("program") or not x.get("course_start_date") or not x.get("course_end_date"):
+            exceptions.append([x.get("name"), "Student Intake No", "Missing Course or start/end date"])
+    for x in classes:
+        if not x.get("custom_instructor"):
+            exceptions.append([x.get("name"), "Module Class Details", "Teacher not assigned"])
+        if not (x.get("schedules") or []):
+            exceptions.append([x.get("name"), "Module Class Details", "No schedule rows"])
+    for x in apps:
+        if not x.get("student_batch"):
+            exceptions.append([x.get("name"), "Student Admission UCC", "No Intake No"])
+        if not x.get("contract_start") or not x.get("contract_end"):
+            exceptions.append([x.get("name"), "Student Admission UCC", "Contract dates incomplete"])
+
+    def slim(rows):
+        out = []
+        for x in rows:
+            e = {"label": x["label"], "value": x["value"], "records": [r.get("name") for r in x.get("records", [])]}
+            if x.get("doctype") is not None: e["doctype"] = x["doctype"]
+            out.append(e)
+        return out
+    schedules_no_room_clash = [x for x in schedules if x.get("name") not in room_clash_names]
+    schedules_no_teacher_clash = [x for x in schedules if x.get("name") not in teacher_clash_names]
+
+    return {
+        "kpis": {"intakes": len(intakes), "classes": len(classes), "sessions": len(schedules), "applicants": len(apps)},
+        "intakesReady": slim([{"label": "Ready", "value": len(ready), "records": ready, "doctype": "Student Intake No"}, {"label": "Missing Course or dates", "value": len(not_ready), "records": not_ready, "doctype": "Student Intake No"}]),
+        "flow": slim([{"label": "Intakes", "value": len(intakes), "records": intakes, "doctype": "Student Intake No"}, {"label": "Module classes", "value": len(classes), "records": classes, "doctype": "Module Class Details"}, {"label": "Scheduled sessions", "value": len(schedules), "records": schedules, "doctype": "Course Schedule"}, {"label": "Shortlisted applicants", "value": len(apps), "records": apps, "doctype": "Student Admission UCC"}]),
+        "classStatus": slim(group_records(classes, "custom_module_status", "Module Class Details")),
+        "schedule": slim([{"label": "All sessions", "value": len(schedules), "records": schedules, "doctype": "Course Schedule"}, {"label": "With Teacher", "value": len([x for x in schedules if x.get("instructor")]), "records": [x for x in schedules if x.get("instructor")], "doctype": "Course Schedule"}, {"label": "With room", "value": len([x for x in schedules if x.get("room")]), "records": [x for x in schedules if x.get("room")], "doctype": "Course Schedule"}, {"label": "With start and end time", "value": len([x for x in schedules if x.get("from_time") and x.get("to_time")]), "records": [x for x in schedules if x.get("from_time") and x.get("to_time")], "doctype": "Course Schedule"}]),
+        "admission": slim(group_records(apps, "application_status", "Student Admission UCC")),
+        "teacher": slim([{"label": "Teacher assigned", "value": len(assigned), "records": assigned, "doctype": "Module Class Details"}, {"label": "Teacher missing", "value": len(unassigned), "records": unassigned, "doctype": "Module Class Details"}]),
+        "sessionReadiness": slim([{"label": "Ready", "value": len(session_ready), "records": session_ready, "doctype": "Course Schedule"}, {"label": "Missing Teacher", "value": len(missing_teacher), "records": missing_teacher, "doctype": "Course Schedule"}, {"label": "Missing room", "value": len(missing_room), "records": missing_room, "doctype": "Course Schedule"}, {"label": "Missing timing", "value": len(missing_timing), "records": missing_timing, "doctype": "Course Schedule"}]),
+        "contracts": slim([{"label": "Contract dates complete", "value": len(complete_contracts), "records": complete_contracts, "doctype": "Student Admission UCC"}, {"label": "Contract dates incomplete", "value": len(incomplete_contracts), "records": incomplete_contracts, "doctype": "Student Admission UCC"}]),
+        "dateCompleteness": slim([{"label": "Start and end dates complete", "value": len(ready), "records": ready, "doctype": "Student Intake No"}, {"label": "Missing start or end date", "value": len(not_ready), "records": not_ready, "doctype": "Student Intake No"}]),
+        "unscheduled": slim([{"label": "With schedules", "value": len(scheduled_classes), "records": scheduled_classes, "doctype": "Module Class Details"}, {"label": "Without schedules", "value": len(unscheduled_classes), "records": unscheduled_classes, "doctype": "Module Class Details"}]),
+        "scheduleCompleteness": slim([{"label": "Complete", "value": len(session_ready), "records": session_ready, "doctype": "Course Schedule"}, {"label": "Missing Teacher", "value": len(missing_teacher), "records": missing_teacher, "doctype": "Course Schedule"}, {"label": "Missing room", "value": len(missing_room), "records": missing_room, "doctype": "Course Schedule"}, {"label": "Missing time", "value": len(missing_timing), "records": missing_timing, "doctype": "Course Schedule"}]),
+        "roomClashes": slim([{"label": "Sessions with room clash", "value": len(room_clashes), "records": room_clashes, "doctype": "Course Schedule"}, {"label": "No detected room clash", "value": max(0, len(schedules) - len(room_clashes)), "records": schedules_no_room_clash, "doctype": "Course Schedule"}]),
+        "teacherClashes": slim([{"label": "Sessions with Teacher clash", "value": len(teacher_clashes), "records": teacher_clashes, "doctype": "Course Schedule"}, {"label": "No detected Teacher clash", "value": max(0, len(schedules) - len(teacher_clashes)), "records": schedules_no_teacher_clash, "doctype": "Course Schedule"}]),
+        "contractVsStart": slim([{"label": "Contract on/before commencement", "value": len(contract_before), "records": contract_before, "doctype": "Student Admission UCC"}, {"label": "Contract after commencement", "value": len(contract_after), "records": contract_after, "doctype": "Student Admission UCC"}, {"label": "Comparison unavailable", "value": len(contract_unknown), "records": contract_unknown, "doctype": "Student Admission UCC"}]),
+        "contractExceptions": slim([{"label": ("Unsigned contracts" if signature_supported else "Signature field unsupported"), "value": len(unsigned), "records": unsigned, "doctype": "Student Admission UCC"}, {"label": ("Unsent contracts" if sent_supported else "Sent-status field unsupported"), "value": len(unsent), "records": unsent, "doctype": "Student Admission UCC"}, {"label": "Contract dates incomplete", "value": len(incomplete_contracts), "records": incomplete_contracts, "doctype": "Student Admission UCC"}]),
+        "exceptions": exceptions,
+        "intakes": [x.get("name") for x in intakes],
+        "classes": [x.get("name") for x in classes],
+        "schedules": [x.get("name") for x in schedules],
+        "apps": [x.get("name") for x in apps],
+    }
+
 def compute_c5_summary(data, active_filters):
     # Faithful port of the client compute() + buildQuality() shared core.
     # Proven byte-identical to the JavaScript across 6 filter permutations.
@@ -576,6 +706,67 @@ elif action == "c511_analytics":
             "courses": data["Course"],
             "programs": data["Program"],
             "plans": data["Assessment Plan"]
+        },
+        "sources": sources
+    }
+elif action == "c521_analytics":
+    # Section 5.2.1 model, server-side. Faithful port of the client buildC521();
+    # proven byte-identical to the JavaScript. Module Class Details (schedules
+    # child) and Student Admission UCC (signature/contract fields) need full
+    # documents; Student Intake No and Course Schedule are lists using the client
+    # field sets. Course Schedule is filtered by programme/student group like the
+    # client. Permission-aware throughout.
+    f5 = filters or {}
+    program = f5.get("program")
+    student_group = f5.get("student_group")
+    data = {}
+    sources = {}
+    for doctype in ["Module Class Details", "Student Admission UCC"]:
+        try:
+            names = frappe.get_list(doctype, pluck="name", limit_page_length=500, order_by="modified desc") or []
+            data[doctype] = [frappe.get_doc(doctype, name).as_dict() for name in names]
+            sources[doctype] = {"status": "Available", "count": len(data[doctype])}
+        except Exception as error:
+            message = str(error)
+            lowered = message.lower()
+            status = "Not permitted" if ("permission" in lowered or "not permitted" in lowered or "not allowed" in lowered) else "Unavailable"
+            data[doctype] = []
+            sources[doctype] = {"status": status, "count": 0, "error": message}
+    try:
+        data["Student Intake No"] = frappe.get_list("Student Intake No", fields=["name", "batch_name", "program", "course_start_date", "course_end_date", "modified"], limit_page_length=500, order_by="modified desc") or []
+        sources["Student Intake No"] = {"status": "Available", "count": len(data["Student Intake No"])}
+    except Exception as error:
+        data["Student Intake No"] = []
+        sources["Student Intake No"] = {"status": "Unavailable", "count": 0, "error": str(error)}
+    schedule_filters = {}
+    if program:
+        schedule_filters["program"] = program
+    if student_group:
+        schedule_filters["student_group"] = student_group
+    try:
+        data["Course Schedule"] = frappe.get_list("Course Schedule", filters=schedule_filters, fields=["name", "student_group", "instructor", "instructor_name", "course", "schedule_date", "room", "from_time", "to_time", "program"], limit_page_length=5000, order_by="modified desc") or []
+        sources["Course Schedule"] = {"status": "Available", "count": len(data["Course Schedule"])}
+    except Exception as error:
+        data["Course Schedule"] = []
+        sources["Course Schedule"] = {"status": "Unavailable", "count": 0, "error": str(error)}
+
+    model = compute_c521(data)
+    frappe.response["message"] = {
+        "ok": True,
+        "meta": {
+            "api_method": "ucc_analytics_criterion_5",
+            "dashboard": "criterion_5",
+            "action": action,
+            "section": "5.2.1",
+            "generated_at": frappe.utils.now()
+        },
+        "filters": filters,
+        "model": model,
+        "records": {
+            "intakes": data["Student Intake No"],
+            "classes": data["Module Class Details"],
+            "schedules": data["Course Schedule"],
+            "apps": data["Student Admission UCC"]
         },
         "sources": sources
     }

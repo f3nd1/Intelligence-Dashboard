@@ -536,6 +536,30 @@ addLog("WARN","source","c512_server_model_unavailable",{error:error.message});
 return null;
 }
 }
+// Section 5.2.1 model from the server (c521_analytics), re-hydrated into the
+// exact buildC521() shape; null when unavailable so the caller falls back to
+// the client buildC521().
+async function fetchC521Model(){
+try{
+const message=await new Promise((resolve,reject)=>frappe.call({
+method:"ucc_analytics_criterion_5",
+args:{payload:JSON.stringify({action:"c521_analytics",filters:currentFilters()})},
+callback:response=>resolve(response?.message),
+error:reject
+}));
+if(!message||message.ok!==true||!message.model||!message.records)throw new Error(message?.message||"c521_analytics is unavailable");
+const rec=message.records,m=message.model;
+const byName=new Map([...(rec.intakes||[]),...(rec.classes||[]),...(rec.schedules||[]),...(rec.apps||[])].map(r=>[r.name,r]));
+const hydrate=ds=>(ds||[]).map(e=>{const out={label:e.label,value:e.value,records:(e.records||[]).map(n=>byName.get(n)||{name:n})};if(e.doctype!==undefined)out.doctype=e.doctype;return out;});
+addLog("INFO","source","c521_server_model_used",{intakes:(rec.intakes||[]).length,classes:(rec.classes||[]).length,schedules:(rec.schedules||[]).length,apps:(rec.apps||[]).length});
+const out={intakes:rec.intakes||[],classes:rec.classes||[],schedules:rec.schedules||[],apps:rec.apps||[],kpis:m.kpis,exceptions:m.exceptions};
+["intakesReady","flow","classStatus","schedule","admission","teacher","sessionReadiness","contracts","dateCompleteness","unscheduled","scheduleCompleteness","roomClashes","teacherClashes","contractVsStart","contractExceptions"].forEach(k=>out[k]=hydrate(m[k]));
+return out;
+}catch(error){
+addLog("WARN","source","c521_server_model_unavailable",{error:error.message});
+return null;
+}
+}
 async function hydrateDocuments(dt){
 const rows=state.data[dt]||[];
 setProgress(Math.min(90,8),`Loading ${(UCC_TERMS[dt]||dt).toLowerCase()} design details…`);
@@ -1757,6 +1781,125 @@ missingEvidence:[
 followup:[...followupGroups].sort((a,b)=>a[0].localeCompare(b[0])).map(([label,records])=>({label,value:records.filter(x=>/complete|implemented|closed/i.test(String(x.recommendation_implementation_status||x.review_status||x.status||""))).length,records}))
 };
 }
+// Section 5.2.1 compute, extracted from the render branch unchanged so it can be
+// ported to the server (c521_analytics) and wired with this as the fallback.
+function buildC521(d){
+const intakes=d["Student Intake No"]||[],classes=d["Module Class Details"]||[],schedules=d["Course Schedule"]||[],apps=d["Student Admission UCC"]||[];
+const ready=intakes.filter(x=>x.program&&x.course_start_date&&x.course_end_date),notReady=intakes.filter(x=>!ready.includes(x));
+const assigned=classes.filter(x=>x.custom_instructor),unassigned=classes.filter(x=>!x.custom_instructor);
+const sessionReady=schedules.filter(x=>x.instructor&&x.room&&x.from_time&&x.to_time);
+const missingTeacher=schedules.filter(x=>!x.instructor),missingRoom=schedules.filter(x=>!x.room),missingTiming=schedules.filter(x=>!x.from_time||!x.to_time);
+const completeContracts=apps.filter(x=>x.contract_start&&x.contract_end),incompleteContracts=apps.filter(x=>!x.contract_start||!x.contract_end);
+const scheduleClassNames=new Set(schedules.map(x=>x.student_group||x.module_class_details).filter(Boolean));
+const unscheduledClasses=classes.filter(x=>!scheduleClassNames.has(x.name));
+const scheduledClasses=classes.filter(x=>scheduleClassNames.has(x.name));
+const overlap=(a,b)=>{
+if(String(a.schedule_date||"")!==String(b.schedule_date||""))return false;
+const toMinutes=value=>{
+if(value===null||value===undefined||value==="")return null;
+const parts=String(value).split(":").map(Number);
+return Number.isFinite(parts[0])?parts[0]*60+(parts[1]||0):null;
+};
+const af=toMinutes(a.from_time),at=toMinutes(a.to_time),bf=toMinutes(b.from_time),bt=toMinutes(b.to_time);
+return af!==null&&at!==null&&bf!==null&&bt!==null&&af<bt&&bf<at;
+};
+const clashRecords=(field)=>{
+const found=new Map;
+schedules.forEach((a,index)=>schedules.slice(index+1).forEach(b=>{
+if(a[field]&&a[field]===b[field]&&overlap(a,b)){found.set(a.name,a);found.set(b.name,b)}
+}));
+return [...found.values()];
+};
+const roomClashes=clashRecords("room"),teacherClashes=clashRecords("instructor");
+const intakeByName=new Map(intakes.map(x=>[x.name,x]));
+const contractBeforeStart=[],contractAfterStart=[],contractUnknown=[];
+apps.forEach(app=>{
+const intake=intakeByName.get(app.student_batch);
+const commencement=app.actual_commencement_date||app.course_commencement_date||(intake&&intake.course_start_date);
+if(!commencement||!app.contract_start){contractUnknown.push(app);return}
+if(new Date(app.contract_start)<=new Date(commencement))contractBeforeStart.push(app);else contractAfterStart.push(app);
+});
+const signatureFields=["contract_signed","is_contract_signed","signed_contract","student_signature"];
+const sentFields=["contract_sent","is_contract_sent","sent_to_student","contract_email_sent"];
+const signatureSupported=apps.some(x=>signatureFields.some(f=>Object.prototype.hasOwnProperty.call(x,f)));
+const sentSupported=apps.some(x=>sentFields.some(f=>Object.prototype.hasOwnProperty.call(x,f)));
+const truthyField=(x,fields)=>fields.some(f=>x[f]===1||x[f]===true||String(x[f]).toLowerCase()==="yes");
+const unsigned=signatureSupported?apps.filter(x=>!truthyField(x,signatureFields)):[];
+const unsent=sentSupported?apps.filter(x=>!truthyField(x,sentFields)):[];
+const exceptions=[];
+intakes.forEach(x=>{if(!x.program||!x.course_start_date||!x.course_end_date)exceptions.push([x.name,"Student Intake No","Missing Course or start/end date"])});
+classes.forEach(x=>{if(!x.custom_instructor)exceptions.push([x.name,"Module Class Details","Teacher not assigned"]);if(!(x.schedules||[]).length)exceptions.push([x.name,"Module Class Details","No schedule rows"])});
+apps.forEach(x=>{if(!x.student_batch)exceptions.push([x.name,"Student Admission UCC","No Intake No"]);if(!x.contract_start||!x.contract_end)exceptions.push([x.name,"Student Admission UCC","Contract dates incomplete"])});
+return{
+intakes,classes,schedules,apps,
+kpis:{intakes:intakes.length,classes:classes.length,sessions:schedules.length,applicants:apps.length},
+intakesReady:[
+{label:"Ready",value:ready.length,records:ready,doctype:"Student Intake No"},
+{label:"Missing Course or dates",value:notReady.length,records:notReady,doctype:"Student Intake No"}
+],
+flow:[
+{label:"Intakes",value:intakes.length,records:intakes,doctype:"Student Intake No"},
+{label:"Module classes",value:classes.length,records:classes,doctype:"Module Class Details"},
+{label:"Scheduled sessions",value:schedules.length,records:schedules,doctype:"Course Schedule"},
+{label:"Shortlisted applicants",value:apps.length,records:apps,doctype:"Student Admission UCC"}
+],
+classStatus:groupRecords(classes,"custom_module_status","Module Class Details"),
+schedule:[
+{label:"All sessions",value:schedules.length,records:schedules,doctype:"Course Schedule"},
+{label:"With Teacher",value:schedules.filter(x=>x.instructor).length,records:schedules.filter(x=>x.instructor),doctype:"Course Schedule"},
+{label:"With room",value:schedules.filter(x=>x.room).length,records:schedules.filter(x=>x.room),doctype:"Course Schedule"},
+{label:"With start and end time",value:schedules.filter(x=>x.from_time&&x.to_time).length,records:schedules.filter(x=>x.from_time&&x.to_time),doctype:"Course Schedule"}
+],
+admission:groupRecords(apps,"application_status","Student Admission UCC"),
+teacher:[
+{label:"Teacher assigned",value:assigned.length,records:assigned,doctype:"Module Class Details"},
+{label:"Teacher missing",value:unassigned.length,records:unassigned,doctype:"Module Class Details"}
+],
+sessionReadiness:[
+{label:"Ready",value:sessionReady.length,records:sessionReady,doctype:"Course Schedule"},
+{label:"Missing Teacher",value:missingTeacher.length,records:missingTeacher,doctype:"Course Schedule"},
+{label:"Missing room",value:missingRoom.length,records:missingRoom,doctype:"Course Schedule"},
+{label:"Missing timing",value:missingTiming.length,records:missingTiming,doctype:"Course Schedule"}
+],
+contracts:[
+{label:"Contract dates complete",value:completeContracts.length,records:completeContracts,doctype:"Student Admission UCC"},
+{label:"Contract dates incomplete",value:incompleteContracts.length,records:incompleteContracts,doctype:"Student Admission UCC"}
+],
+dateCompleteness:[
+{label:"Start and end dates complete",value:ready.length,records:ready,doctype:"Student Intake No"},
+{label:"Missing start or end date",value:notReady.length,records:notReady,doctype:"Student Intake No"}
+],
+unscheduled:[
+{label:"With schedules",value:scheduledClasses.length,records:scheduledClasses,doctype:"Module Class Details"},
+{label:"Without schedules",value:unscheduledClasses.length,records:unscheduledClasses,doctype:"Module Class Details"}
+],
+scheduleCompleteness:[
+{label:"Complete",value:sessionReady.length,records:sessionReady,doctype:"Course Schedule"},
+{label:"Missing Teacher",value:missingTeacher.length,records:missingTeacher,doctype:"Course Schedule"},
+{label:"Missing room",value:missingRoom.length,records:missingRoom,doctype:"Course Schedule"},
+{label:"Missing time",value:missingTiming.length,records:missingTiming,doctype:"Course Schedule"}
+],
+roomClashes:[
+{label:"Sessions with room clash",value:roomClashes.length,records:roomClashes,doctype:"Course Schedule"},
+{label:"No detected room clash",value:Math.max(0,schedules.length-roomClashes.length),records:schedules.filter(x=>!roomClashes.includes(x)),doctype:"Course Schedule"}
+],
+teacherClashes:[
+{label:"Sessions with Teacher clash",value:teacherClashes.length,records:teacherClashes,doctype:"Course Schedule"},
+{label:"No detected Teacher clash",value:Math.max(0,schedules.length-teacherClashes.length),records:schedules.filter(x=>!teacherClashes.includes(x)),doctype:"Course Schedule"}
+],
+contractVsStart:[
+{label:"Contract on/before commencement",value:contractBeforeStart.length,records:contractBeforeStart,doctype:"Student Admission UCC"},
+{label:"Contract after commencement",value:contractAfterStart.length,records:contractAfterStart,doctype:"Student Admission UCC"},
+{label:"Comparison unavailable",value:contractUnknown.length,records:contractUnknown,doctype:"Student Admission UCC"}
+],
+contractExceptions:[
+{label:signatureSupported?"Unsigned contracts":"Signature field unsupported",value:unsigned.length,records:unsigned,doctype:"Student Admission UCC"},
+{label:sentSupported?"Unsent contracts":"Sent-status field unsupported",value:unsent.length,records:unsent,doctype:"Student Admission UCC"},
+{label:"Contract dates incomplete",value:incompleteContracts.length,records:incompleteContracts,doctype:"Student Admission UCC"}
+],
+exceptions
+};
+}
 function renderNewSection(tab){
 const d=state.data||{},today=new Date();today.setHours(0,0,0,0);
 const in90=new Date(today.getTime()+90*86400000);
@@ -1786,118 +1929,24 @@ const recordRows=[
 tbody("c512-records",recordRows,7);
 }
 if(tab==="c521"){
-const intakes=d["Student Intake No"]||[],classes=d["Module Class Details"]||[],schedules=d["Course Schedule"]||[],apps=d["Student Admission UCC"]||[];
-setNewKpi("intakes",intakes.length);setNewKpi("classes",classes.length);setNewKpi("sessions",schedules.length);setNewKpi("applicants",apps.length);
-const ready=intakes.filter(x=>x.program&&x.course_start_date&&x.course_end_date),notReady=intakes.filter(x=>!ready.includes(x));
-chartAndTable("c521-intakes",[
-{label:"Ready",value:ready.length,records:ready,doctype:"Student Intake No"},
-{label:"Missing Course or dates",value:notReady.length,records:notReady,doctype:"Student Intake No"}
-]);
-chartAndTable("c521-flow",[
-{label:"Intakes",value:intakes.length,records:intakes,doctype:"Student Intake No"},
-{label:"Module classes",value:classes.length,records:classes,doctype:"Module Class Details"},
-{label:"Scheduled sessions",value:schedules.length,records:schedules,doctype:"Course Schedule"},
-{label:"Shortlisted applicants",value:apps.length,records:apps,doctype:"Student Admission UCC"}
-]);
-chartAndTable("c521-class-status",groupRecords(classes,"custom_module_status","Module Class Details"));
-chartAndTable("c521-schedule",[
-{label:"All sessions",value:schedules.length,records:schedules,doctype:"Course Schedule"},
-{label:"With Teacher",value:schedules.filter(x=>x.instructor).length,records:schedules.filter(x=>x.instructor),doctype:"Course Schedule"},
-{label:"With room",value:schedules.filter(x=>x.room).length,records:schedules.filter(x=>x.room),doctype:"Course Schedule"},
-{label:"With start and end time",value:schedules.filter(x=>x.from_time&&x.to_time).length,records:schedules.filter(x=>x.from_time&&x.to_time),doctype:"Course Schedule"}
-]);
-chartAndTable("c521-admission",groupRecords(apps,"application_status","Student Admission UCC"));
-const assigned=classes.filter(x=>x.custom_instructor),unassigned=classes.filter(x=>!x.custom_instructor);
-chartAndTable("c521-teacher",[
-{label:"Teacher assigned",value:assigned.length,records:assigned,doctype:"Module Class Details"},
-{label:"Teacher missing",value:unassigned.length,records:unassigned,doctype:"Module Class Details"}
-]);
-const sessionReady=schedules.filter(x=>x.instructor&&x.room&&x.from_time&&x.to_time);
-const missingTeacher=schedules.filter(x=>!x.instructor),missingRoom=schedules.filter(x=>!x.room),missingTiming=schedules.filter(x=>!x.from_time||!x.to_time);
-chartAndTable("c521-session-readiness",[
-{label:"Ready",value:sessionReady.length,records:sessionReady,doctype:"Course Schedule"},
-{label:"Missing Teacher",value:missingTeacher.length,records:missingTeacher,doctype:"Course Schedule"},
-{label:"Missing room",value:missingRoom.length,records:missingRoom,doctype:"Course Schedule"},
-{label:"Missing timing",value:missingTiming.length,records:missingTiming,doctype:"Course Schedule"}
-]);
-const completeContracts=apps.filter(x=>x.contract_start&&x.contract_end),incompleteContracts=apps.filter(x=>!x.contract_start||!x.contract_end);
-chartAndTable("c521-contracts",[
-{label:"Contract dates complete",value:completeContracts.length,records:completeContracts,doctype:"Student Admission UCC"},
-{label:"Contract dates incomplete",value:incompleteContracts.length,records:incompleteContracts,doctype:"Student Admission UCC"}
-]);
-chartAndTable("c521-date-completeness-v110",[
-{label:"Start and end dates complete",value:ready.length,records:ready,doctype:"Student Intake No"},
-{label:"Missing start or end date",value:notReady.length,records:notReady,doctype:"Student Intake No"}
-]);
-const scheduleClassNames=new Set(schedules.map(x=>x.student_group||x.module_class_details).filter(Boolean));
-const unscheduledClasses=classes.filter(x=>!scheduleClassNames.has(x.name));
-const scheduledClasses=classes.filter(x=>scheduleClassNames.has(x.name));
-chartAndTable("c521-unscheduled-v110",[
-{label:"With schedules",value:scheduledClasses.length,records:scheduledClasses,doctype:"Module Class Details"},
-{label:"Without schedules",value:unscheduledClasses.length,records:unscheduledClasses,doctype:"Module Class Details"}
-]);
-chartAndTable("c521-schedule-completeness-v110",[
-{label:"Complete",value:sessionReady.length,records:sessionReady,doctype:"Course Schedule"},
-{label:"Missing Teacher",value:missingTeacher.length,records:missingTeacher,doctype:"Course Schedule"},
-{label:"Missing room",value:missingRoom.length,records:missingRoom,doctype:"Course Schedule"},
-{label:"Missing time",value:missingTiming.length,records:missingTiming,doctype:"Course Schedule"}
-]);
-const overlap=(a,b)=>{
-if(String(a.schedule_date||"")!==String(b.schedule_date||""))return false;
-const toMinutes=value=>{
-if(value===null||value===undefined||value==="")return null;
-const parts=String(value).split(":").map(Number);
-return Number.isFinite(parts[0])?parts[0]*60+(parts[1]||0):null;
-};
-const af=toMinutes(a.from_time),at=toMinutes(a.to_time),bf=toMinutes(b.from_time),bt=toMinutes(b.to_time);
-return af!==null&&at!==null&&bf!==null&&bt!==null&&af<bt&&bf<at;
-};
-const clashRecords=(field)=>{
-const found=new Map;
-schedules.forEach((a,index)=>schedules.slice(index+1).forEach(b=>{
-if(a[field]&&a[field]===b[field]&&overlap(a,b)){found.set(a.name,a);found.set(b.name,b)}
-}));
-return [...found.values()];
-};
-const roomClashes=clashRecords("room"),teacherClashes=clashRecords("instructor");
-chartAndTable("c521-room-clashes-v110",[
-{label:"Sessions with room clash",value:roomClashes.length,records:roomClashes,doctype:"Course Schedule"},
-{label:"No detected room clash",value:Math.max(0,schedules.length-roomClashes.length),records:schedules.filter(x=>!roomClashes.includes(x)),doctype:"Course Schedule"}
-]);
-chartAndTable("c521-teacher-clashes-v110",[
-{label:"Sessions with Teacher clash",value:teacherClashes.length,records:teacherClashes,doctype:"Course Schedule"},
-{label:"No detected Teacher clash",value:Math.max(0,schedules.length-teacherClashes.length),records:schedules.filter(x=>!teacherClashes.includes(x)),doctype:"Course Schedule"}
-]);
-const intakeByName=new Map(intakes.map(x=>[x.name,x]));
-const contractBeforeStart=[],contractAfterStart=[],contractUnknown=[];
-apps.forEach(app=>{
-const intake=intakeByName.get(app.student_batch);
-const commencement=app.actual_commencement_date||app.course_commencement_date||(intake&&intake.course_start_date);
-if(!commencement||!app.contract_start){contractUnknown.push(app);return}
-if(new Date(app.contract_start)<=new Date(commencement))contractBeforeStart.push(app);else contractAfterStart.push(app);
-});
-chartAndTable("c521-contract-vs-start-v110",[
-{label:"Contract on/before commencement",value:contractBeforeStart.length,records:contractBeforeStart,doctype:"Student Admission UCC"},
-{label:"Contract after commencement",value:contractAfterStart.length,records:contractAfterStart,doctype:"Student Admission UCC"},
-{label:"Comparison unavailable",value:contractUnknown.length,records:contractUnknown,doctype:"Student Admission UCC"}
-]);
-const signatureFields=["contract_signed","is_contract_signed","signed_contract","student_signature"];
-const sentFields=["contract_sent","is_contract_sent","sent_to_student","contract_email_sent"];
-const signatureSupported=apps.some(x=>signatureFields.some(f=>Object.prototype.hasOwnProperty.call(x,f)));
-const sentSupported=apps.some(x=>sentFields.some(f=>Object.prototype.hasOwnProperty.call(x,f)));
-const truthyField=(x,fields)=>fields.some(f=>x[f]===1||x[f]===true||String(x[f]).toLowerCase()==="yes");
-const unsigned=signatureSupported?apps.filter(x=>!truthyField(x,signatureFields)):[];
-const unsent=sentSupported?apps.filter(x=>!truthyField(x,sentFields)):[];
-chartAndTable("c521-contract-exceptions-v110",[
-{label:signatureSupported?"Unsigned contracts":"Signature field unsupported",value:unsigned.length,records:unsigned,doctype:"Student Admission UCC"},
-{label:sentSupported?"Unsent contracts":"Sent-status field unsupported",value:unsent.length,records:unsent,doctype:"Student Admission UCC"},
-{label:"Contract dates incomplete",value:incompleteContracts.length,records:incompleteContracts,doctype:"Student Admission UCC"}
-]);
-const exceptions=[];
-intakes.forEach(x=>{if(!x.program||!x.course_start_date||!x.course_end_date)exceptions.push([x.name,"Student Intake No","Missing Course or start/end date"])});
-classes.forEach(x=>{if(!x.custom_instructor)exceptions.push([x.name,"Module Class Details","Teacher not assigned"]);if(!(x.schedules||[]).length)exceptions.push([x.name,"Module Class Details","No schedule rows"])});
-apps.forEach(x=>{if(!x.student_batch)exceptions.push([x.name,"Student Admission UCC","No Intake No"]);if(!x.contract_start||!x.contract_end)exceptions.push([x.name,"Student Admission UCC","Contract dates incomplete"])});
-tbody("c521-exceptions",exceptions.map(x=>`<tr><td>${esc(x[0])}</td><td>${esc(displayDoctype(x[1]))}</td><td>${esc(x[2])}</td><td>${recordLink(x[1],x[0])}</td></tr>`),4);
+const b=state.c521Server||buildC521(d);
+setNewKpi("intakes",b.kpis.intakes);setNewKpi("classes",b.kpis.classes);setNewKpi("sessions",b.kpis.sessions);setNewKpi("applicants",b.kpis.applicants);
+chartAndTable("c521-intakes",b.intakesReady);
+chartAndTable("c521-flow",b.flow);
+chartAndTable("c521-class-status",b.classStatus);
+chartAndTable("c521-schedule",b.schedule);
+chartAndTable("c521-admission",b.admission);
+chartAndTable("c521-teacher",b.teacher);
+chartAndTable("c521-session-readiness",b.sessionReadiness);
+chartAndTable("c521-contracts",b.contracts);
+chartAndTable("c521-date-completeness-v110",b.dateCompleteness);
+chartAndTable("c521-unscheduled-v110",b.unscheduled);
+chartAndTable("c521-schedule-completeness-v110",b.scheduleCompleteness);
+chartAndTable("c521-room-clashes-v110",b.roomClashes);
+chartAndTable("c521-teacher-clashes-v110",b.teacherClashes);
+chartAndTable("c521-contract-vs-start-v110",b.contractVsStart);
+chartAndTable("c521-contract-exceptions-v110",b.contractExceptions);
+tbody("c521-exceptions",b.exceptions.map(x=>`<tr><td>${esc(x[0])}</td><td>${esc(displayDoctype(x[1]))}</td><td>${esc(x[2])}</td><td>${recordLink(x[1],x[0])}</td></tr>`),4);
 }
 if(tab==="c522"){
 const obs=d["Classroom Observation"]||[],classes=d["Module Class Details"]||[],surveys=d["Survey Response"]||[],schedules=d["Course Schedule"]||[];
@@ -2225,6 +2274,7 @@ state.data[t.dt]=await load(t.dt,t.filters);
 if(t.dt==="Survey Response")populateSurveyModuleFilter();
 }
 if(tab==="c512"){setProgress(78,"Computing 5.1.2 analytics");state.c512Server=await fetchC512Model();}
+if(tab==="c521"){setProgress(78,"Computing 5.2.1 analytics");state.c521Server=await fetchC521Model();}
 if(["c54","quality"].includes(tab)){
 const schedules=state.data["Course Schedule"]||[];
 const names=schedules.map(x=>x.name).filter(Boolean);
