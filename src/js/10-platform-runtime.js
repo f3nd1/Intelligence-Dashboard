@@ -395,7 +395,7 @@ return false;
 // Section 5.1.1 model from the server (c511_analytics). Returns the exact
 // buildC511() shape (checks/moduleRows re-hydrated to full record objects) so
 // renderC511 consumes it unchanged, or null if the action is unavailable so the
-// caller renders an unavailable notice.
+// caller falls back to the client buildC511().
 async function fetchC511Model(){
 try{
 const message=await new Promise((resolve,reject)=>frappe.call({
@@ -425,7 +425,7 @@ return null;
 // Section 5.1.2 model from the server (c512_analytics), re-hydrated into the
 // exact buildC512() shape (dataset records mapped back to full objects) so the
 // render branch consumes it unchanged; null when the action is unavailable so
-// the caller renders an unavailable notice.
+// the caller falls back to the client buildC512().
 async function fetchC512Model(){
 try{
 const message=await new Promise((resolve,reject)=>frappe.call({
@@ -446,8 +446,8 @@ return null;
 }
 }
 // Section 5.2.1 model from the server (c521_analytics), re-hydrated into the
-// exact buildC521() shape; null when unavailable so the caller renders an
-// unavailable notice.
+// exact buildC521() shape; null when unavailable so the caller falls back to
+// the client buildC521().
 async function fetchC521Model(){
 try{
 const message=await new Promise((resolve,reject)=>frappe.call({
@@ -470,7 +470,7 @@ return null;
 }
 }
 // Section 5.2.2 model from the server (c522_analytics), re-hydrated into the
-// exact buildC522() shape; null when unavailable so the caller renders an unavailable notice.
+// exact buildC522() shape; null when unavailable so the caller falls back.
 async function fetchC522Model(){
 try{
 const message=await new Promise((resolve,reject)=>frappe.call({
@@ -494,7 +494,7 @@ return null;
 }
 }
 // Section 5.3.1 model from the server (c531_analytics), re-hydrated into the
-// exact buildC531() shape; null when unavailable so the caller renders an unavailable notice.
+// exact buildC531() shape; null when unavailable so the caller falls back.
 async function fetchC531Model(){
 try{
 const message=await new Promise((resolve,reject)=>frappe.call({
@@ -568,14 +568,81 @@ const keys=Object.keys(record||{});
 for(const candidate of candidates){const n=normal(candidate),hit=keys.find(k=>normal(k)===n||normal(k).includes(n)||n.includes(normal(k)));if(hit&&hasEvidence(record[hit]))return{field:hit,value:record[hit]}}
 return null;
 }
+function c511Group(record,group){const hits=C511_GROUPS[group].map(field=>findEvidenceField(record,[field])).filter(Boolean);return{ok:hits.length>0,fields:[...new Set(hits.map(x=>x.field))]}}
+function c511Status(record){return record.approval_status||"Not set"}
 function formatDate(value){
 if(!value)return"—";
 const d=/^\d{4}-\d{2}-\d{2}$/.test(String(value))?new Date(`${value}T00:00:00`):new Date(value);
 if(Number.isNaN(d.getTime()))return String(value);
 return `${String(d.getDate()).padStart(2,"0")} ${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()]} ${d.getFullYear()}`;
 }
+function buildC511(){
+const proposals=state.data["Course Proposal"]||[],reviews=state.data["Course Review"]||[],courses=state.data.Course||[],programs=state.data.Program||[],plans=state.data["Assessment Plan"]||[];
+const checks=proposals.map(record=>{const groups={};Object.keys(C511_GROUPS).forEach(group=>groups[group]=c511Group(record,group));const complete=Object.values(groups).filter(x=>x.ok).length;return{record,groups,rate:pct(complete,Object.keys(groups).length),status:c511Status(record)}});
+const topics=courses.filter(x=>x.topics?.length).length,criteria=courses.filter(x=>x.assessment_criteria?.length).length,approved=checks.filter(x=>/approved|accepted|endorsed|submitted/i.test(x.status)||x.record.docstatus===1).length;
+const readiness=Object.keys(C511_GROUPS).map(group=>({label:group.charAt(0).toUpperCase()+group.slice(1),value:pct(checks.filter(x=>x.groups[group].ok).length,checks.length)}));
+const gaps=[];
+checks.forEach(x=>Object.entries(x.groups).forEach(([group,result])=>{
+if(!result.ok)gaps.push({
+doctype:"Course Proposal",
+record:x.record.name,
+area:group,
+issue:`No populated ${group} evidence detected`,
+severity:"Risk"
+});
+}));
+const moduleRows=courses.map(record=>{
+const lo=(record.custom_list_of_learning_objective||record.topics||[]).length||0;
+const lessons=(record.custom_lesson_plans||[]).length||0;
+const teaching=(record.custom_teaching_approach||[]).length||0;
+const assessment=(record.assessment_criteria||[]).length||0;
+const resources=(record.custom_resource||[]).length||0;
+const areas=[lo,lessons,teaching,assessment,resources],coverage=pct(areas.filter(v=>v>0).length,5);
+return{record,lo,lessons,teaching,assessment,resources,coverage,zero:areas.every(v=>v===0),complete:areas.every(v=>v>0)};
+});
+moduleRows.forEach(x=>{
+[
+["learning outcomes",x.lo],
+["lesson plans",x.lessons],
+["teaching approach",x.teaching],
+["assessment criteria",x.assessment],
+["resources",x.resources]
+].forEach(([area,value])=>{
+if(!value)gaps.push({
+doctype:"Course",
+record:x.record.name,
+area,
+issue:`Missing ${area}`,
+severity:"Risk"
+});
+});
+});
+if(!reviews.length){
+gaps.push({doctype:"Course Review",record:"—",area:"validation",issue:"No readable Course Review records",severity:"Risk"});
+}else{
+reviews.forEach(review=>{
+if(!hasEvidence(review.recommendations||review.module_recommendation_summary)){
+gaps.push({doctype:"Course Review",record:review.name,area:"recommendations",issue:"Missing recommendations",severity:"Warning"});
+}
+if(!(review.actionplan_progress||[]).length){
+gaps.push({doctype:"Course Review",record:review.name,area:"action plan",issue:"No action plan rows",severity:"Risk"});
+}
+if(review.next_review_date&&new Date(`${review.next_review_date}T00:00:00`)<new Date()){
+gaps.push({doctype:"Course Review",record:review.name,area:"review cycle",issue:"Next review date is overdue",severity:"Risk"});
+}
+});
+}
+const proposalApproved=proposals.filter(x=>x.approval_status==="Approved").length;
+const reviewApproved=reviews.filter(x=>x.review_status==="Approved").length;
+const ssgCount=proposals.filter(x=>x.ssg_approval_date).length;
+const overdue=reviews.filter(x=>x.next_review_date&&new Date(`${x.next_review_date}T00:00:00`)<new Date()).length;
+const avgDecisionDays=(()=>{const vals=proposals.map(x=>x.proposed_date&&x.decision_date?(new Date(`${x.decision_date}T00:00:00`)-new Date(`${x.proposed_date}T00:00:00`))/86400000:null).filter(v=>Number.isFinite(v)&&v>=0);return vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length):null})();
+const actionCounts=reviews.map(x=>(x.actionplan_progress||[]).length||0);
+const avgActions=actionCounts.length?Math.round(actionCounts.reduce((a,b)=>a+b,0)/actionCounts.length*10)/10:0;
+return{proposals,reviews,courses,programs,plans,checks,topics,criteria,approved,readiness,gaps,moduleRows,proposalApproved,reviewApproved,ssgCount,overdue,avgDecisionDays,avgActions};
+}
 function renderC511(){
-const a=state.c511Server;if(!a){status("5.1.1 analytics unavailable: the Criterion 5 server script is not responding.");return;}
+const a=state.c511Server||buildC511();
 const setk=(key,value,note)=>{set(`[data-c511-kpi="${key}"]`,value);if(note)set(`[data-c511-note="${key}"]`,note)};
 const moduleComplete=a.moduleRows.filter(x=>x.complete).length,zeroModules=a.moduleRows.filter(x=>x.zero).length;
 setk("proposal-approval",`${pct(a.proposalApproved,a.proposals.length)}%`,`${a.proposalApproved} of ${a.proposals.length}`);
@@ -648,6 +715,15 @@ function group(rows,key){
 const m=new Map;
 (rows||[]).forEach(r=>{const k=r?.[key]||"Not Set";m.set(k,(m.get(k)||0)+1)});
 return [...m].map(([label,value])=>({label,value})).sort((a,b)=>b.value-a.value);
+}
+function groupRecords(rows,key,doctype){
+const m=new Map;
+(rows||[]).forEach(record=>{
+const label=record?.[key]||"Not Set";
+if(!m.has(label))m.set(label,[]);
+m.get(label).push(record);
+});
+return [...m].map(([label,records])=>({label,value:records.length,records,doctype})).sort((a,b)=>b.value-a.value);
 }
 function badge(s){const c=s==="Good"?"good":s==="Warning"?"warn":"risk";return`<span class="badge ${c}">${esc(s)}</span>`}
 const C5_VISUAL_DESCRIPTIONS={"target-gaps":"Compares each academic system area against its target readiness level.","c511-radar":"Compares evidence strength across every course design and development control area.","c511-heatmap":"Grids evidence coverage against each course design control area.","c511-proposal-donut":"Shows the current status mix of course proposals, from drafted to approved.","c511-review-donut":"Shows the current status mix of course reviews, from due to complete.","c511-gap-funnel":"Compares identified evidence gaps by how severe each one is.","c512-review-level":"Compares review coverage across the different review levels applied.","c512-module-status":"Shows the current status mix of module reviews, from due to complete.","c512-course-status":"Shows the current status mix of course reviews, from due to complete.","c512-recommendation-status":"Gauges what share of previous recommendations have been implemented.","c521-intakes":"Gauges how ready each intake is ahead of its scheduled start.","c521-class-status":"Shows the current status mix of module classes, from planned to active.","c521-schedule":"Gauges what share of module classes have a completed schedule.","c521-teacher":"Gauges what share of module classes have a teacher assigned.","c522-coverage":"Gauges how much of scheduled delivery has a completed observation.","c522-observation-type":"Compares delivery observations across the different types conducted.","c522-ratings":"Compares observation ratings across each area being assessed.","c522-signoff":"Gauges what share of delivery observations have completed sign-off.","c531-status":"Shows the current status mix of partnership agreements.","c531-nda":"Gauges what share of partnerships have a completed NDA on file.","c531-monitoring":"Compares partnerships across the monitoring methods applied.","c531-evaluation":"Shows the outcome mix of completed partnership evaluations.","survey-module-score":"Compares survey scores achieved across each module.","survey-type-count":"Shows how student surveys are distributed across each survey type.","learning-risk":"Highlights students currently flagged as at academic risk.","assessment-trend":"Tracks the number of assessment plans created across recent months.","grade":"Shows how student grades are distributed across the grading scale.","assessment-controls":"Gauges how many assessment controls are documented and in place."};
@@ -1159,7 +1235,7 @@ svg.selectAll(".bar-value").data(data).enter().append("text")
 function renderVisibleC511Charts(){
 const panel=$('[data-c511-panel]:not(.hidden)');
 if(!panel)return;
-const tab=panel.dataset.c511Panel,a=state.c511Server;if(!a)return;
+const tab=panel.dataset.c511Panel,a=state.c511Server||buildC511();
 const safe=(label,fn)=>{try{fn()}catch(error){console.error(`5.1.1 ${label} chart error`,error)}};
 if(tab==="summary"){
 safe("radar",()=>radarChart("c511-radar",a.readiness));
@@ -1275,8 +1351,7 @@ else if(actionDoctype)window.open(doctypeListRoute(actionDoctype),"_blank","noop
 function sourceReady(dt){return state.sources?.[dt]?.status==="Available"}
 function makeQA(c){
 const srv=state.c5qaServer;
-if(!srv)addLog("WARN","source","c5_qa_model_missing",{note:"QA rows unavailable until the Criterion 5 server script responds."});
-const rows=srv&&Array.isArray(srv.rows)?srv.rows:[];
+const rows=srv&&Array.isArray(srv.rows)?srv.rows:buildQARows(c);
 state.qa=rows;
 renderOverviewQA();
 renderQATable("qa-c54",rows.filter(x=>x.criterion==="5.4"));
@@ -1290,6 +1365,109 @@ state.exceptions=srv&&Array.isArray(srv.exceptions)?srv.exceptions:[
 ...state.quality.filter(x=>x.count).map(x=>({criterion:"Data Quality",issue:x.check,value:x.count,target:0,status:"Risk"})),
 ...rows.filter(x=>x.status==="Risk").map(x=>({criterion:x.criterion,issue:x.question,value:x.answer,target:"Follow-up required",status:"Risk"}))
 ];
+}
+function buildQARows(c){
+const {s,metrics,topics,criteria}=c,f=currentFilters(),d=state.data;
+const missingTopics=s.courses.filter(x=>!(x.topics?.length));
+const missingCriteria=s.courses.filter(x=>!(x.assessment_criteria?.length));
+const mappedCourseNames=new Set((d.Program||[]).flatMap(p=>(p.courses||[]).map(x=>x.course).filter(Boolean)));
+const unmappedCourses=s.courses.filter(x=>!mappedCourseNames.has(x.name));
+const coursesWithPlans=new Set(s.plans.map(x=>x.course).filter(Boolean));
+const coursesWithoutPlans=s.courses.filter(x=>!coursesWithPlans.has(x.name));
+const schedules=s.schedules||[];
+const missingInstructor=schedules.filter(x=>!x.instructor);
+const missingRoom=schedules.filter(x=>!x.room);
+const schedNames=new Set(schedules.map(x=>x.name));
+const attendedScheduleNames=new Set(s.attendance.map(x=>x.course_schedule).filter(x=>schedNames.has(x)));
+const schedulesNoAttendance=schedules.filter(x=>!attendedScheduleNames.has(x.name));
+const attendanceByStatus=group(s.attendance,"status");
+const attendanceText=attendanceByStatus.length?attendanceByStatus.map(x=>`${x.label}: ${x.value}`).join(", "):"No attendance records in the selected scope.";
+const absent=s.attendance.filter(x=>x.status==="Absent").length;
+const late=s.attendance.filter(x=>x.status==="Late").length;
+const plansMissingExaminer=s.plans.filter(x=>!x.examiner);
+const plansMissingSupervisor=s.plans.filter(x=>!x.supervisor);
+const plansMissingRoom=s.plans.filter(x=>!x.room);
+const plansMissingDate=s.plans.filter(x=>!x.schedule_date);
+const planNames=new Set(s.plans.map(x=>x.name));
+const resultPlanNames=new Set(s.results.map(x=>x.assessment_plan).filter(x=>planNames.has(x)));
+const plansWithoutResults=s.plans.filter(x=>!resultPlanNames.has(x.name));
+const gradeDistribution=group(s.results,"grade");
+const resultErrors=state.quality.filter(x=>/Result|score|grade|Duplicate/i.test(x.check)).reduce((sum,x)=>sum+x.count,0);
+const mr=d["Module Review"]||[],cr=d["Course Review"]||[];
+const overdueReviews=cr.filter(x=>x.next_review_date&&new Date(x.next_review_date)<new Date());
+const pendingRecommendations=[...mr,...cr].filter(x=>x.recommendation_implementation_status==="Not Implemented");
+const actionRows=cr.flatMap(parent=>(parent.actionplan_progress||[]).map(action=>({...action,parent_name:parent.name})));
+const incompleteModuleReviews=mr.filter(x=>{
+const fields=["rating_duration","rating_pedagogy","rating_assessment","rating_learning_outcomes","rating_lesson_plan","rating_resource","recommendation"];
+return fields.some(field=>!x[field]);
+});
+const intakes=d["Student Intake No"]||[],classes=d["Module Class Details"]||[];
+const admissions=d["Student Admission UCC"]||[];
+const intakeGaps=intakes.filter(x=>!x.program||!x.course_start_date||!x.course_end_date);
+const classesNoTeacher=classes.filter(x=>!x.custom_instructor);
+const classesNoSchedule=classes.filter(x=>!(x.schedules||[]).length);
+const incompleteContracts=admissions.filter(x=>!x.contract_start||!x.contract_end);
+const admissionsNoIntake=admissions.filter(x=>!x.student_batch);
+const observations=d["Classroom Observation"]||[],surveys=d["Survey Response"]||[];
+const observedClassNames=new Set(observations.map(x=>x.module_class_details).filter(Boolean));
+const classesNoObservation=classes.filter(x=>!observedClassNames.has(x.name));
+const unsignedObservations=observations.filter(x=>!x.observers_signature||!x.teachers_signature);
+const concernObservations=observations.filter(x=>String(x.areas_text||"").replace(/<[^>]*>/g,"").trim());
+const observationTypes=group(observations,"type_of_observation");
+const noticeTypes=group(observations,"prior_notice");
+const agreements=d["Partnership Agreement"]||[],managed=d["Partnerships Agreement Management"]||[];
+const supplierRatings=d["Supplier Rating"]||[];
+const now=new Date(),in90=new Date(now.getTime()+90*86400000);
+const expiredAgreements=agreements.filter(x=>x.end_date&&new Date(x.end_date)<now);
+const expiringAgreements=agreements.filter(x=>x.end_date&&new Date(x.end_date)>=now&&new Date(x.end_date)<=in90);
+const ndaIncomplete=agreements.filter(x=>x.requires_nda&&!x.nda_acknowledged);
+const monitoring=managed.flatMap(parent=>(parent.monitoring_childtable||[]).map(row=>({...row,parent_name:parent.name})));
+const evaluations=managed.flatMap(parent=>(parent.table_luoo||[]).map(row=>({...row,parent_name:parent.name})));
+const belowThreshold=managed.filter(x=>Number(x.average_identification_and_selection_score)>0&&Number(x.average_identification_and_selection_score)<70);
+const rows=[
+{criterion:"5.1.1",question:"Which Modules are missing curriculum topics?",answer:missingTopics.length?`${missingTopics.length} Module(s): ${missingTopics.slice(0,8).map(x=>x.course_name||x.name).join(", ")}${missingTopics.length>8?"…":""}`:"No scoped Modules are missing curriculum topics.",source:"Course.topics child table on scoped Module records.",doctypes:["Course"],doctype:"Course",records:missingTopics,status:missingTopics.length?"Risk":"Good"},
+{criterion:"5.1.1",question:"Which Modules are missing assessment criteria?",answer:missingCriteria.length?`${missingCriteria.length} Module(s) are missing assessment criteria.`:"No scoped Modules are missing assessment criteria.",source:"Course.assessment_criteria child table.",doctypes:["Course"],doctype:"Course",records:missingCriteria,status:missingCriteria.length?"Risk":"Good"},
+{criterion:"5.1.1",question:"How complete is the Course-to-Module mapping?",answer:`${mappedCourseNames.size} unique Module(s) are mapped; ${unmappedCourses.length} scoped Module(s) are not found in a readable Course mapping.`,source:"Program.courses compared with scoped Course.name.",doctypes:["Program","Course"],doctype:"Course",records:unmappedCourses,status:unmappedCourses.length?"Warning":"Good"},
+{criterion:"5.1.1",question:"Which Modules do not have an Assessment Plan?",answer:coursesWithoutPlans.length?`${coursesWithoutPlans.length} Module(s) have no Assessment Plan.`:"Every scoped Module has at least one Assessment Plan.",source:"Course.name compared with Assessment Plan.course.",doctypes:["Course","Assessment Plan"],doctype:"Course",records:coursesWithoutPlans,status:coursesWithoutPlans.length?"Risk":"Good"},
+{criterion:"5.1.1",question:"What is the overall Module-design readiness?",answer:`${pct(topics+criteria,s.courses.length*2)}% across curriculum topics and assessment criteria for ${s.courses.length} scoped Module(s).`,source:"(Modules with topics + Modules with criteria) ÷ (Module count × 2).",doctypes:["Course"],doctype:"Course",records:[...new Map([...missingTopics,...missingCriteria].map(x=>[x.name,x])).values()],status:pct(topics+criteria,s.courses.length*2)>=100?"Good":pct(topics+criteria,s.courses.length*2)>=90?"Warning":"Risk"},
+{criterion:"5.1.2",question:"What is the Module Review approval status?",answer:sourceReady("Module Review")?(group(mr,"status").map(x=>`${x.label}: ${x.value}`).join(", ")||"No Module Review records."):"Open 5.1.2 to load Module Review data.",source:"Module Review.status.",doctypes:["Module Review"],doctype:"Module Review",records:mr,status:!sourceReady("Module Review")?"Warning":mr.some(x=>x.status!=="Approved")?"Warning":"Good"},
+{criterion:"5.1.2",question:"Which Course Reviews are overdue?",answer:sourceReady("Course Review")?`${overdueReviews.length} Course Review(s) have a next review date before today.`:"Open 5.1.2 to load Course Review data.",source:"Course Review.next_review_date compared with today.",doctypes:["Course Review"],doctype:"Course Review",records:overdueReviews,status:overdueReviews.length?"Risk":"Good"},
+{criterion:"5.1.2",question:"Are scheduled and ad-hoc reviews identifiable?",answer:sourceReady("Module Review")||sourceReady("Course Review")?group([...mr.map(x=>({kind:x.type_of_review||"Not Set"})),...cr.map(x=>({kind:x.review_type||"Not Set"}))],"kind").map(x=>`${x.label}: ${x.value}`).join(", "):"Open 5.1.2 to load review data.",source:"Module Review.type_of_review and Course Review.review_type.",doctypes:["Module Review","Course Review"],status:(mr.length||cr.length)?"Good":"Warning"},
+{criterion:"5.1.2",question:"Which previous recommendations remain unimplemented?",answer:sourceReady("Module Review")||sourceReady("Course Review")?`${pendingRecommendations.length} review record(s) are marked Not Implemented.`:"Open 5.1.2 to load review data.",source:"recommendation_implementation_status.",doctypes:["Module Review","Course Review"],doctype:"Module Review",records:pendingRecommendations.map(x=>({...x,_doctype:mr.includes(x)?"Module Review":"Course Review"})),status:pendingRecommendations.length?"Risk":"Good"},
+{criterion:"5.1.2",question:"What is the Course Review action-plan status?",answer:sourceReady("Course Review")?(group(actionRows,"status").map(x=>`${x.label}: ${x.value}`).join(", ")||"No action-plan rows."):"Open 5.1.2 to load Course Review data.",source:"Course Review.actionplan_progress.status.",doctypes:["Course Review"],status:actionRows.some(x=>!["Completed","In Effect"].includes(x.status))?"Warning":"Good"},
+{criterion:"5.1.2",question:"Which Module Reviews have incomplete core evidence?",answer:sourceReady("Module Review")?`${incompleteModuleReviews.length} Module Review(s) have one or more core evidence fields empty.`:"Open 5.1.2 to load Module Review data.",source:"Core rating and recommendation fields in Module Review.",doctypes:["Module Review"],doctype:"Module Review",records:incompleteModuleReviews,status:incompleteModuleReviews.length?"Warning":"Good"},
+{criterion:"5.2.1",question:"How many scheduled Module sessions are in the selected period?",answer:`${schedules.length} Module Schedule record(s) for ${f.month}.`,source:"Course Schedule.schedule_date filtered by selected period and scope.",doctypes:["Course Schedule"],doctype:"Course Schedule",records:schedules,status:schedules.length?"Good":"Warning"},
+{criterion:"5.2.1",question:"Which scheduled sessions have no Teacher?",answer:missingInstructor.length?`${missingInstructor.length} session(s) lack a Teacher.`:"All selected sessions have a Teacher.",source:"Course Schedule.instructor.",doctypes:["Course Schedule"],doctype:"Course Schedule",records:missingInstructor,status:missingInstructor.length?"Risk":"Good"},
+{criterion:"5.2.1",question:"Which scheduled sessions have no room or venue?",answer:missingRoom.length?`${missingRoom.length} session(s) lack a room.`:"All selected sessions have a room.",source:"Course Schedule.room.",doctypes:["Course Schedule"],doctype:"Course Schedule",records:missingRoom,status:missingRoom.length?"Warning":"Good"},
+{criterion:"5.2.1",question:"Which Intakes are missing core planning dates or Course?",answer:sourceReady("Student Intake No")?`${intakeGaps.length} Intake(s) have missing Course/start/end information.`:"Open 5.2.1 to load Intake data.",source:"Student Intake No.program, course_start_date and course_end_date.",doctypes:["Student Intake No"],doctype:"Student Intake No",records:intakeGaps,status:intakeGaps.length?"Risk":"Good"},
+{criterion:"5.2.1",question:"Which Module Classes have no assigned Teacher or schedule?",answer:sourceReady("Module Class Details")?`${classesNoTeacher.length} lack a Teacher; ${classesNoSchedule.length} have no schedule rows.`:"Open 5.2.1 to load Module Class Details.",source:"Module Class Details.custom_instructor and schedules.",doctypes:["Module Class Details"],doctype:"Module Class Details",records:[...new Map([...classesNoTeacher,...classesNoSchedule].map(x=>[x.name,x])).values()],status:(classesNoTeacher.length||classesNoSchedule.length)?"Risk":"Good"},
+{criterion:"5.2.1",question:"Which Shortlisted Applicants have incomplete Intake or contract dates?",answer:sourceReady("Student Admission UCC")?`${admissionsNoIntake.length} lack Intake No; ${incompleteContracts.length} have incomplete contract dates.`:"Open 5.2.1 to load Shortlisted Applicants.",source:"Student Admission UCC.student_batch, contract_start and contract_end.",doctypes:["Student Admission UCC"],doctype:"Student Admission UCC",records:[...new Map([...admissionsNoIntake,...incompleteContracts].map(x=>[x.name,x])).values()],status:(admissionsNoIntake.length||incompleteContracts.length)?"Warning":"Good"},
+{criterion:"5.2.2",question:"What percentage of scheduled lessons have attendance captured?",answer:`${pct(attendedScheduleNames.size,schedNames.size)}% (${attendedScheduleNames.size} of ${schedNames.size} distinct schedules).`,source:"Distinct Student Attendance.course_schedule ÷ Course Schedule.name.",doctypes:["Student Attendance","Course Schedule"],doctype:"Course Schedule",records:schedulesNoAttendance,status:pct(attendedScheduleNames.size,schedNames.size)>=100?"Good":pct(attendedScheduleNames.size,schedNames.size)>=90?"Warning":"Risk"},
+{criterion:"5.2.2",question:"What is the attendance status distribution?",answer:attendanceText,source:"Student Attendance.status.",doctypes:["Student Attendance"],status:s.attendance.length?"Good":"Warning"},
+{criterion:"5.2.2",question:"Which Module Classes have no Classroom Observation?",answer:sourceReady("Classroom Observation")?`${classesNoObservation.length} Module Class(es) have no linked observation.`:"Open 5.2.2 to load observation data.",source:"Module Class Details.name compared with Classroom Observation.module_class_details.",doctypes:["Module Class Details","Classroom Observation"],doctype:"Module Class Details",records:classesNoObservation,status:classesNoObservation.length?"Warning":"Good"},
+{criterion:"5.2.2",question:"What observation types were conducted?",answer:sourceReady("Classroom Observation")?(observationTypes.map(x=>`${x.label}: ${x.value}`).join(", ")||"No observations."):"Open 5.2.2 to load observation data.",source:"Classroom Observation.type_of_observation.",doctypes:["Classroom Observation"],doctype:"Classroom Observation",records:observations,status:observations.length?"Good":"Warning"},
+{criterion:"5.2.2",question:"Which observations are missing Observer or Teacher sign-off?",answer:sourceReady("Classroom Observation")?`${unsignedObservations.length} observation(s) have incomplete signatures.`:"Open 5.2.2 to load observation data.",source:"Classroom Observation.observers_signature and teachers_signature.",doctypes:["Classroom Observation"],doctype:"Classroom Observation",records:unsignedObservations,status:unsignedObservations.length?"Warning":"Good"},
+{criterion:"5.2.2",question:"Which observations record areas for improvement?",answer:sourceReady("Classroom Observation")?`${concernObservations.length} observation(s) contain areas for improvement.`:"Open 5.2.2 to load observation data.",source:"Classroom Observation.areas_text.",doctypes:["Classroom Observation"],doctype:"Classroom Observation",records:concernObservations,status:concernObservations.length?"Warning":"Good"},
+{criterion:"5.2.2",question:"Were observations conducted with or without prior notice?",answer:sourceReady("Classroom Observation")?(noticeTypes.map(x=>`${x.label}: ${x.value}`).join(", ")||"No observations."):"Open 5.2.2 to load observation data.",source:"Classroom Observation.prior_notice.",doctypes:["Classroom Observation"],status:observations.length?"Good":"Warning"},
+{criterion:"5.3.1",question:"How many signed partnership agreements are active, upcoming or expired?",answer:sourceReady("Partnership Agreement")?`${agreements.length} agreement(s); expired: ${expiredAgreements.length}; expiring within 90 days: ${expiringAgreements.length}.`:"Open 5.3.1 to load Partnership Agreement data.",source:"Partnership Agreement.start_date and end_date.",doctypes:["Partnership Agreement"],doctype:"Partnership Agreement",records:agreements,status:expiredAgreements.length?"Warning":"Good"},
+{criterion:"5.3.1",question:"Which agreements require an NDA that is not acknowledged?",answer:sourceReady("Partnership Agreement")?`${ndaIncomplete.length} agreement(s) require NDA follow-up.`:"Open 5.3.1 to load Partnership Agreement data.",source:"Partnership Agreement.requires_nda and nda_acknowledged.",doctypes:["Partnership Agreement","Non Disclosure Agreement"],doctype:"Partnership Agreement",records:ndaIncomplete,status:ndaIncomplete.length?"Risk":"Good"},
+{criterion:"5.3.1",question:"How many partnership monitoring activities are recorded?",answer:sourceReady("Partnerships Agreement Management")?`${monitoring.length} monitoring row(s) across ${managed.length} managed partnership record(s).`:"Open 5.3.1 to load management data.",source:"Partnerships Agreement Management.monitoring_childtable.",doctypes:["Partnerships Agreement Management"],doctype:"Partnerships Agreement Management",records:managed.filter(x=>(x.monitoring_childtable||[]).length),status:monitoring.length?"Good":"Warning"},
+{criterion:"5.3.1",question:"What monitoring methods are being used?",answer:sourceReady("Partnerships Agreement Management")?(group(monitoring,"monitoring_details").map(x=>`${x.label}: ${x.value}`).join(", ")||"No monitoring entries."):"Open 5.3.1 to load management data.",source:"Partnerships Monitoring Childtable.monitoring_details.",doctypes:["Partnerships Agreement Management"],status:monitoring.length?"Good":"Warning"},
+{criterion:"5.3.1",question:"What decisions resulted from partnership evaluations?",answer:sourceReady("Partnerships Agreement Management")?(group(evaluations,"evaluation_outcome").map(x=>`${x.label}: ${x.value}`).join(", ")||"No evaluation entries."):"Open 5.3.1 to load management data.",source:"Partnerships Evaluation Childtable.evaluation_outcome.",doctypes:["Partnerships Agreement Management"],status:evaluations.length?"Good":"Warning"},
+{criterion:"5.3.1",question:"Which managed partnerships are below the 70/100 selection threshold?",answer:sourceReady("Partnerships Agreement Management")?`${belowThreshold.length} managed partnership(s) are below threshold.`:"Open 5.3.1 to load management data.",source:"average_identification_and_selection_score compared with 70/100.",doctypes:["Partnerships Agreement Management"],doctype:"Partnerships Agreement Management",records:belowThreshold,status:belowThreshold.length?"Risk":"Good"},
+{criterion:"5.3.1",question:"What Provider Rating stages are recorded?",answer:sourceReady("Supplier Rating")?(group(supplierRatings,"evaluation_stage").map(x=>`${x.label}: ${x.value}`).join(", ")||"No Provider Rating records."):"Open 5.3.1 to load Provider Rating data.",source:"Supplier Rating.evaluation_stage. Display term: Provider Rating.",doctypes:["Supplier Rating"],doctype:"Supplier Rating",records:supplierRatings,status:supplierRatings.length?"Good":"Warning"},
+{criterion:"5.4",question:"What is the average End of Module Survey score for each Module?",answer:(()=>{const a=buildSurveyAnalytics(),list=a.moduleScores.filter(x=>a.scored.some(item=>item.module===x.label&&item.survey_type==="End of Module"));return list.length?list.slice(0,8).map(x=>`${x.label}: ${x.value}`).join(", "):"No scored End of Module Survey responses were classified in the selected scope.";})(),source:"Survey Response.course plus scored child response rows.",doctypes:["Survey Response"],status:buildSurveyAnalytics().moduleScores.length?"Good":"Warning"},
+{criterion:"5.4",question:"How many survey responses exist by survey type?",answer:(()=>{const a=buildSurveyAnalytics();return ["End of Module","End of Course","Graduate Survey"].map(t=>`${t}: ${a.scored.filter(x=>x.survey_type===t).length+a.comments.filter(x=>x.survey_type===t).length}`).join(", ");})(),source:"Survey type classified from title, category and question text.",doctypes:["Survey Response"],status:(d["Survey Response"]||[]).length?"Good":"Warning"},
+{criterion:"5.4",question:"Which survey questions have the lowest scores?",answer:(()=>{const list=buildSurveyAnalytics().questionScores.slice().sort((a,b)=>a.value-b.value).slice(0,5);return list.length?list.map(x=>`${x.label}: ${x.value}`).join(", "):"No scored survey questions were available.";})(),source:"Average parsed score grouped by child question.",doctypes:["Survey Response"],status:buildSurveyAnalytics().questionScores.length?"Warning":"Warning"},
+{criterion:"5.4",question:"What open-ended responses were submitted?",answer:`${buildSurveyAnalytics().comments.length} open-ended/non-numeric response(s) are available.`,source:"Survey Response child rows not parsed as numeric/Likert scores.",doctypes:["Survey Response"],status:buildSurveyAnalytics().comments.length?"Good":"Warning"},
+{criterion:"5.4",question:"What attendance-risk indicators are visible alongside survey feedback?",answer:`${absent} Absent record(s) and ${late} Late record(s) in the selected schedule scope.`,source:"Student Attendance.status linked to selected Module Schedule records.",doctypes:["Student Attendance"],status:(absent||late)?"Warning":"Good"},
+{criterion:"5.5",question:"Which Assessment Plans are missing examiner or supervisor?",answer:`${plansMissingExaminer.length} plan(s) lack examiner and ${plansMissingSupervisor.length} lack supervisor.`,source:"Assessment Plan.examiner and supervisor.",doctypes:["Assessment Plan"],doctype:"Assessment Plan",records:[...new Map([...plansMissingExaminer,...plansMissingSupervisor].map(x=>[x.name,x])).values()],status:(plansMissingExaminer.length||plansMissingSupervisor.length)?"Warning":"Good"},
+{criterion:"5.5",question:"Which Assessment Plans have no linked results?",answer:plansWithoutResults.length?`${plansWithoutResults.length} plan(s) have no linked Assessment Result.`:"Every selected Assessment Plan has at least one linked result.",source:"Assessment Plan.name compared with Assessment Result.assessment_plan.",doctypes:["Assessment Plan","Assessment Result"],doctype:"Assessment Plan",records:plansWithoutResults,status:plansWithoutResults.length?"Risk":"Good"},
+{criterion:"5.5",question:"What is the grade distribution?",answer:gradeDistribution.length?gradeDistribution.map(x=>`${x.label}: ${x.value}`).join(", "):"No graded Assessment Result records in the selected scope.",source:"Assessment Result.grade.",doctypes:["Assessment Result"],status:gradeDistribution.length?"Good":"Warning"},
+{criterion:"5.5",question:"How complete are assessment control fields?",answer:`Missing room: ${plansMissingRoom.length}; missing schedule date: ${plansMissingDate.length}; missing examiner: ${plansMissingExaminer.length}; missing supervisor: ${plansMissingSupervisor.length}.`,source:"Assessment Plan control fields.",doctypes:["Assessment Plan"],status:(plansMissingRoom.length||plansMissingDate.length||plansMissingExaminer.length||plansMissingSupervisor.length)?"Warning":"Good"},
+{criterion:"5.5",question:"Are there assessment-result data errors requiring correction?",answer:`${resultErrors} result-quality exception(s) across score-above-maximum, missing grade and duplicate-result checks.`,source:"Assessment Result data-quality rules.",doctypes:["Assessment Result"],status:resultErrors?"Risk":"Good"}
+];
+return rows;
 }
 function setKpi(slot,label,value,note){set(`[data-kpi-label="${slot}"]`,label);set(`[data-kpi="${slot}"]`,value);set(`[data-kpi-note="${slot}"]`,note)}
 function avg(values){const v=values.filter(Number.isFinite);return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length*100)/100:null}
@@ -1471,11 +1649,471 @@ const __c5RadialBars=radialBars;radialBars=function(n,rows){deferredChartCall(__
 const __c5TimelineChart=timelineChart;timelineChart=function(n,rows){deferredChartCall(__c5TimelineChart,n,[rows]);};
 const __c5LabelledBar=labelledBar;labelledBar=function(n,rows,suffix){deferredChartCall(__c5LabelledBar,n,[rows,suffix]);};
 const __c5ChartAndTable=chartAndTable;chartAndTable=function(key,rows){deferredChartCall(__c5ChartAndTable,key,[rows]);};
+function numericRating(v){
+const n=Number(v);if(!Number.isFinite(n))return null;
+return n<=1?n*5:n;
+}
+// Section 5.1.2 compute, extracted from the render branch unchanged so it can be
+// ported to the server (c512_analytics) and wired with this as the fallback.
+// Returns the exact datasets the render branch consumed inline; behaviour identical.
+function buildC512(d,today){
+const attachType=(rows,doctype)=>(rows||[]).map(row=>({...row,_doctype:doctype}));
+const mr=d["Module Review"]||[],cr=d["Course Review"]||[];
+const reviewRecords=[...attachType(mr,"Module Review"),...attachType(cr,"Course Review")];
+const overdue=cr.filter(x=>x.next_review_date&&new Date(x.next_review_date)<today);
+const upcoming=cr.filter(x=>x.next_review_date&&new Date(x.next_review_date)>=today);
+const noNext=cr.filter(x=>!x.next_review_date);
+const reviewTypeGroups=new Map;
+reviewRecords.forEach(record=>{
+const label=record._doctype==="Module Review"?(record.type_of_review||"Not Set"):(record.review_type||"Not Set");
+if(!reviewTypeGroups.has(label))reviewTypeGroups.set(label,[]);
+reviewTypeGroups.get(label).push(record);
+});
+const actionGroups=new Map;
+cr.forEach(parent=>(parent.actionplan_progress||[]).forEach(action=>{
+const label=action.status||"Not Set";
+if(!actionGroups.has(label))actionGroups.set(label,new Map);
+actionGroups.get(label).set(parent.name,parent);
+}));
+const recGroups=new Map;
+reviewRecords.forEach(record=>{
+const label=record.recommendation_implementation_status||"Not Set";
+if(!recGroups.has(label))recGroups.set(label,[]);
+recGroups.get(label).push(record);
+});
+const evidenceFields=["rating_duration","rating_pedagogy","rating_assessment","rating_learning_outcomes","rating_lesson_plan","rating_resource","risk_question","existing_attendance","existing_assessment_result","existing_classroom_observation","student_intervention_plan","admission_requirement_effectiveness","survey_results","rating_value_quality","recommendation"];
+const complete=mr.filter(record=>evidenceFields.every(field=>record[field]!==undefined&&record[field]!==null&&record[field]!==""));
+const incomplete=mr.filter(record=>!complete.includes(record));
+const completedReviews=cr.filter(x=>String(x.review_status||"").toLowerCase().includes("complet"));
+const dueReviews=cr.filter(x=>{
+if(!x.next_review_date)return false;
+const date=new Date(x.next_review_date);
+return date>=today&&date<=new Date(today.getTime()+30*86400000);
+});
+const futureReviews=cr.filter(x=>x.next_review_date&&new Date(x.next_review_date)>new Date(today.getTime()+30*86400000));
+const reviewedModules=new Set(mr.map(x=>x.course||x.module).filter(Boolean));
+const reviewedCourses=new Set(cr.map(x=>x.course).filter(Boolean));
+const coveredModuleReviews=mr.filter(x=>reviewedCourses.has(x.course));
+const uncoveredModuleReviews=mr.filter(x=>!reviewedCourses.has(x.course));
+const allActions=cr.flatMap(parent=>(parent.actionplan_progress||[]).map(action=>({...action,_parent:parent})));
+const actionRecordSet=items=>[...new Map(items.map(x=>[x._parent.name,x._parent])).values()];
+const completedActions=allActions.filter(x=>/complete|closed|done|implemented/i.test(String(x.status||"")));
+const pendingActions=allActions.filter(x=>!completedActions.includes(x));
+const actionDate=x=>x.due_date||x.target_date||x.completion_date||x.date||x.modified;
+const aged=pendingActions.map(x=>({...x,_age:actionDate(x)?Math.max(0,Math.floor((today-new Date(actionDate(x)))/86400000)):null}));
+const agingGroups=[
+{label:"0–30 days",items:aged.filter(x=>x._age!==null&&x._age<=30)},
+{label:"31–60 days",items:aged.filter(x=>x._age>30&&x._age<=60)},
+{label:"61–90 days",items:aged.filter(x=>x._age>60&&x._age<=90)},
+{label:"More than 90 days",items:aged.filter(x=>x._age>90)},
+{label:"No action date",items:aged.filter(x=>x._age===null)}
+];
+const hasAnyField=(record,names)=>names.some(name=>Object.prototype.hasOwnProperty.call(record,name));
+const hasValue=(record,names)=>names.some(name=>record[name]!==undefined&&record[name]!==null&&String(record[name]).replace(/<[^>]+>/g,"").trim()!=="");
+const stakeholderFields=["stakeholder_feedback","feedback_from_stakeholders","stakeholder_comments","stakeholder_input"];
+const benchmarkFields=["benchmarking_evidence","benchmarking","benchmark_data","industry_benchmark"];
+const stakeholderSupported=cr.some(x=>hasAnyField(x,stakeholderFields));
+const benchmarkSupported=cr.some(x=>hasAnyField(x,benchmarkFields));
+const missingStakeholder=stakeholderSupported?cr.filter(x=>!hasValue(x,stakeholderFields)):[];
+const missingBenchmark=benchmarkSupported?cr.filter(x=>!hasValue(x,benchmarkFields)):[];
+const followupGroups=new Map;
+reviewRecords.forEach(record=>{
+const raw=record.review_date||record.date_of_review||record.modified;
+const month=raw?String(raw).slice(0,7):"No date";
+if(!followupGroups.has(month))followupGroups.set(month,[]);
+followupGroups.get(month).push(record);
+});
+return{
+mr,cr,
+kpis:{mrTotal:mr.length,mrApproved:mr.filter(x=>x.status==="Approved").length,crTotal:cr.length,crOverdue:overdue.length},
+reviewLevel:[
+{label:"Module Review",value:mr.length,records:mr,doctype:"Module Review"},
+{label:"Course Review",value:cr.length,records:cr,doctype:"Course Review"}
+],
+schedule:[
+{label:"Overdue",value:overdue.length,records:overdue,doctype:"Course Review"},
+{label:"Upcoming / current",value:upcoming.length,records:upcoming,doctype:"Course Review"},
+{label:"No next review date",value:noNext.length,records:noNext,doctype:"Course Review"}
+],
+moduleStatus:groupRecords(mr,"status","Module Review"),
+courseStatus:groupRecords(cr,"review_status","Course Review"),
+reviewType:[...reviewTypeGroups].map(([label,records])=>({label,value:records.length,records})).sort((a,b)=>b.value-a.value),
+actions:[...actionGroups].map(([label,map])=>({label,value:[...map.values()].reduce((sum,parent)=>sum+(parent.actionplan_progress||[]).filter(x=>(x.status||"Not Set")===label).length,0),records:[...map.values()],doctype:"Course Review"})).sort((a,b)=>b.value-a.value),
+recommendationStatus:[...recGroups].map(([label,records])=>({label,value:records.length,records})).sort((a,b)=>b.value-a.value),
+evidence:[
+{label:"Core evidence complete",value:complete.length,records:complete,doctype:"Module Review"},
+{label:"Core evidence incomplete",value:incomplete.length,records:incomplete,doctype:"Module Review"}
+],
+cycle:[
+{label:"Completed",value:completedReviews.length,records:completedReviews,doctype:"Course Review"},
+{label:"Due within 30 days",value:dueReviews.length,records:dueReviews,doctype:"Course Review"},
+{label:"Upcoming",value:futureReviews.length,records:futureReviews,doctype:"Course Review"},
+{label:"Overdue",value:overdue.length,records:overdue,doctype:"Course Review"},
+{label:"No next review date",value:noNext.length,records:noNext,doctype:"Course Review"}
+],
+coverage:[
+{label:"Module Reviews linked to a Course Review",value:coveredModuleReviews.length,records:coveredModuleReviews,doctype:"Module Review"},
+{label:"Module Reviews without matching Course Review",value:uncoveredModuleReviews.length,records:uncoveredModuleReviews,doctype:"Module Review"},
+{label:"Distinct reviewed modules",value:reviewedModules.size,records:mr,doctype:"Module Review"}
+],
+actionsCompletion:[
+{label:"Completed actions",value:completedActions.length,records:actionRecordSet(completedActions),doctype:"Course Review"},
+{label:"Pending actions",value:pendingActions.length,records:actionRecordSet(pendingActions),doctype:"Course Review"}
+],
+actionAging:agingGroups.map(x=>({label:x.label,value:x.items.length,records:actionRecordSet(x.items),doctype:"Course Review"})),
+missingEvidence:[
+{label:"Missing next review date",value:noNext.length,records:noNext,doctype:"Course Review"},
+{label:stakeholderSupported?"Missing stakeholder feedback":"Stakeholder feedback field unsupported",value:stakeholderSupported?missingStakeholder.length:0,records:missingStakeholder,doctype:"Course Review"},
+{label:benchmarkSupported?"Missing benchmarking evidence":"Benchmarking field unsupported",value:benchmarkSupported?missingBenchmark.length:0,records:missingBenchmark,doctype:"Course Review"}
+],
+followup:[...followupGroups].sort((a,b)=>a[0].localeCompare(b[0])).map(([label,records])=>({label,value:records.filter(x=>/complete|implemented|closed/i.test(String(x.recommendation_implementation_status||x.review_status||x.status||""))).length,records}))
+};
+}
+// Section 5.2.1 compute, extracted from the render branch unchanged so it can be
+// ported to the server (c521_analytics) and wired with this as the fallback.
+function buildC521(d){
+const intakes=d["Student Intake No"]||[],classes=d["Module Class Details"]||[],schedules=d["Course Schedule"]||[],apps=d["Student Admission UCC"]||[];
+const ready=intakes.filter(x=>x.program&&x.course_start_date&&x.course_end_date),notReady=intakes.filter(x=>!ready.includes(x));
+const assigned=classes.filter(x=>x.custom_instructor),unassigned=classes.filter(x=>!x.custom_instructor);
+const sessionReady=schedules.filter(x=>x.instructor&&x.room&&x.from_time&&x.to_time);
+const missingTeacher=schedules.filter(x=>!x.instructor),missingRoom=schedules.filter(x=>!x.room),missingTiming=schedules.filter(x=>!x.from_time||!x.to_time);
+const completeContracts=apps.filter(x=>x.contract_start&&x.contract_end),incompleteContracts=apps.filter(x=>!x.contract_start||!x.contract_end);
+const scheduleClassNames=new Set(schedules.map(x=>x.student_group||x.module_class_details).filter(Boolean));
+const unscheduledClasses=classes.filter(x=>!scheduleClassNames.has(x.name));
+const scheduledClasses=classes.filter(x=>scheduleClassNames.has(x.name));
+const overlap=(a,b)=>{
+if(String(a.schedule_date||"")!==String(b.schedule_date||""))return false;
+const toMinutes=value=>{
+if(value===null||value===undefined||value==="")return null;
+const parts=String(value).split(":").map(Number);
+return Number.isFinite(parts[0])?parts[0]*60+(parts[1]||0):null;
+};
+const af=toMinutes(a.from_time),at=toMinutes(a.to_time),bf=toMinutes(b.from_time),bt=toMinutes(b.to_time);
+return af!==null&&at!==null&&bf!==null&&bt!==null&&af<bt&&bf<at;
+};
+const clashRecords=(field)=>{
+const found=new Map;
+schedules.forEach((a,index)=>schedules.slice(index+1).forEach(b=>{
+if(a[field]&&a[field]===b[field]&&overlap(a,b)){found.set(a.name,a);found.set(b.name,b)}
+}));
+return [...found.values()];
+};
+const roomClashes=clashRecords("room"),teacherClashes=clashRecords("instructor");
+const intakeByName=new Map(intakes.map(x=>[x.name,x]));
+const contractBeforeStart=[],contractAfterStart=[],contractUnknown=[];
+apps.forEach(app=>{
+const intake=intakeByName.get(app.student_batch);
+const commencement=app.actual_commencement_date||app.course_commencement_date||(intake&&intake.course_start_date);
+if(!commencement||!app.contract_start){contractUnknown.push(app);return}
+if(new Date(app.contract_start)<=new Date(commencement))contractBeforeStart.push(app);else contractAfterStart.push(app);
+});
+const signatureFields=["contract_signed","is_contract_signed","signed_contract","student_signature"];
+const sentFields=["contract_sent","is_contract_sent","sent_to_student","contract_email_sent"];
+const signatureSupported=apps.some(x=>signatureFields.some(f=>Object.prototype.hasOwnProperty.call(x,f)));
+const sentSupported=apps.some(x=>sentFields.some(f=>Object.prototype.hasOwnProperty.call(x,f)));
+const truthyField=(x,fields)=>fields.some(f=>x[f]===1||x[f]===true||String(x[f]).toLowerCase()==="yes");
+const unsigned=signatureSupported?apps.filter(x=>!truthyField(x,signatureFields)):[];
+const unsent=sentSupported?apps.filter(x=>!truthyField(x,sentFields)):[];
+const exceptions=[];
+intakes.forEach(x=>{if(!x.program||!x.course_start_date||!x.course_end_date)exceptions.push([x.name,"Student Intake No","Missing Course or start/end date"])});
+classes.forEach(x=>{if(!x.custom_instructor)exceptions.push([x.name,"Module Class Details","Teacher not assigned"]);if(!(x.schedules||[]).length)exceptions.push([x.name,"Module Class Details","No schedule rows"])});
+apps.forEach(x=>{if(!x.student_batch)exceptions.push([x.name,"Student Admission UCC","No Intake No"]);if(!x.contract_start||!x.contract_end)exceptions.push([x.name,"Student Admission UCC","Contract dates incomplete"])});
+return{
+intakes,classes,schedules,apps,
+kpis:{intakes:intakes.length,classes:classes.length,sessions:schedules.length,applicants:apps.length},
+intakesReady:[
+{label:"Ready",value:ready.length,records:ready,doctype:"Student Intake No"},
+{label:"Missing Course or dates",value:notReady.length,records:notReady,doctype:"Student Intake No"}
+],
+flow:[
+{label:"Intakes",value:intakes.length,records:intakes,doctype:"Student Intake No"},
+{label:"Module classes",value:classes.length,records:classes,doctype:"Module Class Details"},
+{label:"Scheduled sessions",value:schedules.length,records:schedules,doctype:"Course Schedule"},
+{label:"Shortlisted applicants",value:apps.length,records:apps,doctype:"Student Admission UCC"}
+],
+classStatus:groupRecords(classes,"custom_module_status","Module Class Details"),
+schedule:[
+{label:"All sessions",value:schedules.length,records:schedules,doctype:"Course Schedule"},
+{label:"With Teacher",value:schedules.filter(x=>x.instructor).length,records:schedules.filter(x=>x.instructor),doctype:"Course Schedule"},
+{label:"With room",value:schedules.filter(x=>x.room).length,records:schedules.filter(x=>x.room),doctype:"Course Schedule"},
+{label:"With start and end time",value:schedules.filter(x=>x.from_time&&x.to_time).length,records:schedules.filter(x=>x.from_time&&x.to_time),doctype:"Course Schedule"}
+],
+admission:groupRecords(apps,"application_status","Student Admission UCC"),
+teacher:[
+{label:"Teacher assigned",value:assigned.length,records:assigned,doctype:"Module Class Details"},
+{label:"Teacher missing",value:unassigned.length,records:unassigned,doctype:"Module Class Details"}
+],
+sessionReadiness:[
+{label:"Ready",value:sessionReady.length,records:sessionReady,doctype:"Course Schedule"},
+{label:"Missing Teacher",value:missingTeacher.length,records:missingTeacher,doctype:"Course Schedule"},
+{label:"Missing room",value:missingRoom.length,records:missingRoom,doctype:"Course Schedule"},
+{label:"Missing timing",value:missingTiming.length,records:missingTiming,doctype:"Course Schedule"}
+],
+contracts:[
+{label:"Contract dates complete",value:completeContracts.length,records:completeContracts,doctype:"Student Admission UCC"},
+{label:"Contract dates incomplete",value:incompleteContracts.length,records:incompleteContracts,doctype:"Student Admission UCC"}
+],
+dateCompleteness:[
+{label:"Start and end dates complete",value:ready.length,records:ready,doctype:"Student Intake No"},
+{label:"Missing start or end date",value:notReady.length,records:notReady,doctype:"Student Intake No"}
+],
+unscheduled:[
+{label:"With schedules",value:scheduledClasses.length,records:scheduledClasses,doctype:"Module Class Details"},
+{label:"Without schedules",value:unscheduledClasses.length,records:unscheduledClasses,doctype:"Module Class Details"}
+],
+scheduleCompleteness:[
+{label:"Complete",value:sessionReady.length,records:sessionReady,doctype:"Course Schedule"},
+{label:"Missing Teacher",value:missingTeacher.length,records:missingTeacher,doctype:"Course Schedule"},
+{label:"Missing room",value:missingRoom.length,records:missingRoom,doctype:"Course Schedule"},
+{label:"Missing time",value:missingTiming.length,records:missingTiming,doctype:"Course Schedule"}
+],
+roomClashes:[
+{label:"Sessions with room clash",value:roomClashes.length,records:roomClashes,doctype:"Course Schedule"},
+{label:"No detected room clash",value:Math.max(0,schedules.length-roomClashes.length),records:schedules.filter(x=>!roomClashes.includes(x)),doctype:"Course Schedule"}
+],
+teacherClashes:[
+{label:"Sessions with Teacher clash",value:teacherClashes.length,records:teacherClashes,doctype:"Course Schedule"},
+{label:"No detected Teacher clash",value:Math.max(0,schedules.length-teacherClashes.length),records:schedules.filter(x=>!teacherClashes.includes(x)),doctype:"Course Schedule"}
+],
+contractVsStart:[
+{label:"Contract on/before commencement",value:contractBeforeStart.length,records:contractBeforeStart,doctype:"Student Admission UCC"},
+{label:"Contract after commencement",value:contractAfterStart.length,records:contractAfterStart,doctype:"Student Admission UCC"},
+{label:"Comparison unavailable",value:contractUnknown.length,records:contractUnknown,doctype:"Student Admission UCC"}
+],
+contractExceptions:[
+{label:signatureSupported?"Unsigned contracts":"Signature field unsupported",value:unsigned.length,records:unsigned,doctype:"Student Admission UCC"},
+{label:sentSupported?"Unsent contracts":"Sent-status field unsupported",value:unsent.length,records:unsent,doctype:"Student Admission UCC"},
+{label:"Contract dates incomplete",value:incompleteContracts.length,records:incompleteContracts,doctype:"Student Admission UCC"}
+],
+exceptions
+};
+}
+// Section 5.2.2 compute, extracted from the render branch so it can be ported to
+// the server (c522_analytics) and wired with this as the fallback. Rating averages
+// are returned RAW; the render branch applies toFixed so both the server and
+// fallback paths format identically in the browser.
+function buildC522(d,today){
+const obs=d["Classroom Observation"]||[],classes=d["Module Class Details"]||[],surveys=d["Survey Response"]||[],schedules=d["Course Schedule"]||[];
+const ratingFields={
+"Preparation":["availability_of_learning_materials_likert","lesson_aligned_likert","lesson_plan_alignment_likert","lesson_objective_likert"],
+"Delivery":["relevance_likert","mastery_likert","transition_likert","pacing_likert","educational_tools_likert","teaching_style_likert"],
+"Class dynamics":["able_to_maintain_order_in_class_likert","good_rapport_with_students_likert","teacher_attentive_likert","timely_likert"],
+"Communication":["simple_language_likert","teacher_confident_likert","good_balance_likert","vocal_likert","teacher_encourage_likert","non_verbal_likert"]
+};
+const flatRatingFields=Object.values(ratingFields).flat();
+const allRatings=obs.flatMap(o=>flatRatingFields.map(f=>numericRating(o[f])).filter(v=>v!==null));
+const observedClassNames=new Set(obs.map(x=>x.module_class_details).filter(Boolean));
+const observedClasses=classes.filter(x=>observedClassNames.has(x.name)),unobservedClasses=classes.filter(x=>!observedClassNames.has(x.name));
+const areaRows=Object.entries(ratingFields).map(([label,fields])=>{
+const vals=obs.flatMap(o=>fields.map(f=>numericRating(o[f])).filter(v=>v!==null));
+return{label,value:vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0,records:obs,doctype:"Classroom Observation"};
+});
+const categoryMap=new Map;
+surveys.forEach(survey=>(survey.response||[]).forEach(response=>{
+const label=response.category||"Uncategorised";
+if(!categoryMap.has(label))categoryMap.set(label,new Map);
+categoryMap.get(label).set(survey.name,survey);
+}));
+const bothSigned=obs.filter(x=>x.observers_signature&&x.teachers_signature),observerOnly=obs.filter(x=>x.observers_signature&&!x.teachers_signature),teacherOnly=obs.filter(x=>!x.observers_signature&&x.teachers_signature),unsigned=obs.filter(x=>!x.observers_signature&&!x.teachers_signature);
+const concerns=obs.filter(x=>String(x.areas_text||"").replace(/<[^>]*>/g,"").trim()),noConcerns=obs.filter(x=>!concerns.includes(x));
+const attendance=d["Student Attendance"]||[];
+const deliveredScheduleNames=new Set(attendance.map(x=>x.course_schedule).filter(Boolean));
+const deliveredSchedules=schedules.filter(x=>deliveredScheduleNames.has(x.name));
+const undeliveredSchedules=schedules.filter(x=>!deliveredScheduleNames.has(x.name));
+const teachers=[...new Set(classes.map(x=>x.custom_instructor_full_name||x.custom_instructor).filter(Boolean))];
+const observedTeachers=new Set(obs.map(x=>x.name_of_teacher).filter(Boolean));
+const scheduledObs=obs.filter(x=>/scheduled|formal/i.test(String(x.type_of_observation||""))||x.course_schedule);
+const adhocObs=obs.filter(x=>!scheduledObs.includes(x));
+const unsignedObs=obs.filter(x=>!(x.observers_signature&&x.teachers_signature));
+const signoffAgeGroups=[
+{label:"0–7 days",records:unsignedObs.filter(x=>{const dd=x.date_of_observation?Math.floor((today-new Date(x.date_of_observation))/86400000):null;return dd!==null&&dd<=7})},
+{label:"8–30 days",records:unsignedObs.filter(x=>{const dd=x.date_of_observation?Math.floor((today-new Date(x.date_of_observation))/86400000):null;return dd>7&&dd<=30})},
+{label:"31+ days",records:unsignedObs.filter(x=>{const dd=x.date_of_observation?Math.floor((today-new Date(x.date_of_observation))/86400000):null;return dd>30})},
+{label:"No observation date",records:unsignedObs.filter(x=>!x.date_of_observation)}
+];
+const observationAverages=obs.map(record=>{
+const vals=flatRatingFields.map(f=>numericRating(record[f])).filter(v=>v!==null);
+return {...record,_average:vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null};
+});
+const ratingBands=[
+{label:"4.0–5.0",records:observationAverages.filter(x=>x._average>=4)},
+{label:"3.0–3.9",records:observationAverages.filter(x=>x._average>=3&&x._average<4)},
+{label:"Below 3.0",records:observationAverages.filter(x=>x._average!==null&&x._average<3)},
+{label:"Not rated",records:observationAverages.filter(x=>x._average===null)}
+];
+const belowThreshold=observationAverages.filter(x=>x._average!==null&&x._average<3);
+const textPresent=(x,fields)=>fields.some(f=>String(x[f]||"").replace(/<[^>]+>/g,"").trim());
+const strengthFields=["strengths","strengths_text","positive_observations","good_practices"];
+const improvementFields=["areas_text","areas_for_improvement","improvement_areas","recommendations"];
+const strengthRows=obs.filter(x=>textPresent(x,strengthFields));
+const improvementRows=obs.filter(x=>textPresent(x,improvementFields));
+const surveyMonths=new Map;
+surveys.forEach(x=>{const month=String(x.posting_date||x.modified||"No date").slice(0,7);if(!surveyMonths.has(month))surveyMonths.set(month,[]);surveyMonths.get(month).push(x)});
+return{
+obs,classes,schedules,surveys,
+kpis:{observations:obs.length,observationScoreAvg:allRatings.length?allRatings.reduce((a,b)=>a+b,0)/allRatings.length:null,surveys:surveys.length,unobserved:unobservedClasses.length},
+coverage:[
+{label:"Observed Module classes",value:observedClasses.length,records:observedClasses,doctype:"Module Class Details"},
+{label:"Without observation",value:unobservedClasses.length,records:unobservedClasses,doctype:"Module Class Details"}
+],
+observationType:groupRecords(obs,"type_of_observation","Classroom Observation"),
+platform:groupRecords(obs,"platform_delivery","Classroom Observation"),
+ratings:areaRows,
+surveyCategories:[...categoryMap].map(([label,map])=>({label,value:[...map.values()].reduce((sum,survey)=>sum+(survey.response||[]).filter(row=>(row.category||"Uncategorised")===label).length,0),records:[...map.values()],doctype:"Survey Response"})).sort((a,b)=>b.value-a.value),
+notice:groupRecords(obs,"prior_notice","Classroom Observation"),
+signoff:[
+{label:"Both signed",value:bothSigned.length,records:bothSigned,doctype:"Classroom Observation"},
+{label:"Observer only",value:observerOnly.length,records:observerOnly,doctype:"Classroom Observation"},
+{label:"Teacher only",value:teacherOnly.length,records:teacherOnly,doctype:"Classroom Observation"},
+{label:"Unsigned",value:unsigned.length,records:unsigned,doctype:"Classroom Observation"}
+],
+concerns:[
+{label:"Areas for improvement recorded",value:concerns.length,records:concerns,doctype:"Classroom Observation"},
+{label:"No areas recorded",value:noConcerns.length,records:noConcerns,doctype:"Classroom Observation"}
+],
+plannedDelivered:[
+{label:"Planned sessions",value:schedules.length,records:schedules,doctype:"Course Schedule"},
+{label:"Delivered / attendance captured",value:deliveredSchedules.length,records:deliveredSchedules,doctype:"Course Schedule"},
+{label:"No delivery evidence",value:undeliveredSchedules.length,records:undeliveredSchedules,doctype:"Course Schedule"}
+],
+teacherCoverage:[
+{label:"Teachers observed",value:teachers.filter(x=>observedTeachers.has(x)).length,records:obs.filter(x=>observedTeachers.has(x.name_of_teacher)),doctype:"Classroom Observation"},
+{label:"Teachers not observed",value:teachers.filter(x=>!observedTeachers.has(x)).length,records:classes.filter(x=>!observedTeachers.has(x.custom_instructor_full_name||x.custom_instructor)),doctype:"Module Class Details"}
+],
+moduleCoverage:groupRecords(obs,"module_name","Classroom Observation"),
+observationMode:[
+{label:"Scheduled / formal",value:scheduledObs.length,records:scheduledObs,doctype:"Classroom Observation"},
+{label:"Ad-hoc / other",value:adhocObs.length,records:adhocObs,doctype:"Classroom Observation"}
+],
+signoffAging:signoffAgeGroups.map(x=>({label:x.label,value:x.records.length,records:x.records,doctype:"Classroom Observation"})),
+ratingDistribution:ratingBands.map(x=>({label:x.label,value:x.records.length,records:x.records,doctype:"Classroom Observation"})),
+strengths:[
+{label:"Strengths recorded",value:strengthRows.length,records:strengthRows,doctype:"Classroom Observation"},
+{label:"No strengths recorded",value:obs.length-strengthRows.length,records:obs.filter(x=>!strengthRows.includes(x)),doctype:"Classroom Observation"}
+],
+improvements:[
+{label:"Improvement areas recorded",value:improvementRows.length,records:improvementRows,doctype:"Classroom Observation"},
+{label:"No improvement area recorded",value:obs.length-improvementRows.length,records:obs.filter(x=>!improvementRows.includes(x)),doctype:"Classroom Observation"}
+],
+surveyVolume:[...surveyMonths].sort((a,b)=>a[0].localeCompare(b[0])).map(([label,records])=>({label,value:records.reduce((sum,x)=>sum+Math.max(1,(x.response||[]).length),0),records,doctype:"Survey Response"})),
+deliveryExceptions:[
+{label:"Module classes without observation",value:unobservedClasses.length,records:unobservedClasses,doctype:"Module Class Details"},
+{label:"Observations awaiting full sign-off",value:unsignedObs.length,records:unsignedObs,doctype:"Classroom Observation"},
+{label:"Observations below rating threshold",value:belowThreshold.length,records:belowThreshold,doctype:"Classroom Observation"},
+{label:"No delivery evidence",value:undeliveredSchedules.length,records:undeliveredSchedules,doctype:"Course Schedule"}
+]
+};
+}
+// Section 5.3.1 compute, extracted from the render branch so it can be ported to
+// the server (c531_analytics) and wired with this as the fallback.
+function buildC531(d,today,in90){
+const signed=d["Partnership Agreement"]||[],managed=d["Partnerships Agreement Management"]||[],ratings=d["Supplier Rating"]||[];
+const monitoring=managed.flatMap(parent=>(parent.monitoring_childtable||[]).map(row=>({...row,name:parent.name,_doctype:"Partnerships Agreement Management"})));
+const evaluations=managed.flatMap(parent=>(parent.table_luoo||[]).map(row=>({...row,name:parent.name,_doctype:"Partnerships Agreement Management"})));
+const signedStatus=signed.map(x=>{
+const end=x.end_date?new Date(x.end_date):null,start=x.start_date?new Date(x.start_date):null;
+return {...x,derived_status:end&&end<today?"Expired":start&&start>today?"Upcoming":"Active"};
+});
+const expired=signed.filter(x=>x.end_date&&new Date(x.end_date)<today),expiring=signed.filter(x=>x.end_date&&new Date(x.end_date)>=today&&new Date(x.end_date)<=in90),later=signed.filter(x=>x.end_date&&new Date(x.end_date)>in90),noEnd=signed.filter(x=>!x.end_date);
+const ndaNotRequired=signed.filter(x=>!x.requires_nda),ndaComplete=signed.filter(x=>x.requires_nda&&x.nda_acknowledged),ndaIncomplete=signed.filter(x=>x.requires_nda&&!x.nda_acknowledged);
+const scoreRows=managed.filter(x=>Number(x.average_identification_and_selection_score)>0).map(x=>({label:x.agreement_title||x.name,value:Number(x.average_identification_and_selection_score),records:[x],doctype:"Partnerships Agreement Management"})).sort((a,b)=>b.value-a.value);
+const pass=managed.filter(x=>Number(x.average_identification_and_selection_score)>=70),below=managed.filter(x=>Number(x.average_identification_and_selection_score)>0&&Number(x.average_identification_and_selection_score)<70),notScored=managed.filter(x=>!Number(x.average_identification_and_selection_score));
+const statusField=x=>String(x.status||x.agreement_status||x.workflow_state||"");
+const lifecycle=signed.map(x=>{
+const explicit=statusField(x);
+const end=x.end_date?new Date(x.end_date):null,start=x.start_date?new Date(x.start_date):null;
+const derived=/terminat/i.test(explicit)?"Terminated":end&&end<today?"Expired":end&&end<=in90?"Expiring":start&&start>today?"Upcoming":"Active";
+return {...x,derived_status_v110:derived};
+});
+const partySignatureFields=["party_signature","partner_signature","signed_by_partner","partner_signed"];
+const uccSignatureFields=["ucc_signature","company_signature","signed_by_ucc","ucc_signed"];
+const hasField=(x,fields)=>fields.some(f=>Object.prototype.hasOwnProperty.call(x,f));
+const hasValue=(x,fields)=>fields.some(f=>x[f]===1||x[f]===true||String(x[f]||"").trim()!=="");
+const signatureSupported=signed.some(x=>hasField(x,[...partySignatureFields,...uccSignatureFields]));
+const bothSigned=signatureSupported?signed.filter(x=>hasValue(x,partySignatureFields)&&hasValue(x,uccSignatureFields)):[];
+const signatureIncomplete=signatureSupported?signed.filter(x=>!bothSigned.includes(x)):[];
+const riskFields=["risk_level","partnership_risk","risk_rating","average_identification_and_selection_score"];
+const riskSupported=managed.some(x=>hasField(x,riskFields));
+const riskRows=riskSupported?managed.map(x=>{
+let label=x.risk_level||x.partnership_risk||x.risk_rating;
+if(!label&&Number(x.average_identification_and_selection_score))label=Number(x.average_identification_and_selection_score)>=70?"Low":"High";
+return {...x,_risk:label||"Not Set"};
+}):[];
+const latestMonitoring=new Map;
+monitoring.forEach(row=>{
+const key=row.name,date=new Date(row.monitoring_date||row.date||row.modified||0);
+if(!latestMonitoring.has(key)||date>latestMonitoring.get(key).date)latestMonitoring.set(key,{date,row});
+});
+const recentManaged=[],staleManaged=[],noMonitoring=[];
+managed.forEach(parent=>{
+const item=latestMonitoring.get(parent.name);
+if(!item){noMonitoring.push(parent);return}
+const age=Math.floor((today-item.date)/86400000);
+if(age<=180)recentManaged.push(parent);else staleManaged.push(parent);
+});
+const decisionFields=["decision","continuation_decision","evaluation_decision","recommended_action"];
+const decisionRows=evaluations.map(x=>({...x,_decision:decisionFields.map(f=>x[f]).find(Boolean)||x.evaluation_outcome||"Not Set"}));
+const parentsWithMonitoring=new Set(monitoring.map(x=>x.name)),parentsWithEvaluation=new Set(evaluations.map(x=>x.name));
+const withoutMonitoring=managed.filter(x=>!parentsWithMonitoring.has(x.name));
+const withoutEvaluation=managed.filter(x=>!parentsWithEvaluation.has(x.name));
+const qualityComplete=managed.filter(x=>parentsWithMonitoring.has(x.name)&&parentsWithEvaluation.has(x.name)&&Number(x.average_identification_and_selection_score)>0);
+const qualityIncomplete=managed.filter(x=>!qualityComplete.includes(x));
+return{
+signed,managed,ratings,signedStatus,
+kpis:{partners:signed.length,partnersActive:signedStatus.filter(x=>x.derived_status==="Active").length,monitoring:monitoring.length,evaluations:evaluations.length},
+status:groupRecords(signedStatus,"derived_status","Partnership Agreement"),
+type:groupRecords(signed,"pa_agreement_type","Partnership Agreement"),
+expiry:[
+{label:"Expired",value:expired.length,records:expired,doctype:"Partnership Agreement"},
+{label:"Due within 90 days",value:expiring.length,records:expiring,doctype:"Partnership Agreement"},
+{label:"More than 90 days",value:later.length,records:later,doctype:"Partnership Agreement"},
+{label:"No end date",value:noEnd.length,records:noEnd,doctype:"Partnership Agreement"}
+],
+nda:[
+{label:"Not required",value:ndaNotRequired.length,records:ndaNotRequired,doctype:"Partnership Agreement"},
+{label:"Required and acknowledged",value:ndaComplete.length,records:ndaComplete,doctype:"Partnership Agreement"},
+{label:"Required but incomplete",value:ndaIncomplete.length,records:ndaIncomplete,doctype:"Partnership Agreement"}
+],
+monitoring:groupRecords(monitoring,"monitoring_details"),
+monitoringType:groupRecords(monitoring,"type_of_monitoring"),
+evaluation:groupRecords(evaluations,"evaluation_outcome"),
+scores:scoreRows,
+ratingStage:groupRecords(ratings,"evaluation_stage","Supplier Rating"),
+threshold:[
+{label:"Meets threshold",value:pass.length,records:pass,doctype:"Partnerships Agreement Management"},
+{label:"Below threshold",value:below.length,records:below,doctype:"Partnerships Agreement Management"},
+{label:"Not scored",value:notScored.length,records:notScored,doctype:"Partnerships Agreement Management"}
+],
+lifecycle:groupRecords(lifecycle,"derived_status_v110","Partnership Agreement"),
+signature:[
+{label:signatureSupported?"Both parties signed":"Signature fields unsupported",value:bothSigned.length,records:bothSigned,doctype:"Partnership Agreement"},
+{label:"Signature incomplete",value:signatureIncomplete.length,records:signatureIncomplete,doctype:"Partnership Agreement"}
+],
+risk:riskSupported?groupRecords(riskRows,"_risk","Partnerships Agreement Management"):[
+{label:"Risk field unsupported",value:0,records:[],doctype:"Partnerships Agreement Management"}
+],
+monitoringRecency:[
+{label:"Monitored within 180 days",value:recentManaged.length,records:recentManaged,doctype:"Partnerships Agreement Management"},
+{label:"Monitoring older than 180 days",value:staleManaged.length,records:staleManaged,doctype:"Partnerships Agreement Management"},
+{label:"No monitoring record",value:noMonitoring.length,records:noMonitoring,doctype:"Partnerships Agreement Management"}
+],
+decisions:groupRecords(decisionRows,"_decision","Partnerships Agreement Management"),
+missingControls:[
+{label:"Without recent monitoring",value:withoutMonitoring.length,records:withoutMonitoring,doctype:"Partnerships Agreement Management"},
+{label:"Without evaluation",value:withoutEvaluation.length,records:withoutEvaluation,doctype:"Partnerships Agreement Management"}
+],
+qualityCompleteness:[
+{label:"Core quality record complete",value:qualityComplete.length,records:qualityComplete,doctype:"Partnerships Agreement Management"},
+{label:"Core quality record incomplete",value:qualityIncomplete.length,records:qualityIncomplete,doctype:"Partnerships Agreement Management"}
+]
+};
+}
 function renderNewSection(tab){
 const d=state.data||{},today=new Date();today.setHours(0,0,0,0);
 const in90=new Date(today.getTime()+90*86400000);
+const attachType=(rows,doctype)=>(rows||[]).map(row=>({...row,_doctype:doctype}));
 if(tab==="c512"){
-const b=state.c512Server;if(!b){status("5.1.2 analytics unavailable: the Criterion 5 server script is not responding.");return;}
+const b=state.c512Server||buildC512(d,today);
 setNewKpi("mr-total",b.kpis.mrTotal);setNewKpi("mr-approved",b.kpis.mrApproved);
 setNewKpi("cr-total",b.kpis.crTotal);setNewKpi("cr-overdue",b.kpis.crOverdue);
 chartAndTable("c512-review-level",b.reviewLevel);
@@ -1499,7 +2137,7 @@ const recordRows=[
 tbody("c512-records",recordRows,7);
 }
 if(tab==="c521"){
-const b=state.c521Server;if(!b){status("5.2.1 analytics unavailable: the Criterion 5 server script is not responding.");return;}
+const b=state.c521Server||buildC521(d);
 setNewKpi("intakes",b.kpis.intakes);setNewKpi("classes",b.kpis.classes);setNewKpi("sessions",b.kpis.sessions);setNewKpi("applicants",b.kpis.applicants);
 chartAndTable("c521-intakes",b.intakesReady);
 chartAndTable("c521-flow",b.flow);
@@ -1519,7 +2157,7 @@ chartAndTable("c521-contract-exceptions-v110",b.contractExceptions);
 tbody("c521-exceptions",b.exceptions.map(x=>`<tr><td>${esc(x[0])}</td><td>${esc(displayDoctype(x[1]))}</td><td>${esc(x[2])}</td><td>${recordLink(x[1],x[0])}</td></tr>`),4);
 }
 if(tab==="c522"){
-const b=state.c522Server;if(!b){status("5.2.2 analytics unavailable: the Criterion 5 server script is not responding.");return;}
+const b=state.c522Server||buildC522(d,today);
 setNewKpi("observations",b.kpis.observations);setNewKpi("observation-score",b.kpis.observationScoreAvg!==null?b.kpis.observationScoreAvg.toFixed(1)+"/5":"—");
 setNewKpi("surveys",b.kpis.surveys);setNewKpi("unobserved",b.kpis.unobserved);
 chartAndTable("c522-coverage",b.coverage);
@@ -1547,7 +2185,7 @@ const recordRows=[
 tbody("c522-records",recordRows,6);
 }
 if(tab==="c531"){
-const b=state.c531Server;if(!b){status("5.3.1 analytics unavailable: the Criterion 5 server script is not responding.");return;}
+const b=state.c531Server||buildC531(d,today,in90);
 setNewKpi("partners",b.kpis.partners);setNewKpi("partners-active",b.kpis.partnersActive);
 setNewKpi("monitoring",b.kpis.monitoring);setNewKpi("evaluations",b.kpis.evaluations);
 chartAndTable("c531-status",b.status);
