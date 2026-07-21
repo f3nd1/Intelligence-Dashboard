@@ -88,7 +88,7 @@ SOURCE_CANDIDATES = {
     "quality_action": ["Quality Action"],
     "management_review": ["Management Review"],
     "operational_outcomes": ["Operational Outcomes Cost Time Saving"],
-    "provider_rating": ["Provider Rating", "Supplier Rating"]
+    "provider_rating": ["Supplier Rating"]
 }
 
 SAFE_FIELDS = {
@@ -367,7 +367,7 @@ CONFIG = {
         "sources": ["provider_rating", "management_review"],
         "metrics": [
             {
-                "id": "c641-ratings", "label": "Provider Rating records",
+                "id": "c641-ratings", "label": "Supplier Rating records",
                 "source": "provider_rating", "mode": "all"
             },
             {
@@ -593,7 +593,7 @@ def resolve_source(alias):
 
         try:
             # A candidate name can be a display label a site admin has
-            # retranslated (e.g. "Provider Rating" -> "Supplier Rating").
+            # shown under a translated label in the user interface.
             # Check the real, stable DocType name exists before ever
             # querying it, instead of catching a "not found" error after
             # the fact.
@@ -1204,7 +1204,7 @@ result = {
     "ok": True,
     "meta": {
         "api_method": "ucc_analytics_criterion_6",
-        "platform_version": "1.9.5",
+        "platform_version": "1.9.13",
         "status": "live_foundation",
         "generated_at": frappe.utils.now(),
         "action": action,
