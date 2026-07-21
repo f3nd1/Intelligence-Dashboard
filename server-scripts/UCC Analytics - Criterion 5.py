@@ -45,6 +45,7 @@ ALLOWED_ACTIONS = [
     "base",
     "overview",
     "summary",
+    "c511_analytics",
     "c511_hydrate",
     "c511_summary",
     "c511_proposals",
@@ -132,6 +133,157 @@ def js_number(v):
         return float(v)
     except (TypeError, ValueError):
         return float("nan")
+
+C511_GROUPS = {
+    "overview": ["course_title", "mode_of_delivery", "academic_level", "course_language", "programme_structure", "proposed_date"],
+    "strategy": ["overall_achievement", "industry_relevance", "skills_development", "target_headcount", "competitors"],
+    "learner": ["target_audience_industry", "minimum_age", "industry_experience", "cognitive_level", "prior_knowledge", "learning_style", "cognitive_development_focus", "motivation_level", "emotional_state", "stress_resilience", "social_engagement_level", "peer_learning_engagement", "teamwork_and_collaboration_skills", "special_educational_needs", "inclusivity_measures", "learning_environment_support", "learner_profile_characteristic", "mer_academic", "mer_language"],
+    "pedagogy": ["table_teqa", "teaching_technique_offline", "teacher_student_ratio_offline", "teaching_technique_online", "teacher_student_ratio_online", "total_duration_ft", "total_duration_pt", "days_per_week_ft", "hour_per_day_ft", "days_per_week_pt", "hour_per_day_pt", "ft_contact_hour_total", "pt_contact_hour_total"],
+    "curriculum": ["learning_outcomes", "module_list", "sequencing_and_rationale", "course_developer", "industrial_attachment_needead", "industrial_attachment_details", "articulation_pathway", "pathway_programme_details", "accrediation_y_n", "accrediation_details", "association_y_n", "association_details"],
+    "assessment": ["assessment_criteria", "assessmnet_descriptions"],
+    "risk": ["table_ornh", "budget_management", "total_budget_fee", "total_actual_spending", "resource_childable", "risk_table", "risk_mitigation_childtable", "table_odgh", "stakeholder_note", "documentation_table"],
+    "approval": ["approval_status", "decision_date", "quality_meeting", "ssg_approval_date", "decision_summary"],
+}
+C511_GROUP_ORDER = ["overview", "strategy", "learner", "pedagogy", "curriculum", "assessment", "risk", "approval"]
+_NORM_ALLOWED = "abcdefghijklmnopqrstuvwxyz0123456789"
+
+def has_evidence(v):
+    if isinstance(v, (list, tuple)):
+        return len(v) > 0
+    if isinstance(v, dict):
+        return len(v) > 0
+    return v is not None and str(v).strip() != "" and v != 0
+
+def _norm(s):
+    return "".join(ch for ch in str(s).lower() if ch in _NORM_ALLOWED)
+
+def find_evidence_field(record, candidates):
+    for field in candidates:
+        if field in record and has_evidence(record[field]):
+            return field
+    keys = list((record or {}).keys())
+    for candidate in candidates:
+        n = _norm(candidate)
+        for k in keys:
+            nk = _norm(k)
+            if (nk == n or n in nk or nk in n) and has_evidence(record[k]):
+                return k
+    return None
+
+def c511_group(record, group):
+    fields = []
+    for field in C511_GROUPS[group]:
+        hit = find_evidence_field(record, [field])
+        if hit is not None and hit not in fields:
+            fields.append(hit)
+    return {"ok": len(fields) > 0, "fields": fields}
+
+def _child_len(record, primary, fallback=None):
+    # mirror JS (record[primary] || record[fallback] || []).length where [] is truthy in JS
+    v = record.get(primary)
+    if v is None and fallback is not None:
+        v = record.get(fallback)
+    if v is None:
+        v = []
+    return len(v) if isinstance(v, (list, tuple)) else 0
+
+def compute_c511(data, today):
+    proposals = data.get("Course Proposal") or []
+    reviews = data.get("Course Review") or []
+    courses = data.get("Course") or []
+
+    checks = []
+    for record in proposals:
+        groups = {}
+        for g in C511_GROUP_ORDER:
+            groups[g] = c511_group(record, g)
+        complete = len([1 for g in C511_GROUP_ORDER if groups[g]["ok"]])
+        checks.append({"record": record.get("name"),
+                       "groups": {g: {"ok": groups[g]["ok"], "fields": groups[g]["fields"]} for g in C511_GROUP_ORDER},
+                       "rate": pct(complete, len(C511_GROUP_ORDER)),
+                       "status": record.get("approval_status") or "Not set"})
+
+    topics = len([c for c in courses if (c.get("topics") or [])])
+    criteria = len([c for c in courses if (c.get("assessment_criteria") or [])])
+    approved_words = ("approved", "accepted", "endorsed", "submitted")
+    proposals_by_name = {}
+    for p in proposals:
+        proposals_by_name[p.get("name")] = p
+    approved = 0
+    for x in checks:
+        status_l = str(x["status"]).lower()
+        if any(w in status_l for w in approved_words) or proposals_by_name.get(x["record"], {}).get("docstatus") == 1:
+            approved += 1
+
+    readiness = []
+    for g in C511_GROUP_ORDER:
+        readiness.append({"label": g[0].upper() + g[1:],
+                          "value": pct(len([x for x in checks if x["groups"][g]["ok"]]), len(checks))})
+
+    gaps = []
+    for x in checks:
+        for g in C511_GROUP_ORDER:
+            if not x["groups"][g]["ok"]:
+                gaps.append({"doctype": "Course Proposal", "record": x["record"], "area": g,
+                             "issue": "No populated {0} evidence detected".format(g), "severity": "Risk"})
+
+    module_rows = []
+    for record in courses:
+        lo = _child_len(record, "custom_list_of_learning_objective", "topics")
+        lessons = _child_len(record, "custom_lesson_plans")
+        teaching = _child_len(record, "custom_teaching_approach")
+        assessment = _child_len(record, "assessment_criteria")
+        resources = _child_len(record, "custom_resource")
+        areas = [lo, lessons, teaching, assessment, resources]
+        module_rows.append({"record": record.get("name"), "lo": lo, "lessons": lessons, "teaching": teaching,
+                            "assessment": assessment, "resources": resources,
+                            "coverage": pct(len([v for v in areas if v > 0]), 5),
+                            "zero": all(v == 0 for v in areas), "complete": all(v > 0 for v in areas)})
+    for x in module_rows:
+        for area, value in [("learning outcomes", x["lo"]), ("lesson plans", x["lessons"]),
+                            ("teaching approach", x["teaching"]), ("assessment criteria", x["assessment"]),
+                            ("resources", x["resources"])]:
+            if not value:
+                gaps.append({"doctype": "Course", "record": x["record"], "area": area,
+                             "issue": "Missing {0}".format(area), "severity": "Risk"})
+
+    if not reviews:
+        gaps.append({"doctype": "Course Review", "record": "—", "area": "validation",
+                     "issue": "No readable Course Review records", "severity": "Risk"})
+    else:
+        for review in reviews:
+            rec_text = review.get("recommendations") or review.get("module_recommendation_summary")
+            if not has_evidence(rec_text):
+                gaps.append({"doctype": "Course Review", "record": review.get("name"), "area": "recommendations",
+                             "issue": "Missing recommendations", "severity": "Warning"})
+            if not (review.get("actionplan_progress") or []):
+                gaps.append({"doctype": "Course Review", "record": review.get("name"), "area": "action plan",
+                             "issue": "No action plan rows", "severity": "Risk"})
+            nrd = review.get("next_review_date")
+            if nrd and str(nrd)[:10] <= today:
+                gaps.append({"doctype": "Course Review", "record": review.get("name"), "area": "review cycle",
+                             "issue": "Next review date is overdue", "severity": "Risk"})
+
+    proposal_approved = len([x for x in proposals if x.get("approval_status") == "Approved"])
+    review_approved = len([x for x in reviews if x.get("review_status") == "Approved"])
+    ssg_count = len([x for x in proposals if x.get("ssg_approval_date")])
+    overdue = len([x for x in reviews if x.get("next_review_date") and str(x.get("next_review_date"))[:10] <= today])
+    decision_vals = []
+    for x in proposals:
+        pd = x.get("proposed_date")
+        dd = x.get("decision_date")
+        if pd and dd:
+            days = frappe.utils.date_diff(dd, pd)
+            if days >= 0:
+                decision_vals.append(days)
+    avg_decision_days = js_round(sum(decision_vals) / len(decision_vals)) if decision_vals else None
+    action_counts = [len(x.get("actionplan_progress") or []) for x in reviews]
+    avg_actions = (js_round(sum(action_counts) / len(action_counts) * 10) / 10) if action_counts else 0
+
+    return {"topics": topics, "criteria": criteria, "approved": approved, "readiness": readiness, "gaps": gaps,
+            "moduleRows": module_rows, "checks": checks, "proposalApproved": proposal_approved,
+            "reviewApproved": review_approved, "ssgCount": ssg_count, "overdue": overdue,
+            "avgDecisionDays": avg_decision_days, "avgActions": avg_actions}
 
 def compute_c5_summary(data, active_filters):
     # Faithful port of the client compute() + buildQuality() shared core.
@@ -230,6 +382,56 @@ if action not in ALLOWED_ACTIONS:
         "error_code": "UNSUPPORTED_ACTION",
         "message": "Unsupported Criterion 5 action.",
         "allowed_actions": ALLOWED_ACTIONS
+    }
+elif action == "c511_analytics":
+    # Section 5.1.1 model, server-side. Faithful port of the client buildC511();
+    # proven byte-identical to the JavaScript across fixtures incl. the due-today
+    # boundary. Course Proposal / Course Review / Course / Program need full
+    # documents (evidence fields + child tables); Assessment Plan is a list.
+    # Limits mirror the client (proposals/reviews first 300, courses/programmes
+    # first 1000, by modified desc). Permission-aware throughout.
+    data = {}
+    sources = {}
+
+    def _hydrate(doctype, cap):
+        try:
+            names = frappe.get_list(doctype, pluck="name", limit_page_length=cap, order_by="modified desc") or []
+            docs = [frappe.get_doc(doctype, name).as_dict() for name in names]
+            return docs, {"status": "Available", "count": len(docs)}
+        except Exception as error:
+            message = str(error)
+            lowered = message.lower()
+            status = "Not permitted" if ("permission" in lowered or "not permitted" in lowered or "not allowed" in lowered) else "Unavailable"
+            return [], {"status": status, "count": 0, "error": message}
+
+    for doctype, cap in [("Course Proposal", min(limit, 300)), ("Course Review", min(limit, 300)),
+                         ("Course", min(limit, 1000)), ("Program", min(limit, 1000))]:
+        data[doctype], sources[doctype] = _hydrate(doctype, cap)
+    data["Assessment Plan"], sources["Assessment Plan"] = safe_rows(
+        "Assessment Plan", ["name", "course", "program", "academic_year", "assessment_name", "modified"])
+
+    today = frappe.utils.nowdate()
+    model = compute_c511(data, today)
+    frappe.response["message"] = {
+        "ok": True,
+        "meta": {
+            "api_method": "ucc_analytics_criterion_5",
+            "dashboard": "criterion_5",
+            "action": action,
+            "section": "5.1.1",
+            "as_of": today,
+            "generated_at": frappe.utils.now()
+        },
+        "filters": filters,
+        "model": model,
+        "records": {
+            "proposals": data["Course Proposal"],
+            "reviews": data["Course Review"],
+            "courses": data["Course"],
+            "programs": data["Program"],
+            "plans": data["Assessment Plan"]
+        },
+        "sources": sources
     }
 elif action == "summary":
     # Shared cross-section compute (metrics + data-quality), server-side.
