@@ -280,7 +280,21 @@ const noticeStatus=/error|failed|unavailable|permission/i.test(text)
 :"available";
 setC5Notice(text,noticeStatus);
 };
-const errText=e=>e?.message||e?._server_messages||e?.exc||"Not permitted or unavailable";
+// Surface the real Frappe error. A missing DocType raises DoesNotExistError
+// (HTTP 404); its detail lives on the xhr's responseJSON (exception / exc_type /
+// _server_messages) and status, none of which the old one-liner read, so it fell
+// back to a permission-sounding string and got misclassified. Append the HTTP
+// status so classifyError can key off 404/403 even when the body is empty.
+const errText=e=>{
+if(!e)return"Request failed";
+const rj=e.responseJSON||e._response||{};
+const status=e.httpStatus||e.status||rj.http_status_code;
+const flat=v=>Array.isArray(v)?v.join(" "):(typeof v==="string"?v:"");
+const parts=[e.message,rj.exception,rj.exc_type,flat(e._server_messages),flat(rj._server_messages),e.exc,rj.exc].filter(Boolean);
+let text=parts.join(" · ");
+if(status)text=(text?text+" ":"")+"(HTTP "+status+")";
+return text||"Request failed";
+};
 $("[data-c5-readiness-details]")?.addEventListener("click",openC5ReadinessDetails);
 function setProgress(value,task){
 const overlay=$("[data-loading-overlay]"),fill=$("[data-progress-fill]");
@@ -291,7 +305,7 @@ function hideProgress(){setTimeout(()=>$("[data-loading-overlay]").classList.add
 function classifyError(message){
 const text=String(message||"");
 if(/permission|not permitted|forbidden|403/i.test(text))return"Permission denied";
-if(/not found|does not exist|doctype .* not found|404/i.test(text))return"Not installed";
+if(/not found|does ?not ?exist|doesnotexist|no such|404/i.test(text))return"Not installed";
 if(/unknown column|field .* not found|invalid field/i.test(text))return"Field mismatch";
 return"Request failed";
 }
@@ -378,6 +392,36 @@ addLog("WARN","source","server_hydration_unavailable",{error:error.message});
 return false;
 }
 }
+// Section 5.1.1 model from the server (c511_analytics). Returns the exact
+// buildC511() shape (checks/moduleRows re-hydrated to full record objects) so
+// renderC511 consumes it unchanged, or null if the action is unavailable so the
+// caller falls back to the client buildC511().
+async function fetchC511Model(){
+try{
+const message=await new Promise((resolve,reject)=>frappe.call({
+method:"ucc_analytics_criterion_5",
+args:{payload:JSON.stringify({action:"c511_analytics",limit:1000})},
+callback:response=>resolve(response?.message),
+error:reject
+}));
+if(!message||message.ok!==true||!message.model||!message.records)throw new Error(message?.message||"c511_analytics is unavailable");
+const m=message.model,rec=message.records;
+const pByName=new Map((rec.proposals||[]).map(p=>[p.name,p]));
+const cByName=new Map((rec.courses||[]).map(c=>[c.name,c]));
+const adapted={
+proposals:rec.proposals||[],reviews:rec.reviews||[],courses:rec.courses||[],programs:rec.programs||[],plans:rec.plans||[],
+checks:(m.checks||[]).map(x=>({record:pByName.get(x.record)||{name:x.record},groups:x.groups,rate:x.rate,status:x.status})),
+moduleRows:(m.moduleRows||[]).map(x=>({record:cByName.get(x.record)||{name:x.record},lo:x.lo,lessons:x.lessons,teaching:x.teaching,assessment:x.assessment,resources:x.resources,coverage:x.coverage,zero:x.zero,complete:x.complete})),
+topics:m.topics,criteria:m.criteria,approved:m.approved,readiness:m.readiness,gaps:m.gaps,
+proposalApproved:m.proposalApproved,reviewApproved:m.reviewApproved,ssgCount:m.ssgCount,overdue:m.overdue,avgDecisionDays:m.avgDecisionDays,avgActions:m.avgActions
+};
+addLog("INFO","source","c511_server_model_used",{proposals:adapted.proposals.length,reviews:adapted.reviews.length,courses:adapted.courses.length});
+return adapted;
+}catch(error){
+addLog("WARN","source","c511_server_model_unavailable",{error:error.message});
+return null;
+}
+}
 async function hydrateDocuments(dt){
 const rows=state.data[dt]||[];
 setProgress(Math.min(90,8),`Loading ${(UCC_TERMS[dt]||dt).toLowerCase()} design details…`);
@@ -393,7 +437,7 @@ const rows=await list(dt,cfg.fields);
 setProgress(Math.min(94,20),`Loading ${dt} (${Math.min(rows.length,300)})`);
 const full=await mapLimit(rows.slice(0,300),8,async row=>{try{return await doc(dt,row.name)}catch{return row}});
 state.sources[dt]={status:"Available",count:full.length,purpose:cfg.purpose};return full;
-}catch(e){state.sources[dt]={status:/not found|does not exist|doctype .* not found|404/i.test(e.message)?"Not installed":/permission|forbidden|not permitted/i.test(e.message)?"Permission denied":"Unavailable",count:0,error:e.message,purpose:cfg.purpose};return[]}
+}catch(e){state.sources[dt]={status:/not found|does ?not ?exist|doesnotexist|no such|404/i.test(e.message)?"Not installed":/permission|forbidden|not permitted|403/i.test(e.message)?"Permission denied":"Unavailable",count:0,error:e.message,purpose:cfg.purpose};return[]}
 }
 function hasEvidence(v){if(Array.isArray(v))return v.length>0;if(v&&typeof v==="object")return Object.keys(v).length>0;return v!==null&&v!==undefined&&String(v).trim()!==""&&v!==0}
 function findEvidenceField(record,candidates){
@@ -477,7 +521,7 @@ const avgActions=actionCounts.length?Math.round(actionCounts.reduce((a,b)=>a+b,0
 return{proposals,reviews,courses,programs,plans,checks,topics,criteria,approved,readiness,gaps,moduleRows,proposalApproved,reviewApproved,ssgCount,overdue,avgDecisionDays,avgActions};
 }
 function renderC511(){
-const a=buildC511();
+const a=state.c511Server||buildC511();
 const setk=(key,value,note)=>{set(`[data-c511-kpi="${key}"]`,value);if(note)set(`[data-c511-note="${key}"]`,note)};
 const moduleComplete=a.moduleRows.filter(x=>x.complete).length,zeroModules=a.moduleRows.filter(x=>x.zero).length;
 setk("proposal-approval",`${pct(a.proposalApproved,a.proposals.length)}%`,`${a.proposalApproved} of ${a.proposals.length}`);
@@ -1070,7 +1114,7 @@ svg.selectAll(".bar-value").data(data).enter().append("text")
 function renderVisibleC511Charts(){
 const panel=$('[data-c511-panel]:not(.hidden)');
 if(!panel)return;
-const tab=panel.dataset.c511Panel,a=buildC511();
+const tab=panel.dataset.c511Panel,a=state.c511Server||buildC511();
 const safe=(label,fn)=>{try{fn()}catch(error){console.error(`5.1.1 ${label} chart error`,error)}};
 if(tab==="summary"){
 safe("radar",()=>radarChart("c511-radar",a.readiness));
@@ -1994,6 +2038,7 @@ add("Assessment Plan",ap);add("Assessment Result",ar);
 }
 if(tab==="c511"){
 for(const dt of Object.keys(C511_SOURCES)){setProgress(22,`Loading ${dt}`);state.data[dt]=await loadC511Source(dt);}
+setProgress(30,"Computing 5.1.1 analytics");state.c511Server=await fetchC511Model();
 }
 if(tab==="c54"){
 const sf=[];

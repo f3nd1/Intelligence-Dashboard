@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.9.8-c511-server-wire (2026-07-21)
+
+- Wired section 5.1.1 to consume the server c511_analytics model. loadSection now calls the action after loading 5.1.1's sources and stores the result (re-hydrated into buildC511()'s exact shape) in state.c511Server; renderC511 and the 5.1.1 chart renderer use it, falling back to the client buildC511() only when the action is unavailable. The client fallback is retained for now and will be removed once the wiring is confirmed live. Verified in-harness: c511_analytics is called on 5.1.1 load, its values flow to the KPIs and gaps table, the record-object rehydration is correct, and both the server and fallback paths render with zero console errors.
+
+## v1.9.8-error-surface-404 (2026-07-21)
+
+- Fixed inaccurate source-error labels. A missing DocType raises Frappe DoesNotExistError (HTTP 404), but errText only read e.message / e._server_messages / e.exc and so missed the detail on the xhr's responseJSON, falling back to a permission-sounding string that classifyError then mislabelled. errText now reads responseJSON.exception / exc_type / _server_messages and appends the HTTP status; classifyError and the loadC511Source catch recognise doesnotexist / 404 and 403. A 404 now reports "Not installed" instead of "Not permitted or unavailable". Verified with a classifyError unit check (7/7 representative Frappe error strings). Note: the 404 itself is an ERPNext-side condition (the DocType is not present on the site); this change only makes the report accurate, it cannot make a missing DocType resolve.
+
+
 ## v1.9.8-remove-legend (2026-07-20)
 
 - Removed the five "Legend & Definitions" sub-tabs and panels from Criterion 5 sections (~17 KB of HTML; archived in `custom-html-block/archive/HTML_archived_c5_cards_v1.9.8.html`) and the legend special-case in the local-tab handler.
