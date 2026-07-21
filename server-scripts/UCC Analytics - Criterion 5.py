@@ -876,6 +876,121 @@ def compute_c531(d, today, in90):
         "signedStatus": [{"name": x.get("name"), "derived_status": x.get("derived_status")} for x in signed_status],
     }
 
+def scoped_rows(data, active_filters):
+    f = {"year": active_filters.get("year") or "", "student_group": active_filters.get("student_group") or "", "program": active_filters.get("program") or ""}
+    groups = data.get("Student Group") or []
+    programs = data.get("Program") or []
+    scoped_groups = [g for g in groups if
+        (not f["year"] or g.get("academic_year") == f["year"]) and
+        (not f["program"] or g.get("program") == f["program"]) and
+        (not f["student_group"] or g.get("name") == f["student_group"])]
+    scope_student_groups = set(g.get("name") for g in scoped_groups)
+    scope_courses = set(g.get("course") for g in scoped_groups if g.get("course"))
+    if not f["student_group"] and f["program"]:
+        prog = None
+        for candidate in programs:
+            if candidate.get("name") == f["program"]:
+                prog = candidate; break
+        for child in (prog.get("courses") if prog else []) or []:
+            scope_courses.add(child.get("course"))
+    if not f["student_group"] and not f["program"]:
+        for course in data.get("Course") or []:
+            scope_courses.add(course.get("name"))
+    schedules = [x for x in (data.get("Course Schedule") or []) if
+        ((not f["student_group"] and not f["year"]) or x.get("student_group") in scope_student_groups) and
+        (not f["program"] or x.get("program") == f["program"])]
+    schedule_names = set(x.get("name") for x in schedules)
+    attendance = [x for x in (data.get("Student Attendance") or []) if x.get("course_schedule") in schedule_names]
+    plans = [x for x in (data.get("Assessment Plan") or []) if
+        (not f["year"] or x.get("academic_year") == f["year"]) and
+        (not f["program"] or x.get("program") == f["program"]) and
+        (not f["student_group"] or x.get("student_group") == f["student_group"])]
+    plan_names = set(x.get("name") for x in plans)
+    results = [x for x in (data.get("Assessment Result") or []) if
+        (not f["year"] or x.get("academic_year") == f["year"]) and
+        (not f["program"] or x.get("program") == f["program"]) and
+        (not f["student_group"] or x.get("student_group") == f["student_group"]) and
+        (not plan_names or x.get("assessment_plan") in plan_names)]
+    courses = [x for x in (data.get("Course") or []) if x.get("name") in scope_courses]
+    enroll = [x for x in (data.get("Course Enrollment") or []) if
+        (not f["program"] or x.get("program") == f["program"]) and
+        (not scope_courses or x.get("course") in scope_courses)]
+    return {"courses": courses, "schedules": schedules, "attendance": attendance, "plans": plans, "results": results, "enroll": enroll}
+
+def survey_type(row, child):
+    ch = child or {}
+    text = (str(row.get("title") or "") + " " + str(ch.get("category") or "") + " " + str(ch.get("question") or "")).lower()
+    nospace = "".join(text.split())
+    if "graduate" in text or "graduation" in text or "alumni" in text:
+        return "Graduate Survey"
+    if "endofcourse" in nospace or "course survey" in text or "programme survey" in text or "program survey" in text:
+        return "End of Course"
+    if "endofmodule" in nospace or "module survey" in text or "module feedback" in text:
+        return "End of Module"
+    return "Other / Unclassified"
+
+def parse_survey_score(value):
+    raw = str(value if value is not None else "").strip()
+    if not raw:
+        return None
+    numstr = raw.replace("%", "")
+    if numstr == "":
+        numeric = 0.0
+    else:
+        try:
+            numeric = float(numstr)
+        except (TypeError, ValueError):
+            numeric = float("nan")
+    if numeric == numeric:  # finite (not NaN)
+        return numeric / 20 if "%" in raw else numeric
+    key = raw.lower()
+    likert = {
+        "strongly disagree": 1, "disagree": 2, "neutral": 3, "neither agree nor disagree": 3,
+        "agree": 4, "strongly agree": 5,
+        "very dissatisfied": 1, "dissatisfied": 2, "satisfied": 4, "very satisfied": 5,
+        "poor": 1, "fair": 2, "average": 3, "good": 4, "excellent": 5,
+        "never": 1, "rarely": 2, "sometimes": 3, "often": 4, "always": 5,
+    }
+    return likert.get(key)
+
+def js_round2(x):
+    return int(x * 100 + 0.5) / 100
+
+def build_survey_analytics(data, survey_filter):
+    docs = data.get("Survey Response") or []
+    fmod = survey_filter.get("module") or ""
+    ftype = survey_filter.get("type") or ""
+    scored = []; comments = []; type_counts = {}
+    for doc in docs:
+        if fmod and doc.get("course") != fmod:
+            continue
+        for child in (doc.get("response") if isinstance(doc.get("response"), list) else []):
+            t = survey_type(doc, child)
+            if ftype and t != ftype:
+                continue
+            type_counts[t] = type_counts.get(t, 0) + 1
+            score = parse_survey_score(child.get("response"))
+            base = {"survey_type": t, "module": doc.get("course") or "Not Set", "course": doc.get("program") or "Not Set",
+                    "category": child.get("category") or "", "question": child.get("question") or "",
+                    "response": child.get("response") or "", "posting_date": doc.get("posting_date") or "", "survey": doc.get("name")}
+            if score is not None:
+                b = dict(base); b["score"] = score; scored.append(b)
+            elif str(child.get("response") or "").strip():
+                comments.append(base)
+    def avg_by(rows, key):
+        m = {}
+        for r in rows:
+            k = r.get(key) or "Not Set"
+            v = m.get(k) or {"sum": 0, "count": 0}
+            v["sum"] += r["score"]; v["count"] += 1; m[k] = v
+        out = [{"label": label, "value": js_round2(v["sum"] / v["count"]), "count": v["count"]} for label, v in m.items()]
+        out.sort(key=lambda x: -x["value"])
+        return out
+    docs_filtered = [dd for dd in docs if (not fmod or dd.get("course") == fmod)]
+    return {"docs": docs_filtered, "scored": scored, "comments": comments,
+            "typeCounts": [{"label": label, "value": value} for label, value in type_counts.items()],
+            "moduleScores": avg_by(scored, "module"), "questionScores": avg_by(scored, "question")}
+
 def compute_c5_summary(data, active_filters):
     # Faithful port of the client compute() + buildQuality() shared core.
     # Proven byte-identical to the JavaScript across 6 filter permutations.
