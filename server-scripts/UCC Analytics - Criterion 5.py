@@ -49,6 +49,7 @@ ALLOWED_ACTIONS = [
     "c512_analytics",
     "c521_analytics",
     "c522_analytics",
+    "c531_analytics",
     "c511_hydrate",
     "c511_summary",
     "c511_proposals",
@@ -730,6 +731,151 @@ def compute_c522(d, today):
         "surveys": [x.get("name") for x in surveys],
     }
 
+def compute_c531(d, today, in90):
+    signed = d.get("Partnership Agreement") or []
+    managed = d.get("Partnerships Agreement Management") or []
+    ratings = d.get("Supplier Rating") or []
+
+    def dstr(v):
+        return str(v)[:10] if v else None
+    monitoring = []
+    for parent in managed:
+        for row in (parent.get("monitoring_childtable") or []):
+            rr = dict(row); rr["name"] = parent.get("name"); rr["_doctype"] = "Partnerships Agreement Management"; monitoring.append(rr)
+    evaluations = []
+    for parent in managed:
+        for row in (parent.get("table_luoo") or []):
+            rr = dict(row); rr["name"] = parent.get("name"); rr["_doctype"] = "Partnerships Agreement Management"; evaluations.append(rr)
+
+    signed_status = []
+    for x in signed:
+        end = dstr(x.get("end_date")); start = dstr(x.get("start_date"))
+        status = "Expired" if (end and end < today) else ("Upcoming" if (start and start > today) else "Active")
+        xx = dict(x); xx["derived_status"] = status; signed_status.append(xx)
+
+    expired = [x for x in signed if x.get("end_date") and dstr(x.get("end_date")) < today]
+    expiring = [x for x in signed if x.get("end_date") and dstr(x.get("end_date")) >= today and dstr(x.get("end_date")) <= in90]
+    later = [x for x in signed if x.get("end_date") and dstr(x.get("end_date")) > in90]
+    no_end = [x for x in signed if not x.get("end_date")]
+    nda_not_required = [x for x in signed if not x.get("requires_nda")]
+    nda_complete = [x for x in signed if x.get("requires_nda") and x.get("nda_acknowledged")]
+    nda_incomplete = [x for x in signed if x.get("requires_nda") and not x.get("nda_acknowledged")]
+
+    score_rows = []
+    for x in managed:
+        if js_number(x.get("average_identification_and_selection_score")) > 0:
+            score_rows.append({"label": x.get("agreement_title") or x.get("name"), "value": js_number(x.get("average_identification_and_selection_score")), "records": [x], "doctype": "Partnerships Agreement Management"})
+    score_rows.sort(key=lambda r: -r["value"])
+    passing = [x for x in managed if js_number(x.get("average_identification_and_selection_score")) >= 70]
+    below = [x for x in managed if 0 < js_number(x.get("average_identification_and_selection_score")) < 70]
+    not_scored = [x for x in managed if not js_number(x.get("average_identification_and_selection_score"))]
+
+    def status_field(x):
+        return str(x.get("status") or x.get("agreement_status") or x.get("workflow_state") or "")
+    lifecycle = []
+    for x in signed:
+        explicit = status_field(x).lower()
+        end = dstr(x.get("end_date")); start = dstr(x.get("start_date"))
+        if "terminat" in explicit:
+            derived = "Terminated"
+        elif end and end < today:
+            derived = "Expired"
+        elif end and end <= in90:
+            derived = "Expiring"
+        elif start and start > today:
+            derived = "Upcoming"
+        else:
+            derived = "Active"
+        xx = dict(x); xx["derived_status_v110"] = derived; lifecycle.append(xx)
+
+    party_signature_fields = ["party_signature", "partner_signature", "signed_by_partner", "partner_signed"]
+    ucc_signature_fields = ["ucc_signature", "company_signature", "signed_by_ucc", "ucc_signed"]
+    def has_field(x, fields):
+        return any(f in x for f in fields)
+    def has_value(x, fields):
+        for f in fields:
+            v = x.get(f)
+            if v == 1 or v is True or str(v or "").strip() != "":
+                return True
+        return False
+    signature_supported = any(has_field(x, party_signature_fields + ucc_signature_fields) for x in signed)
+    both_signed = [x for x in signed if has_value(x, party_signature_fields) and has_value(x, ucc_signature_fields)] if signature_supported else []
+    both_names = set(x.get("name") for x in both_signed)
+    signature_incomplete = [x for x in signed if x.get("name") not in both_names] if signature_supported else []
+
+    risk_fields = ["risk_level", "partnership_risk", "risk_rating", "average_identification_and_selection_score"]
+    risk_supported = any(has_field(x, risk_fields) for x in managed)
+    risk_rows = []
+    if risk_supported:
+        for x in managed:
+            label = x.get("risk_level") or x.get("partnership_risk") or x.get("risk_rating")
+            if not label and js_number(x.get("average_identification_and_selection_score")):
+                label = "Low" if js_number(x.get("average_identification_and_selection_score")) >= 70 else "High"
+            xx = dict(x); xx["_risk"] = label or "Not Set"; risk_rows.append(xx)
+
+    latest_monitoring = {}
+    for row in monitoring:
+        key = row.get("name")
+        dv = dstr(row.get("monitoring_date") or row.get("date") or row.get("modified")) or "1970-01-01"
+        if key not in latest_monitoring or dv > latest_monitoring[key][0]:
+            latest_monitoring[key] = (dv, row)
+    recent_managed = []; stale_managed = []; no_monitoring = []
+    for parent in managed:
+        item = latest_monitoring.get(parent.get("name"))
+        if not item:
+            no_monitoring.append(parent); continue
+        age = frappe.utils.date_diff(today, item[0])
+        if age <= 180:
+            recent_managed.append(parent)
+        else:
+            stale_managed.append(parent)
+
+    decision_fields = ["decision", "continuation_decision", "evaluation_decision", "recommended_action"]
+    decision_rows = []
+    for x in evaluations:
+        dec = None
+        for f in decision_fields:
+            if x.get(f):
+                dec = x.get(f); break
+        xx = dict(x); xx["_decision"] = dec or x.get("evaluation_outcome") or "Not Set"; decision_rows.append(xx)
+
+    parents_with_monitoring = set(x.get("name") for x in monitoring)
+    parents_with_evaluation = set(x.get("name") for x in evaluations)
+    without_monitoring = [x for x in managed if x.get("name") not in parents_with_monitoring]
+    without_evaluation = [x for x in managed if x.get("name") not in parents_with_evaluation]
+    quality_complete = [x for x in managed if x.get("name") in parents_with_monitoring and x.get("name") in parents_with_evaluation and js_number(x.get("average_identification_and_selection_score")) > 0]
+    quality_complete_names = set(x.get("name") for x in quality_complete)
+    quality_incomplete = [x for x in managed if x.get("name") not in quality_complete_names]
+
+    def slim(rows):
+        out = []
+        for x in rows:
+            e = {"label": x["label"], "value": x["value"], "records": [r.get("name") for r in x.get("records", [])]}
+            if x.get("doctype") is not None: e["doctype"] = x["doctype"]
+            out.append(e)
+        return out
+    return {
+        "kpis": {"partners": len(signed), "partnersActive": len([x for x in signed_status if x.get("derived_status") == "Active"]), "monitoring": len(monitoring), "evaluations": len(evaluations)},
+        "status": slim(group_records(signed_status, "derived_status", "Partnership Agreement")),
+        "type": slim(group_records(signed, "pa_agreement_type", "Partnership Agreement")),
+        "expiry": slim([{"label": "Expired", "value": len(expired), "records": expired, "doctype": "Partnership Agreement"}, {"label": "Due within 90 days", "value": len(expiring), "records": expiring, "doctype": "Partnership Agreement"}, {"label": "More than 90 days", "value": len(later), "records": later, "doctype": "Partnership Agreement"}, {"label": "No end date", "value": len(no_end), "records": no_end, "doctype": "Partnership Agreement"}]),
+        "nda": slim([{"label": "Not required", "value": len(nda_not_required), "records": nda_not_required, "doctype": "Partnership Agreement"}, {"label": "Required and acknowledged", "value": len(nda_complete), "records": nda_complete, "doctype": "Partnership Agreement"}, {"label": "Required but incomplete", "value": len(nda_incomplete), "records": nda_incomplete, "doctype": "Partnership Agreement"}]),
+        "monitoring": slim(group_records(monitoring, "monitoring_details", None)),
+        "monitoringType": slim(group_records(monitoring, "type_of_monitoring", None)),
+        "evaluation": slim(group_records(evaluations, "evaluation_outcome", None)),
+        "scores": slim(score_rows),
+        "ratingStage": slim(group_records(ratings, "evaluation_stage", "Supplier Rating")),
+        "threshold": slim([{"label": "Meets threshold", "value": len(passing), "records": passing, "doctype": "Partnerships Agreement Management"}, {"label": "Below threshold", "value": len(below), "records": below, "doctype": "Partnerships Agreement Management"}, {"label": "Not scored", "value": len(not_scored), "records": not_scored, "doctype": "Partnerships Agreement Management"}]),
+        "lifecycle": slim(group_records(lifecycle, "derived_status_v110", "Partnership Agreement")),
+        "signature": slim([{"label": ("Both parties signed" if signature_supported else "Signature fields unsupported"), "value": len(both_signed), "records": both_signed, "doctype": "Partnership Agreement"}, {"label": "Signature incomplete", "value": len(signature_incomplete), "records": signature_incomplete, "doctype": "Partnership Agreement"}]),
+        "risk": (slim(group_records(risk_rows, "_risk", "Partnerships Agreement Management")) if risk_supported else slim([{"label": "Risk field unsupported", "value": 0, "records": [], "doctype": "Partnerships Agreement Management"}])),
+        "monitoringRecency": slim([{"label": "Monitored within 180 days", "value": len(recent_managed), "records": recent_managed, "doctype": "Partnerships Agreement Management"}, {"label": "Monitoring older than 180 days", "value": len(stale_managed), "records": stale_managed, "doctype": "Partnerships Agreement Management"}, {"label": "No monitoring record", "value": len(no_monitoring), "records": no_monitoring, "doctype": "Partnerships Agreement Management"}]),
+        "decisions": slim(group_records(decision_rows, "_decision", "Partnerships Agreement Management")),
+        "missingControls": slim([{"label": "Without recent monitoring", "value": len(without_monitoring), "records": without_monitoring, "doctype": "Partnerships Agreement Management"}, {"label": "Without evaluation", "value": len(without_evaluation), "records": without_evaluation, "doctype": "Partnerships Agreement Management"}]),
+        "qualityCompleteness": slim([{"label": "Core quality record complete", "value": len(quality_complete), "records": quality_complete, "doctype": "Partnerships Agreement Management"}, {"label": "Core quality record incomplete", "value": len(quality_incomplete), "records": quality_incomplete, "doctype": "Partnerships Agreement Management"}]),
+        "signedStatus": [{"name": x.get("name"), "derived_status": x.get("derived_status")} for x in signed_status],
+    }
+
 def compute_c5_summary(data, active_filters):
     # Faithful port of the client compute() + buildQuality() shared core.
     # Proven byte-identical to the JavaScript across 6 filter permutations.
@@ -879,6 +1025,67 @@ elif action == "c511_analytics":
             "courses": data["Course"],
             "programs": data["Program"],
             "plans": data["Assessment Plan"]
+        },
+        "sources": sources
+    }
+elif action == "c531_analytics":
+    # Section 5.3.1 model, server-side. Faithful port of the client buildC531();
+    # proven byte-identical to the JavaScript. Partnership Agreement (signature
+    # fields) and Partnerships Agreement Management (monitoring_childtable /
+    # table_luoo child tables) need full documents. The Provider/Supplier Rating
+    # source is resolved with frappe.db.exists FIRST so a missing DocType never
+    # raises (the permanent fix for the recurring "Provider Rating not found").
+    data = {}
+    sources = {}
+    for doctype in ["Partnership Agreement", "Partnerships Agreement Management"]:
+        try:
+            names = frappe.get_list(doctype, pluck="name", limit_page_length=500, order_by="modified desc") or []
+            data[doctype] = [frappe.get_doc(doctype, name).as_dict() for name in names]
+            sources[doctype] = {"status": "Available", "count": len(data[doctype])}
+        except Exception as error:
+            message = str(error)
+            lowered = message.lower()
+            status = "Not permitted" if ("permission" in lowered or "not permitted" in lowered or "not allowed" in lowered) else "Unavailable"
+            data[doctype] = []
+            sources[doctype] = {"status": status, "count": 0, "error": message}
+
+    rating_doctype = None
+    for candidate in ["Provider Rating", "Supplier Rating"]:
+        if frappe.db.exists("DocType", candidate):
+            rating_doctype = candidate
+            break
+    if not rating_doctype:
+        data["Supplier Rating"] = []
+        sources["Supplier Rating"] = {"status": "Not installed", "count": 0, "attempted": ["Provider Rating", "Supplier Rating"]}
+    else:
+        try:
+            data["Supplier Rating"] = frappe.get_list(rating_doctype, fields=["name", "evaluation_stage"], limit_page_length=500, order_by="modified desc") or []
+        except Exception:
+            try:
+                data["Supplier Rating"] = frappe.get_list(rating_doctype, fields=["name", "modified"], limit_page_length=500, order_by="modified desc") or []
+            except Exception as error:
+                data["Supplier Rating"] = []
+        sources["Supplier Rating"] = {"status": "Available", "count": len(data["Supplier Rating"]), "resolved": rating_doctype}
+
+    today = frappe.utils.nowdate()
+    in90 = frappe.utils.add_days(today, 90)
+    model = compute_c531(data, today, in90)
+    frappe.response["message"] = {
+        "ok": True,
+        "meta": {
+            "api_method": "ucc_analytics_criterion_5",
+            "dashboard": "criterion_5",
+            "action": action,
+            "section": "5.3.1",
+            "as_of": today,
+            "generated_at": frappe.utils.now()
+        },
+        "filters": filters,
+        "model": model,
+        "records": {
+            "signed": data["Partnership Agreement"],
+            "managed": data["Partnerships Agreement Management"],
+            "ratings": data["Supplier Rating"]
         },
         "sources": sources
     }

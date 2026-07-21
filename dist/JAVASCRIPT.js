@@ -584,6 +584,32 @@ addLog("WARN","source","c522_server_model_unavailable",{error:error.message});
 return null;
 }
 }
+// Section 5.3.1 model from the server (c531_analytics), re-hydrated into the
+// exact buildC531() shape; null when unavailable so the caller falls back.
+async function fetchC531Model(){
+try{
+const message=await new Promise((resolve,reject)=>frappe.call({
+method:"ucc_analytics_criterion_5",
+args:{payload:JSON.stringify({action:"c531_analytics"})},
+callback:response=>resolve(response?.message),
+error:reject
+}));
+if(!message||message.ok!==true||!message.model||!message.records)throw new Error(message?.message||"c531_analytics is unavailable");
+const rec=message.records,m=message.model;
+const signed=rec.signed||[],managed=rec.managed||[],ratings=rec.ratings||[];
+const byName=new Map();
+[...signed,...managed,...ratings].forEach(r=>{if(!byName.has(r.name))byName.set(r.name,r);});
+const hydrate=ds=>(ds||[]).map(e=>{const out={label:e.label,value:e.value,records:(e.records||[]).map(n=>byName.get(n)||{name:n})};if(e.doctype!==undefined)out.doctype=e.doctype;return out;});
+const signedByName=new Map(signed.map(r=>[r.name,r]));
+addLog("INFO","source","c531_server_model_used",{signed:signed.length,managed:managed.length,ratings:ratings.length});
+const out={signed,managed,ratings,kpis:m.kpis,signedStatus:(m.signedStatus||[]).map(x=>({...(signedByName.get(x.name)||{name:x.name}),derived_status:x.derived_status}))};
+["status","type","expiry","nda","monitoring","monitoringType","evaluation","scores","ratingStage","threshold","lifecycle","signature","risk","monitoringRecency","decisions","missingControls","qualityCompleteness"].forEach(k=>out[k]=hydrate(m[k]));
+return out;
+}catch(error){
+addLog("WARN","source","c531_server_model_unavailable",{error:error.message});
+return null;
+}
+}
 async function hydrateDocuments(dt){
 const rows=state.data[dt]||[];
 setProgress(Math.min(90,8),`Loading ${(UCC_TERMS[dt]||dt).toLowerCase()} design details…`);
@@ -2040,6 +2066,110 @@ deliveryExceptions:[
 ]
 };
 }
+// Section 5.3.1 compute, extracted from the render branch so it can be ported to
+// the server (c531_analytics) and wired with this as the fallback.
+function buildC531(d,today,in90){
+const signed=d["Partnership Agreement"]||[],managed=d["Partnerships Agreement Management"]||[],ratings=d["Supplier Rating"]||[];
+const monitoring=managed.flatMap(parent=>(parent.monitoring_childtable||[]).map(row=>({...row,name:parent.name,_doctype:"Partnerships Agreement Management"})));
+const evaluations=managed.flatMap(parent=>(parent.table_luoo||[]).map(row=>({...row,name:parent.name,_doctype:"Partnerships Agreement Management"})));
+const signedStatus=signed.map(x=>{
+const end=x.end_date?new Date(x.end_date):null,start=x.start_date?new Date(x.start_date):null;
+return {...x,derived_status:end&&end<today?"Expired":start&&start>today?"Upcoming":"Active"};
+});
+const expired=signed.filter(x=>x.end_date&&new Date(x.end_date)<today),expiring=signed.filter(x=>x.end_date&&new Date(x.end_date)>=today&&new Date(x.end_date)<=in90),later=signed.filter(x=>x.end_date&&new Date(x.end_date)>in90),noEnd=signed.filter(x=>!x.end_date);
+const ndaNotRequired=signed.filter(x=>!x.requires_nda),ndaComplete=signed.filter(x=>x.requires_nda&&x.nda_acknowledged),ndaIncomplete=signed.filter(x=>x.requires_nda&&!x.nda_acknowledged);
+const scoreRows=managed.filter(x=>Number(x.average_identification_and_selection_score)>0).map(x=>({label:x.agreement_title||x.name,value:Number(x.average_identification_and_selection_score),records:[x],doctype:"Partnerships Agreement Management"})).sort((a,b)=>b.value-a.value);
+const pass=managed.filter(x=>Number(x.average_identification_and_selection_score)>=70),below=managed.filter(x=>Number(x.average_identification_and_selection_score)>0&&Number(x.average_identification_and_selection_score)<70),notScored=managed.filter(x=>!Number(x.average_identification_and_selection_score));
+const statusField=x=>String(x.status||x.agreement_status||x.workflow_state||"");
+const lifecycle=signed.map(x=>{
+const explicit=statusField(x);
+const end=x.end_date?new Date(x.end_date):null,start=x.start_date?new Date(x.start_date):null;
+const derived=/terminat/i.test(explicit)?"Terminated":end&&end<today?"Expired":end&&end<=in90?"Expiring":start&&start>today?"Upcoming":"Active";
+return {...x,derived_status_v110:derived};
+});
+const partySignatureFields=["party_signature","partner_signature","signed_by_partner","partner_signed"];
+const uccSignatureFields=["ucc_signature","company_signature","signed_by_ucc","ucc_signed"];
+const hasField=(x,fields)=>fields.some(f=>Object.prototype.hasOwnProperty.call(x,f));
+const hasValue=(x,fields)=>fields.some(f=>x[f]===1||x[f]===true||String(x[f]||"").trim()!=="");
+const signatureSupported=signed.some(x=>hasField(x,[...partySignatureFields,...uccSignatureFields]));
+const bothSigned=signatureSupported?signed.filter(x=>hasValue(x,partySignatureFields)&&hasValue(x,uccSignatureFields)):[];
+const signatureIncomplete=signatureSupported?signed.filter(x=>!bothSigned.includes(x)):[];
+const riskFields=["risk_level","partnership_risk","risk_rating","average_identification_and_selection_score"];
+const riskSupported=managed.some(x=>hasField(x,riskFields));
+const riskRows=riskSupported?managed.map(x=>{
+let label=x.risk_level||x.partnership_risk||x.risk_rating;
+if(!label&&Number(x.average_identification_and_selection_score))label=Number(x.average_identification_and_selection_score)>=70?"Low":"High";
+return {...x,_risk:label||"Not Set"};
+}):[];
+const latestMonitoring=new Map;
+monitoring.forEach(row=>{
+const key=row.name,date=new Date(row.monitoring_date||row.date||row.modified||0);
+if(!latestMonitoring.has(key)||date>latestMonitoring.get(key).date)latestMonitoring.set(key,{date,row});
+});
+const recentManaged=[],staleManaged=[],noMonitoring=[];
+managed.forEach(parent=>{
+const item=latestMonitoring.get(parent.name);
+if(!item){noMonitoring.push(parent);return}
+const age=Math.floor((today-item.date)/86400000);
+if(age<=180)recentManaged.push(parent);else staleManaged.push(parent);
+});
+const decisionFields=["decision","continuation_decision","evaluation_decision","recommended_action"];
+const decisionRows=evaluations.map(x=>({...x,_decision:decisionFields.map(f=>x[f]).find(Boolean)||x.evaluation_outcome||"Not Set"}));
+const parentsWithMonitoring=new Set(monitoring.map(x=>x.name)),parentsWithEvaluation=new Set(evaluations.map(x=>x.name));
+const withoutMonitoring=managed.filter(x=>!parentsWithMonitoring.has(x.name));
+const withoutEvaluation=managed.filter(x=>!parentsWithEvaluation.has(x.name));
+const qualityComplete=managed.filter(x=>parentsWithMonitoring.has(x.name)&&parentsWithEvaluation.has(x.name)&&Number(x.average_identification_and_selection_score)>0);
+const qualityIncomplete=managed.filter(x=>!qualityComplete.includes(x));
+return{
+signed,managed,ratings,signedStatus,
+kpis:{partners:signed.length,partnersActive:signedStatus.filter(x=>x.derived_status==="Active").length,monitoring:monitoring.length,evaluations:evaluations.length},
+status:groupRecords(signedStatus,"derived_status","Partnership Agreement"),
+type:groupRecords(signed,"pa_agreement_type","Partnership Agreement"),
+expiry:[
+{label:"Expired",value:expired.length,records:expired,doctype:"Partnership Agreement"},
+{label:"Due within 90 days",value:expiring.length,records:expiring,doctype:"Partnership Agreement"},
+{label:"More than 90 days",value:later.length,records:later,doctype:"Partnership Agreement"},
+{label:"No end date",value:noEnd.length,records:noEnd,doctype:"Partnership Agreement"}
+],
+nda:[
+{label:"Not required",value:ndaNotRequired.length,records:ndaNotRequired,doctype:"Partnership Agreement"},
+{label:"Required and acknowledged",value:ndaComplete.length,records:ndaComplete,doctype:"Partnership Agreement"},
+{label:"Required but incomplete",value:ndaIncomplete.length,records:ndaIncomplete,doctype:"Partnership Agreement"}
+],
+monitoring:groupRecords(monitoring,"monitoring_details"),
+monitoringType:groupRecords(monitoring,"type_of_monitoring"),
+evaluation:groupRecords(evaluations,"evaluation_outcome"),
+scores:scoreRows,
+ratingStage:groupRecords(ratings,"evaluation_stage","Supplier Rating"),
+threshold:[
+{label:"Meets threshold",value:pass.length,records:pass,doctype:"Partnerships Agreement Management"},
+{label:"Below threshold",value:below.length,records:below,doctype:"Partnerships Agreement Management"},
+{label:"Not scored",value:notScored.length,records:notScored,doctype:"Partnerships Agreement Management"}
+],
+lifecycle:groupRecords(lifecycle,"derived_status_v110","Partnership Agreement"),
+signature:[
+{label:signatureSupported?"Both parties signed":"Signature fields unsupported",value:bothSigned.length,records:bothSigned,doctype:"Partnership Agreement"},
+{label:"Signature incomplete",value:signatureIncomplete.length,records:signatureIncomplete,doctype:"Partnership Agreement"}
+],
+risk:riskSupported?groupRecords(riskRows,"_risk","Partnerships Agreement Management"):[
+{label:"Risk field unsupported",value:0,records:[],doctype:"Partnerships Agreement Management"}
+],
+monitoringRecency:[
+{label:"Monitored within 180 days",value:recentManaged.length,records:recentManaged,doctype:"Partnerships Agreement Management"},
+{label:"Monitoring older than 180 days",value:staleManaged.length,records:staleManaged,doctype:"Partnerships Agreement Management"},
+{label:"No monitoring record",value:noMonitoring.length,records:noMonitoring,doctype:"Partnerships Agreement Management"}
+],
+decisions:groupRecords(decisionRows,"_decision","Partnerships Agreement Management"),
+missingControls:[
+{label:"Without recent monitoring",value:withoutMonitoring.length,records:withoutMonitoring,doctype:"Partnerships Agreement Management"},
+{label:"Without evaluation",value:withoutEvaluation.length,records:withoutEvaluation,doctype:"Partnerships Agreement Management"}
+],
+qualityCompleteness:[
+{label:"Core quality record complete",value:qualityComplete.length,records:qualityComplete,doctype:"Partnerships Agreement Management"},
+{label:"Core quality record incomplete",value:qualityIncomplete.length,records:qualityIncomplete,doctype:"Partnerships Agreement Management"}
+]
+};
+}
 function renderNewSection(tab){
 const d=state.data||{},today=new Date();today.setHours(0,0,0,0);
 const in90=new Date(today.getTime()+90*86400000);
@@ -2117,105 +2247,27 @@ const recordRows=[
 tbody("c522-records",recordRows,6);
 }
 if(tab==="c531"){
-const signed=d["Partnership Agreement"]||[],managed=d["Partnerships Agreement Management"]||[],ratings=d["Supplier Rating"]||[];
-const monitoring=managed.flatMap(parent=>(parent.monitoring_childtable||[]).map(row=>({...row,name:parent.name,_doctype:"Partnerships Agreement Management"})));
-const evaluations=managed.flatMap(parent=>(parent.table_luoo||[]).map(row=>({...row,name:parent.name,_doctype:"Partnerships Agreement Management"})));
-const signedStatus=signed.map(x=>{
-const end=x.end_date?new Date(x.end_date):null,start=x.start_date?new Date(x.start_date):null;
-return {...x,derived_status:end&&end<today?"Expired":start&&start>today?"Upcoming":"Active"};
-});
-setNewKpi("partners",signed.length);setNewKpi("partners-active",signedStatus.filter(x=>x.derived_status==="Active").length);
-setNewKpi("monitoring",monitoring.length);setNewKpi("evaluations",evaluations.length);
-chartAndTable("c531-status",groupRecords(signedStatus,"derived_status","Partnership Agreement"));
-chartAndTable("c531-type",groupRecords(signed,"pa_agreement_type","Partnership Agreement"));
-const expired=signed.filter(x=>x.end_date&&new Date(x.end_date)<today),expiring=signed.filter(x=>x.end_date&&new Date(x.end_date)>=today&&new Date(x.end_date)<=in90),later=signed.filter(x=>x.end_date&&new Date(x.end_date)>in90),noEnd=signed.filter(x=>!x.end_date);
-chartAndTable("c531-expiry",[
-{label:"Expired",value:expired.length,records:expired,doctype:"Partnership Agreement"},
-{label:"Due within 90 days",value:expiring.length,records:expiring,doctype:"Partnership Agreement"},
-{label:"More than 90 days",value:later.length,records:later,doctype:"Partnership Agreement"},
-{label:"No end date",value:noEnd.length,records:noEnd,doctype:"Partnership Agreement"}
-]);
-const ndaNotRequired=signed.filter(x=>!x.requires_nda),ndaComplete=signed.filter(x=>x.requires_nda&&x.nda_acknowledged),ndaIncomplete=signed.filter(x=>x.requires_nda&&!x.nda_acknowledged);
-chartAndTable("c531-nda",[
-{label:"Not required",value:ndaNotRequired.length,records:ndaNotRequired,doctype:"Partnership Agreement"},
-{label:"Required and acknowledged",value:ndaComplete.length,records:ndaComplete,doctype:"Partnership Agreement"},
-{label:"Required but incomplete",value:ndaIncomplete.length,records:ndaIncomplete,doctype:"Partnership Agreement"}
-]);
-chartAndTable("c531-monitoring",groupRecords(monitoring,"monitoring_details"));
-chartAndTable("c531-monitoring-type",groupRecords(monitoring,"type_of_monitoring"));
-chartAndTable("c531-evaluation",groupRecords(evaluations,"evaluation_outcome"));
-const scoreRows=managed.filter(x=>Number(x.average_identification_and_selection_score)>0).map(x=>({label:x.agreement_title||x.name,value:Number(x.average_identification_and_selection_score),records:[x],doctype:"Partnerships Agreement Management"})).sort((a,b)=>b.value-a.value);
-chartAndTable("c531-scores",scoreRows);
-chartAndTable("c531-rating-stage",groupRecords(ratings,"evaluation_stage","Supplier Rating"));
-const pass=managed.filter(x=>Number(x.average_identification_and_selection_score)>=70),below=managed.filter(x=>Number(x.average_identification_and_selection_score)>0&&Number(x.average_identification_and_selection_score)<70),notScored=managed.filter(x=>!Number(x.average_identification_and_selection_score));
-chartAndTable("c531-threshold",[
-{label:"Meets threshold",value:pass.length,records:pass,doctype:"Partnerships Agreement Management"},
-{label:"Below threshold",value:below.length,records:below,doctype:"Partnerships Agreement Management"},
-{label:"Not scored",value:notScored.length,records:notScored,doctype:"Partnerships Agreement Management"}
-]);
-const statusField=x=>String(x.status||x.agreement_status||x.workflow_state||"");
-const lifecycle=signed.map(x=>{
-const explicit=statusField(x);
-const end=x.end_date?new Date(x.end_date):null,start=x.start_date?new Date(x.start_date):null;
-const derived=/terminat/i.test(explicit)?"Terminated":end&&end<today?"Expired":end&&end<=in90?"Expiring":start&&start>today?"Upcoming":"Active";
-return {...x,derived_status_v110:derived};
-});
-chartAndTable("c531-lifecycle-v110",groupRecords(lifecycle,"derived_status_v110","Partnership Agreement"));
-const partySignatureFields=["party_signature","partner_signature","signed_by_partner","partner_signed"];
-const uccSignatureFields=["ucc_signature","company_signature","signed_by_ucc","ucc_signed"];
-const hasField=(x,fields)=>fields.some(f=>Object.prototype.hasOwnProperty.call(x,f));
-const hasValue=(x,fields)=>fields.some(f=>x[f]===1||x[f]===true||String(x[f]||"").trim()!=="");
-const signatureSupported=signed.some(x=>hasField(x,[...partySignatureFields,...uccSignatureFields]));
-const bothSigned=signatureSupported?signed.filter(x=>hasValue(x,partySignatureFields)&&hasValue(x,uccSignatureFields)):[];
-const signatureIncomplete=signatureSupported?signed.filter(x=>!bothSigned.includes(x)):[];
-chartAndTable("c531-signature-v110",[
-{label:signatureSupported?"Both parties signed":"Signature fields unsupported",value:bothSigned.length,records:bothSigned,doctype:"Partnership Agreement"},
-{label:"Signature incomplete",value:signatureIncomplete.length,records:signatureIncomplete,doctype:"Partnership Agreement"}
-]);
-const riskFields=["risk_level","partnership_risk","risk_rating","average_identification_and_selection_score"];
-const riskSupported=managed.some(x=>hasField(x,riskFields));
-const riskRows=riskSupported?managed.map(x=>{
-let label=x.risk_level||x.partnership_risk||x.risk_rating;
-if(!label&&Number(x.average_identification_and_selection_score))label=Number(x.average_identification_and_selection_score)>=70?"Low":"High";
-return {...x,_risk:label||"Not Set"};
-}):[];
-chartAndTable("c531-risk-v110",riskSupported?groupRecords(riskRows,"_risk","Partnerships Agreement Management"):[
-{label:"Risk field unsupported",value:0,records:[],doctype:"Partnerships Agreement Management"}
-]);
-const latestMonitoring=new Map;
-monitoring.forEach(row=>{
-const key=row.name,date=new Date(row.monitoring_date||row.date||row.modified||0);
-if(!latestMonitoring.has(key)||date>latestMonitoring.get(key).date)latestMonitoring.set(key,{date,row});
-});
-const recentManaged=[],staleManaged=[],noMonitoring=[];
-managed.forEach(parent=>{
-const item=latestMonitoring.get(parent.name);
-if(!item){noMonitoring.push(parent);return}
-const age=Math.floor((today-item.date)/86400000);
-if(age<=180)recentManaged.push(parent);else staleManaged.push(parent);
-});
-chartAndTable("c531-monitoring-recency-v110",[
-{label:"Monitored within 180 days",value:recentManaged.length,records:recentManaged,doctype:"Partnerships Agreement Management"},
-{label:"Monitoring older than 180 days",value:staleManaged.length,records:staleManaged,doctype:"Partnerships Agreement Management"},
-{label:"No monitoring record",value:noMonitoring.length,records:noMonitoring,doctype:"Partnerships Agreement Management"}
-]);
-const decisionFields=["decision","continuation_decision","evaluation_decision","recommended_action"];
-const decisionRows=evaluations.map(x=>({...x,_decision:decisionFields.map(f=>x[f]).find(Boolean)||x.evaluation_outcome||"Not Set"}));
-chartAndTable("c531-decisions-v110",groupRecords(decisionRows,"_decision","Partnerships Agreement Management"));
-const parentsWithMonitoring=new Set(monitoring.map(x=>x.name)),parentsWithEvaluation=new Set(evaluations.map(x=>x.name));
-const withoutMonitoring=managed.filter(x=>!parentsWithMonitoring.has(x.name));
-const withoutEvaluation=managed.filter(x=>!parentsWithEvaluation.has(x.name));
-chartAndTable("c531-missing-controls-v110",[
-{label:"Without recent monitoring",value:withoutMonitoring.length,records:withoutMonitoring,doctype:"Partnerships Agreement Management"},
-{label:"Without evaluation",value:withoutEvaluation.length,records:withoutEvaluation,doctype:"Partnerships Agreement Management"}
-]);
-const qualityComplete=managed.filter(x=>parentsWithMonitoring.has(x.name)&&parentsWithEvaluation.has(x.name)&&Number(x.average_identification_and_selection_score)>0);
-const qualityIncomplete=managed.filter(x=>!qualityComplete.includes(x));
-chartAndTable("c531-quality-completeness-v110",[
-{label:"Core quality record complete",value:qualityComplete.length,records:qualityComplete,doctype:"Partnerships Agreement Management"},
-{label:"Core quality record incomplete",value:qualityIncomplete.length,records:qualityIncomplete,doctype:"Partnerships Agreement Management"}
-]);
-tbody("c531-records",signedStatus.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.pa_partner_name||x.party_name||"—")}</td><td>${esc(x.pa_agreement_type||"—")}</td><td>${esc(x.derived_status)}</td><td>${esc(formatDate(x.start_date||x.posting_date))}</td><td>${esc(formatDate(x.end_date))}</td><td>${recordLink("Partnership Agreement",x.name)}</td></tr>`),7);
+const b=state.c531Server||buildC531(d,today,in90);
+setNewKpi("partners",b.kpis.partners);setNewKpi("partners-active",b.kpis.partnersActive);
+setNewKpi("monitoring",b.kpis.monitoring);setNewKpi("evaluations",b.kpis.evaluations);
+chartAndTable("c531-status",b.status);
+chartAndTable("c531-type",b.type);
+chartAndTable("c531-expiry",b.expiry);
+chartAndTable("c531-nda",b.nda);
+chartAndTable("c531-monitoring",b.monitoring);
+chartAndTable("c531-monitoring-type",b.monitoringType);
+chartAndTable("c531-evaluation",b.evaluation);
+chartAndTable("c531-scores",b.scores);
+chartAndTable("c531-rating-stage",b.ratingStage);
+chartAndTable("c531-threshold",b.threshold);
+chartAndTable("c531-lifecycle-v110",b.lifecycle);
+chartAndTable("c531-signature-v110",b.signature);
+chartAndTable("c531-risk-v110",b.risk);
+chartAndTable("c531-monitoring-recency-v110",b.monitoringRecency);
+chartAndTable("c531-decisions-v110",b.decisions);
+chartAndTable("c531-missing-controls-v110",b.missingControls);
+chartAndTable("c531-quality-completeness-v110",b.qualityCompleteness);
+tbody("c531-records",b.signedStatus.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.pa_partner_name||x.party_name||"—")}</td><td>${esc(x.pa_agreement_type||"—")}</td><td>${esc(x.derived_status)}</td><td>${esc(formatDate(x.start_date||x.posting_date))}</td><td>${esc(formatDate(x.end_date))}</td><td>${recordLink("Partnership Agreement",x.name)}</td></tr>`),7);
 }
 }
 async function loadBase(){
@@ -2330,6 +2382,7 @@ if(t.dt==="Survey Response")populateSurveyModuleFilter();
 if(tab==="c512"){setProgress(78,"Computing 5.1.2 analytics");state.c512Server=await fetchC512Model();}
 if(tab==="c521"){setProgress(78,"Computing 5.2.1 analytics");state.c521Server=await fetchC521Model();}
 if(tab==="c522"){setProgress(78,"Computing 5.2.2 analytics");state.c522Server=await fetchC522Model();}
+if(tab==="c531"){setProgress(78,"Computing 5.3.1 analytics");state.c531Server=await fetchC531Model();}
 if(["c54","quality"].includes(tab)){
 const schedules=state.data["Course Schedule"]||[];
 const names=schedules.map(x=>x.name).filter(Boolean);
