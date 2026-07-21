@@ -73,7 +73,7 @@ SOURCE_CANDIDATES = {
     "nda": ["Non Disclosure Agreement"],
     "onboarding": ["External Onboarding"],
     "offboarding": ["External Offboarding"],
-    "provider_rating": ["Provider Rating", "Supplier Rating"],
+    "provider_rating": ["Supplier Rating"],
     "annual_review": ["Agent Annual Performance Review"],
     "claim": ["Agent Claim Form"],
     "applicant": ["Student Applicant"]
@@ -448,7 +448,7 @@ def resolve_source(alias):
 
         try:
             # A candidate name can be a display label a site admin has
-            # retranslated (e.g. "Provider Rating" -> "Supplier Rating").
+            # shown under a translated label in the user interface.
             # Check the real, stable DocType name exists before ever
             # querying it, instead of catching a "not found" error after
             # the fact.
@@ -966,7 +966,7 @@ result = {
     "ok": True,
     "meta": {
         "api_method": "ucc_analytics_criterion_3",
-        "platform_version": "1.9.5",
+        "platform_version": "1.9.13",
         "status": "live_foundation",
         "generated_at": frappe.utils.now(),
         "action": action,
