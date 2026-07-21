@@ -145,7 +145,7 @@ C511_GROUPS = {
     "approval": ["approval_status", "decision_date", "quality_meeting", "ssg_approval_date", "decision_summary"],
 }
 C511_GROUP_ORDER = ["overview", "strategy", "learner", "pedagogy", "curriculum", "assessment", "risk", "approval"]
-_NORM_ALLOWED = "abcdefghijklmnopqrstuvwxyz0123456789"
+NORM_ALLOWED = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 def has_evidence(v):
     if isinstance(v, (list, tuple)):
@@ -154,8 +154,8 @@ def has_evidence(v):
         return len(v) > 0
     return v is not None and str(v).strip() != "" and v != 0
 
-def _norm(s):
-    return "".join(ch for ch in str(s).lower() if ch in _NORM_ALLOWED)
+def norm_value(s):
+    return "".join(ch for ch in str(s).lower() if ch in NORM_ALLOWED)
 
 def find_evidence_field(record, candidates):
     for field in candidates:
@@ -163,9 +163,9 @@ def find_evidence_field(record, candidates):
             return field
     keys = list((record or {}).keys())
     for candidate in candidates:
-        n = _norm(candidate)
+        n = norm_value(candidate)
         for k in keys:
-            nk = _norm(k)
+            nk = norm_value(k)
             if (nk == n or n in nk or nk in n) and has_evidence(record[k]):
                 return k
     return None
@@ -178,7 +178,7 @@ def c511_group(record, group):
             fields.append(hit)
     return {"ok": len(fields) > 0, "fields": fields}
 
-def _child_len(record, primary, fallback=None):
+def child_len(record, primary, fallback=None):
     # mirror JS (record[primary] || record[fallback] || []).length where [] is truthy in JS
     v = record.get(primary)
     if v is None and fallback is not None:
@@ -229,11 +229,11 @@ def compute_c511(data, today):
 
     module_rows = []
     for record in courses:
-        lo = _child_len(record, "custom_list_of_learning_objective", "topics")
-        lessons = _child_len(record, "custom_lesson_plans")
-        teaching = _child_len(record, "custom_teaching_approach")
-        assessment = _child_len(record, "assessment_criteria")
-        resources = _child_len(record, "custom_resource")
+        lo = child_len(record, "custom_list_of_learning_objective", "topics")
+        lessons = child_len(record, "custom_lesson_plans")
+        teaching = child_len(record, "custom_teaching_approach")
+        assessment = child_len(record, "assessment_criteria")
+        resources = child_len(record, "custom_resource")
         areas = [lo, lessons, teaching, assessment, resources]
         module_rows.append({"record": record.get("name"), "lo": lo, "lessons": lessons, "teaching": teaching,
                             "assessment": assessment, "resources": resources,
@@ -304,7 +304,11 @@ def compute_c5_summary(data, active_filters):
 
     scope_courses = set(g.get("course") for g in scoped_groups if g.get("course"))
     if not f["student_group"] and f["program"]:
-        prog = next((x for x in programs if x.get("name") == f["program"]), None)
+        prog = None
+        for candidate in programs:
+            if candidate.get("name") == f["program"]:
+                prog = candidate
+                break
         for child in (prog.get("courses") if prog else []) or []:
             scope_courses.add(child.get("course"))
     if not f["student_group"] and not f["program"]:
@@ -393,7 +397,7 @@ elif action == "c511_analytics":
     data = {}
     sources = {}
 
-    def _hydrate(doctype, cap):
+    def hydrate_docs(doctype, cap):
         try:
             names = frappe.get_list(doctype, pluck="name", limit_page_length=cap, order_by="modified desc") or []
             docs = [frappe.get_doc(doctype, name).as_dict() for name in names]
@@ -406,7 +410,7 @@ elif action == "c511_analytics":
 
     for doctype, cap in [("Course Proposal", min(limit, 300)), ("Course Review", min(limit, 300)),
                          ("Course", min(limit, 1000)), ("Program", min(limit, 1000))]:
-        data[doctype], sources[doctype] = _hydrate(doctype, cap)
+        data[doctype], sources[doctype] = hydrate_docs(doctype, cap)
     data["Assessment Plan"], sources["Assessment Plan"] = safe_rows(
         "Assessment Plan", ["name", "course", "program", "academic_year", "assessment_name", "modified"])
 
