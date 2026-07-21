@@ -46,6 +46,7 @@ ALLOWED_ACTIONS = [
     "overview",
     "summary",
     "c511_analytics",
+    "c512_analytics",
     "c511_hydrate",
     "c511_summary",
     "c511_proposals",
@@ -285,6 +286,147 @@ def compute_c511(data, today):
             "reviewApproved": review_approved, "ssgCount": ssg_count, "overdue": overdue,
             "avgDecisionDays": avg_decision_days, "avgActions": avg_actions}
 
+# Server form of compute_c512: no imports, no leading-underscore identifiers,
+# no id(), frappe.utils for dates. String date keys "_doctype"/"_parent"/"_age"
+# are data (allowed); only NAMES avoid leading underscores.
+def group_records(rows, key, doctype):
+    m = {}
+    for r in (rows or []):
+        label = (r.get(key) if r else None) or "Not Set"
+        m.setdefault(label, []).append(r)
+    out = [{"label": l, "value": len(recs), "records": recs, "doctype": doctype} for l, recs in m.items()]
+    out.sort(key=lambda x: -x["value"])
+    return out
+
+def strip_tags(v):
+    s = str(v); out = []; i = 0; n = len(s)
+    while i < n:
+        if s[i] == "<":
+            j = s.find(">", i + 1)
+            if j != -1 and j > i + 1:
+                i = j + 1
+                continue
+        out.append(s[i]); i += 1
+    return "".join(out)
+
+def compute_c512(data, today):
+    def attach(rows, dt):
+        res = []
+        for r in (rows or []):
+            rr = dict(r); rr["_doctype"] = dt; res.append(rr)
+        return res
+    mr = data.get("Module Review") or []
+    cr = data.get("Course Review") or []
+    review_records = attach(mr, "Module Review") + attach(cr, "Course Review")
+    overdue = [x for x in cr if x.get("next_review_date") and str(x.get("next_review_date"))[:10] < today]
+    upcoming = [x for x in cr if x.get("next_review_date") and str(x.get("next_review_date"))[:10] >= today]
+    no_next = [x for x in cr if not x.get("next_review_date")]
+
+    review_type_groups = {}
+    for r in review_records:
+        label = (r.get("type_of_review") or "Not Set") if r.get("_doctype") == "Module Review" else (r.get("review_type") or "Not Set")
+        review_type_groups.setdefault(label, []).append(r)
+    action_groups = {}
+    for parent in cr:
+        for action in (parent.get("actionplan_progress") or []):
+            label = action.get("status") or "Not Set"
+            action_groups.setdefault(label, {})[parent.get("name")] = parent
+    rec_groups = {}
+    for r in review_records:
+        label = r.get("recommendation_implementation_status") or "Not Set"
+        rec_groups.setdefault(label, []).append(r)
+    evidence_fields = ["rating_duration","rating_pedagogy","rating_assessment","rating_learning_outcomes","rating_lesson_plan","rating_resource","risk_question","existing_attendance","existing_assessment_result","existing_classroom_observation","student_intervention_plan","admission_requirement_effectiveness","survey_results","rating_value_quality","recommendation"]
+    complete = [r for r in mr if all(r.get(f) is not None and r.get(f) != "" for f in evidence_fields)]
+    complete_names = set(r.get("name") for r in complete)
+    incomplete = [r for r in mr if r.get("name") not in complete_names]
+    completed_reviews = [x for x in cr if "complet" in str(x.get("review_status") or "").lower()]
+    today_plus_30 = frappe.utils.add_days(today, 30)
+    due_reviews = [x for x in cr if x.get("next_review_date") and str(x.get("next_review_date"))[:10] >= today and str(x.get("next_review_date"))[:10] <= today_plus_30]
+    future_reviews = [x for x in cr if x.get("next_review_date") and str(x.get("next_review_date"))[:10] > today_plus_30]
+    reviewed_courses = set(x.get("course") for x in cr if x.get("course"))
+    reviewed_modules = set((x.get("course") or x.get("module")) for x in mr if (x.get("course") or x.get("module")))
+    covered = [x for x in mr if x.get("course") in reviewed_courses]
+    uncovered = [x for x in mr if x.get("course") not in reviewed_courses]
+    all_actions = []
+    for parent in cr:
+        for action in (parent.get("actionplan_progress") or []):
+            a = dict(action); a["_parent"] = parent; all_actions.append(a)
+    def action_record_set(items):
+        seen = {}
+        for x in items:
+            seen[x.get("_parent").get("name")] = x.get("_parent")
+        return list(seen.values())
+    def is_done(s):
+        s = str(s or "").lower()
+        return ("complete" in s) or ("closed" in s) or ("done" in s) or ("implemented" in s)
+    completed_actions = []
+    pending_actions = []
+    for x in all_actions:
+        if is_done(x.get("status")):
+            completed_actions.append(x)
+        else:
+            pending_actions.append(x)
+    def action_date(x):
+        return x.get("due_date") or x.get("target_date") or x.get("completion_date") or x.get("date") or x.get("modified")
+    aged = []
+    for x in pending_actions:
+        ad = action_date(x)
+        xx = dict(x); xx["_age"] = (max(0, frappe.utils.date_diff(today, ad)) if ad else None); aged.append(xx)
+    aging = [
+        ("0–30 days", [x for x in aged if x.get("_age") is not None and x.get("_age") <= 30]),
+        ("31–60 days", [x for x in aged if x.get("_age") is not None and 30 < x.get("_age") <= 60]),
+        ("61–90 days", [x for x in aged if x.get("_age") is not None and 60 < x.get("_age") <= 90]),
+        ("More than 90 days", [x for x in aged if x.get("_age") is not None and x.get("_age") > 90]),
+        ("No action date", [x for x in aged if x.get("_age") is None]),
+    ]
+    stakeholder_fields = ["stakeholder_feedback","feedback_from_stakeholders","stakeholder_comments","stakeholder_input"]
+    benchmark_fields = ["benchmarking_evidence","benchmarking","benchmark_data","industry_benchmark"]
+    stakeholder_supported = any(any(name in x for name in stakeholder_fields) for x in cr)
+    benchmark_supported = any(any(name in x for name in benchmark_fields) for x in cr)
+    def has_value(rec, names):
+        return any(rec.get(nm) is not None and strip_tags(rec.get(nm)).strip() != "" for nm in names)
+    missing_stakeholder = [x for x in cr if not has_value(x, stakeholder_fields)] if stakeholder_supported else []
+    missing_benchmark = [x for x in cr if not has_value(x, benchmark_fields)] if benchmark_supported else []
+    followup_groups = {}
+    for r in review_records:
+        raw = r.get("review_date") or r.get("date_of_review") or r.get("modified")
+        month = str(raw)[:7] if raw else "No date"
+        followup_groups.setdefault(month, []).append(r)
+
+    def slim(rows):
+        out = []
+        for x in rows:
+            e = {"label": x["label"], "value": x["value"], "records": [r.get("name") for r in x.get("records", [])]}
+            if x.get("doctype") is not None:
+                e["doctype"] = x["doctype"]
+            out.append(e)
+        return out
+
+    review_type = sorted([{"label": l, "value": len(recs), "records": recs} for l, recs in review_type_groups.items()], key=lambda x: -x["value"])
+    actions_ds = sorted([{"label": l, "value": sum(len([a for a in (p.get("actionplan_progress") or []) if (a.get("status") or "Not Set") == l]) for p in m.values()), "records": list(m.values()), "doctype": "Course Review"} for l, m in action_groups.items()], key=lambda x: -x["value"])
+    rec_status = sorted([{"label": l, "value": len(recs), "records": recs} for l, recs in rec_groups.items()], key=lambda x: -x["value"])
+    followup = sorted([{"label": l, "value": len([x for x in recs if is_done(x.get("recommendation_implementation_status") or x.get("review_status") or x.get("status"))]), "records": recs} for l, recs in followup_groups.items()], key=lambda x: x["label"])
+
+    return {
+        "kpis": {"mrTotal": len(mr), "mrApproved": len([x for x in mr if x.get("status") == "Approved"]), "crTotal": len(cr), "crOverdue": len(overdue)},
+        "reviewLevel": slim([{"label": "Module Review", "value": len(mr), "records": mr, "doctype": "Module Review"}, {"label": "Course Review", "value": len(cr), "records": cr, "doctype": "Course Review"}]),
+        "schedule": slim([{"label": "Overdue", "value": len(overdue), "records": overdue, "doctype": "Course Review"}, {"label": "Upcoming / current", "value": len(upcoming), "records": upcoming, "doctype": "Course Review"}, {"label": "No next review date", "value": len(no_next), "records": no_next, "doctype": "Course Review"}]),
+        "moduleStatus": slim(group_records(mr, "status", "Module Review")),
+        "courseStatus": slim(group_records(cr, "review_status", "Course Review")),
+        "reviewType": slim(review_type),
+        "actions": slim(actions_ds),
+        "recommendationStatus": slim(rec_status),
+        "evidence": slim([{"label": "Core evidence complete", "value": len(complete), "records": complete, "doctype": "Module Review"}, {"label": "Core evidence incomplete", "value": len(incomplete), "records": incomplete, "doctype": "Module Review"}]),
+        "cycle": slim([{"label": "Completed", "value": len(completed_reviews), "records": completed_reviews, "doctype": "Course Review"}, {"label": "Due within 30 days", "value": len(due_reviews), "records": due_reviews, "doctype": "Course Review"}, {"label": "Upcoming", "value": len(future_reviews), "records": future_reviews, "doctype": "Course Review"}, {"label": "Overdue", "value": len(overdue), "records": overdue, "doctype": "Course Review"}, {"label": "No next review date", "value": len(no_next), "records": no_next, "doctype": "Course Review"}]),
+        "coverage": slim([{"label": "Module Reviews linked to a Course Review", "value": len(covered), "records": covered, "doctype": "Module Review"}, {"label": "Module Reviews without matching Course Review", "value": len(uncovered), "records": uncovered, "doctype": "Module Review"}, {"label": "Distinct reviewed modules", "value": len(reviewed_modules), "records": mr, "doctype": "Module Review"}]),
+        "actionsCompletion": slim([{"label": "Completed actions", "value": len(completed_actions), "records": action_record_set(completed_actions), "doctype": "Course Review"}, {"label": "Pending actions", "value": len(pending_actions), "records": action_record_set(pending_actions), "doctype": "Course Review"}]),
+        "actionAging": slim([{"label": l, "value": len(items), "records": action_record_set(items), "doctype": "Course Review"} for l, items in aging]),
+        "missingEvidence": slim([{"label": "Missing next review date", "value": len(no_next), "records": no_next, "doctype": "Course Review"}, {"label": ("Missing stakeholder feedback" if stakeholder_supported else "Stakeholder feedback field unsupported"), "value": (len(missing_stakeholder) if stakeholder_supported else 0), "records": missing_stakeholder, "doctype": "Course Review"}, {"label": ("Missing benchmarking evidence" if benchmark_supported else "Benchmarking field unsupported"), "value": (len(missing_benchmark) if benchmark_supported else 0), "records": missing_benchmark, "doctype": "Course Review"}]),
+        "followup": slim(followup),
+        "mr": [x.get("name") for x in mr],
+        "cr": [x.get("name") for x in cr],
+    }
+
 def compute_c5_summary(data, active_filters):
     # Faithful port of the client compute() + buildQuality() shared core.
     # Proven byte-identical to the JavaScript across 6 filter permutations.
@@ -434,6 +576,45 @@ elif action == "c511_analytics":
             "courses": data["Course"],
             "programs": data["Program"],
             "plans": data["Assessment Plan"]
+        },
+        "sources": sources
+    }
+elif action == "c512_analytics":
+    # Section 5.1.2 model, server-side. Faithful port of the client buildC512();
+    # proven byte-identical to the JavaScript across fixtures. Module Review and
+    # Course Review need full documents (rating fields + actionplan_progress child
+    # table); first 500 by modified desc, matching the client. Permission-aware.
+    data = {}
+    sources = {}
+    for doctype in ["Module Review", "Course Review"]:
+        try:
+            names = frappe.get_list(doctype, pluck="name", limit_page_length=min(limit, 500), order_by="modified desc") or []
+            data[doctype] = [frappe.get_doc(doctype, name).as_dict() for name in names]
+            sources[doctype] = {"status": "Available", "count": len(data[doctype])}
+        except Exception as error:
+            message = str(error)
+            lowered = message.lower()
+            status = "Not permitted" if ("permission" in lowered or "not permitted" in lowered or "not allowed" in lowered) else "Unavailable"
+            data[doctype] = []
+            sources[doctype] = {"status": status, "count": 0, "error": message}
+
+    today = frappe.utils.nowdate()
+    model = compute_c512(data, today)
+    frappe.response["message"] = {
+        "ok": True,
+        "meta": {
+            "api_method": "ucc_analytics_criterion_5",
+            "dashboard": "criterion_5",
+            "action": action,
+            "section": "5.1.2",
+            "as_of": today,
+            "generated_at": frappe.utils.now()
+        },
+        "filters": filters,
+        "model": model,
+        "records": {
+            "mr": data["Module Review"],
+            "cr": data["Course Review"]
         },
         "sources": sources
     }

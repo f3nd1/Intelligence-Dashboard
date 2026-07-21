@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.9.8-c512-migrate (2026-07-21)
+
+- Migrated section 5.1.2 (Course Review) compute to the server, following the proven 5.1.1 pattern. Step 1: extracted the interleaved compute out of renderNewSection's c512 branch into a clean `buildC512()` (behaviour-preserving; c512 rendering verified byte-identical to HEAD in-harness). Step 2: ported it to `compute_c512` in the Criterion 5 Server Script (RestrictedPython-safe: no imports, no leading-underscore names, no next()/id(), frappe.utils for dates), proven byte-identical to the JavaScript across 4 fixtures (main, empty, module-reviews-only, course-reviews-only). Step 3: added the `c512_analytics` action returning the full 5.1.2 model. Step 4: wired the client to call it and re-hydrate the datasets into buildC512()'s shape, with `buildC512()` retained as fallback. Verified in-browser: the action is called, its values drive the KPIs/charts/record table, and both the server and fallback paths render with zero console errors; no regressions across the other C5 tabs.
+
+
 ## v1.9.8-c511-server-wire (2026-07-21)
 
 - Wired section 5.1.1 to consume the server c511_analytics model. loadSection now calls the action after loading 5.1.1's sources and stores the result (re-hydrated into buildC511()'s exact shape) in state.c511Server; renderC511 and the 5.1.1 chart renderer use it, falling back to the client buildC511() only when the action is unavailable. The client fallback is retained for now and will be removed once the wiring is confirmed live. Verified in-harness: c511_analytics is called on 5.1.1 load, its values flow to the KPIs and gaps table, the record-object rehydration is correct, and both the server and fallback paths render with zero console errors.

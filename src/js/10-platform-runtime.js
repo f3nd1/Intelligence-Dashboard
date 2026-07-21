@@ -422,6 +422,29 @@ addLog("WARN","source","c511_server_model_unavailable",{error:error.message});
 return null;
 }
 }
+// Section 5.1.2 model from the server (c512_analytics), re-hydrated into the
+// exact buildC512() shape (dataset records mapped back to full objects) so the
+// render branch consumes it unchanged; null when the action is unavailable so
+// the caller falls back to the client buildC512().
+async function fetchC512Model(){
+try{
+const message=await new Promise((resolve,reject)=>frappe.call({
+method:"ucc_analytics_criterion_5",
+args:{payload:JSON.stringify({action:"c512_analytics",limit:1000})},
+callback:response=>resolve(response?.message),
+error:reject
+}));
+if(!message||message.ok!==true||!message.model||!message.records)throw new Error(message?.message||"c512_analytics is unavailable");
+const rec=message.records,mr=rec.mr||[],cr=rec.cr||[],m=message.model;
+const byName=new Map([...mr,...cr].map(r=>[r.name,r]));
+const hydrate=ds=>(ds||[]).map(e=>{const out={label:e.label,value:e.value,records:(e.records||[]).map(n=>byName.get(n)||{name:n})};if(e.doctype!==undefined)out.doctype=e.doctype;return out;});
+addLog("INFO","source","c512_server_model_used",{module_reviews:mr.length,course_reviews:cr.length});
+return{mr,cr,kpis:m.kpis,reviewLevel:hydrate(m.reviewLevel),schedule:hydrate(m.schedule),moduleStatus:hydrate(m.moduleStatus),courseStatus:hydrate(m.courseStatus),reviewType:hydrate(m.reviewType),actions:hydrate(m.actions),recommendationStatus:hydrate(m.recommendationStatus),evidence:hydrate(m.evidence),cycle:hydrate(m.cycle),coverage:hydrate(m.coverage),actionsCompletion:hydrate(m.actionsCompletion),actionAging:hydrate(m.actionAging),missingEvidence:hydrate(m.missingEvidence),followup:hydrate(m.followup)};
+}catch(error){
+addLog("WARN","source","c512_server_model_unavailable",{error:error.message});
+return null;
+}
+}
 async function hydrateDocuments(dt){
 const rows=state.data[dt]||[];
 setProgress(Math.min(90,8),`Loading ${(UCC_TERMS[dt]||dt).toLowerCase()} design details…`);
@@ -1527,57 +1550,37 @@ function numericRating(v){
 const n=Number(v);if(!Number.isFinite(n))return null;
 return n<=1?n*5:n;
 }
-function renderNewSection(tab){
-const d=state.data||{},today=new Date();today.setHours(0,0,0,0);
-const in90=new Date(today.getTime()+90*86400000);
+// Section 5.1.2 compute, extracted from the render branch unchanged so it can be
+// ported to the server (c512_analytics) and wired with this as the fallback.
+// Returns the exact datasets the render branch consumed inline; behaviour identical.
+function buildC512(d,today){
 const attachType=(rows,doctype)=>(rows||[]).map(row=>({...row,_doctype:doctype}));
-if(tab==="c512"){
 const mr=d["Module Review"]||[],cr=d["Course Review"]||[];
 const reviewRecords=[...attachType(mr,"Module Review"),...attachType(cr,"Course Review")];
 const overdue=cr.filter(x=>x.next_review_date&&new Date(x.next_review_date)<today);
 const upcoming=cr.filter(x=>x.next_review_date&&new Date(x.next_review_date)>=today);
 const noNext=cr.filter(x=>!x.next_review_date);
-setNewKpi("mr-total",mr.length);setNewKpi("mr-approved",mr.filter(x=>x.status==="Approved").length);
-setNewKpi("cr-total",cr.length);setNewKpi("cr-overdue",overdue.length);
-chartAndTable("c512-review-level",[
-{label:"Module Review",value:mr.length,records:mr,doctype:"Module Review"},
-{label:"Course Review",value:cr.length,records:cr,doctype:"Course Review"}
-]);
-chartAndTable("c512-schedule",[
-{label:"Overdue",value:overdue.length,records:overdue,doctype:"Course Review"},
-{label:"Upcoming / current",value:upcoming.length,records:upcoming,doctype:"Course Review"},
-{label:"No next review date",value:noNext.length,records:noNext,doctype:"Course Review"}
-]);
-chartAndTable("c512-module-status",groupRecords(mr,"status","Module Review"));
-chartAndTable("c512-course-status",groupRecords(cr,"review_status","Course Review"));
 const reviewTypeGroups=new Map;
 reviewRecords.forEach(record=>{
 const label=record._doctype==="Module Review"?(record.type_of_review||"Not Set"):(record.review_type||"Not Set");
 if(!reviewTypeGroups.has(label))reviewTypeGroups.set(label,[]);
 reviewTypeGroups.get(label).push(record);
 });
-chartAndTable("c512-review-type",[...reviewTypeGroups].map(([label,records])=>({label,value:records.length,records})).sort((a,b)=>b.value-a.value));
 const actionGroups=new Map;
 cr.forEach(parent=>(parent.actionplan_progress||[]).forEach(action=>{
 const label=action.status||"Not Set";
 if(!actionGroups.has(label))actionGroups.set(label,new Map);
 actionGroups.get(label).set(parent.name,parent);
 }));
-chartAndTable("c512-actions",[...actionGroups].map(([label,map])=>({label,value:[...map.values()].reduce((sum,parent)=>sum+(parent.actionplan_progress||[]).filter(x=>(x.status||"Not Set")===label).length,0),records:[...map.values()],doctype:"Course Review"})).sort((a,b)=>b.value-a.value));
 const recGroups=new Map;
 reviewRecords.forEach(record=>{
 const label=record.recommendation_implementation_status||"Not Set";
 if(!recGroups.has(label))recGroups.set(label,[]);
 recGroups.get(label).push(record);
 });
-chartAndTable("c512-recommendation-status",[...recGroups].map(([label,records])=>({label,value:records.length,records})).sort((a,b)=>b.value-a.value));
 const evidenceFields=["rating_duration","rating_pedagogy","rating_assessment","rating_learning_outcomes","rating_lesson_plan","rating_resource","risk_question","existing_attendance","existing_assessment_result","existing_classroom_observation","student_intervention_plan","admission_requirement_effectiveness","survey_results","rating_value_quality","recommendation"];
 const complete=mr.filter(record=>evidenceFields.every(field=>record[field]!==undefined&&record[field]!==null&&record[field]!==""));
 const incomplete=mr.filter(record=>!complete.includes(record));
-chartAndTable("c512-evidence",[
-{label:"Core evidence complete",value:complete.length,records:complete,doctype:"Module Review"},
-{label:"Core evidence incomplete",value:incomplete.length,records:incomplete,doctype:"Module Review"}
-]);
 const completedReviews=cr.filter(x=>String(x.review_status||"").toLowerCase().includes("complet"));
 const dueReviews=cr.filter(x=>{
 if(!x.next_review_date)return false;
@@ -1585,30 +1588,14 @@ const date=new Date(x.next_review_date);
 return date>=today&&date<=new Date(today.getTime()+30*86400000);
 });
 const futureReviews=cr.filter(x=>x.next_review_date&&new Date(x.next_review_date)>new Date(today.getTime()+30*86400000));
-chartAndTable("c512-cycle-v110",[
-{label:"Completed",value:completedReviews.length,records:completedReviews,doctype:"Course Review"},
-{label:"Due within 30 days",value:dueReviews.length,records:dueReviews,doctype:"Course Review"},
-{label:"Upcoming",value:futureReviews.length,records:futureReviews,doctype:"Course Review"},
-{label:"Overdue",value:overdue.length,records:overdue,doctype:"Course Review"},
-{label:"No next review date",value:noNext.length,records:noNext,doctype:"Course Review"}
-]);
 const reviewedModules=new Set(mr.map(x=>x.course||x.module).filter(Boolean));
 const reviewedCourses=new Set(cr.map(x=>x.course).filter(Boolean));
 const coveredModuleReviews=mr.filter(x=>reviewedCourses.has(x.course));
 const uncoveredModuleReviews=mr.filter(x=>!reviewedCourses.has(x.course));
-chartAndTable("c512-coverage-v110",[
-{label:"Module Reviews linked to a Course Review",value:coveredModuleReviews.length,records:coveredModuleReviews,doctype:"Module Review"},
-{label:"Module Reviews without matching Course Review",value:uncoveredModuleReviews.length,records:uncoveredModuleReviews,doctype:"Module Review"},
-{label:"Distinct reviewed modules",value:reviewedModules.size,records:mr,doctype:"Module Review"}
-]);
 const allActions=cr.flatMap(parent=>(parent.actionplan_progress||[]).map(action=>({...action,_parent:parent})));
 const actionRecordSet=items=>[...new Map(items.map(x=>[x._parent.name,x._parent])).values()];
 const completedActions=allActions.filter(x=>/complete|closed|done|implemented/i.test(String(x.status||"")));
 const pendingActions=allActions.filter(x=>!completedActions.includes(x));
-chartAndTable("c512-actions-completion-v110",[
-{label:"Completed actions",value:completedActions.length,records:actionRecordSet(completedActions),doctype:"Course Review"},
-{label:"Pending actions",value:pendingActions.length,records:actionRecordSet(pendingActions),doctype:"Course Review"}
-]);
 const actionDate=x=>x.due_date||x.target_date||x.completion_date||x.date||x.modified;
 const aged=pendingActions.map(x=>({...x,_age:actionDate(x)?Math.max(0,Math.floor((today-new Date(actionDate(x)))/86400000)):null}));
 const agingGroups=[
@@ -1618,7 +1605,6 @@ const agingGroups=[
 {label:"More than 90 days",items:aged.filter(x=>x._age>90)},
 {label:"No action date",items:aged.filter(x=>x._age===null)}
 ];
-chartAndTable("c512-action-aging-v110",agingGroups.map(x=>({label:x.label,value:x.items.length,records:actionRecordSet(x.items),doctype:"Course Review"})));
 const hasAnyField=(record,names)=>names.some(name=>Object.prototype.hasOwnProperty.call(record,name));
 const hasValue=(record,names)=>names.some(name=>record[name]!==undefined&&record[name]!==null&&String(record[name]).replace(/<[^>]+>/g,"").trim()!=="");
 const stakeholderFields=["stakeholder_feedback","feedback_from_stakeholders","stakeholder_comments","stakeholder_input"];
@@ -1627,11 +1613,6 @@ const stakeholderSupported=cr.some(x=>hasAnyField(x,stakeholderFields));
 const benchmarkSupported=cr.some(x=>hasAnyField(x,benchmarkFields));
 const missingStakeholder=stakeholderSupported?cr.filter(x=>!hasValue(x,stakeholderFields)):[];
 const missingBenchmark=benchmarkSupported?cr.filter(x=>!hasValue(x,benchmarkFields)):[];
-chartAndTable("c512-missing-evidence-v110",[
-{label:"Missing next review date",value:noNext.length,records:noNext,doctype:"Course Review"},
-{label:stakeholderSupported?"Missing stakeholder feedback":"Stakeholder feedback field unsupported",value:stakeholderSupported?missingStakeholder.length:0,records:missingStakeholder,doctype:"Course Review"},
-{label:benchmarkSupported?"Missing benchmarking evidence":"Benchmarking field unsupported",value:benchmarkSupported?missingBenchmark.length:0,records:missingBenchmark,doctype:"Course Review"}
-]);
 const followupGroups=new Map;
 reviewRecords.forEach(record=>{
 const raw=record.review_date||record.date_of_review||record.modified;
@@ -1639,10 +1620,77 @@ const month=raw?String(raw).slice(0,7):"No date";
 if(!followupGroups.has(month))followupGroups.set(month,[]);
 followupGroups.get(month).push(record);
 });
-chartAndTable("c512-followup-v110",[...followupGroups].sort((a,b)=>a[0].localeCompare(b[0])).map(([label,records])=>({label,value:records.filter(x=>/complete|implemented|closed/i.test(String(x.recommendation_implementation_status||x.review_status||x.status||""))).length,records})));
+return{
+mr,cr,
+kpis:{mrTotal:mr.length,mrApproved:mr.filter(x=>x.status==="Approved").length,crTotal:cr.length,crOverdue:overdue.length},
+reviewLevel:[
+{label:"Module Review",value:mr.length,records:mr,doctype:"Module Review"},
+{label:"Course Review",value:cr.length,records:cr,doctype:"Course Review"}
+],
+schedule:[
+{label:"Overdue",value:overdue.length,records:overdue,doctype:"Course Review"},
+{label:"Upcoming / current",value:upcoming.length,records:upcoming,doctype:"Course Review"},
+{label:"No next review date",value:noNext.length,records:noNext,doctype:"Course Review"}
+],
+moduleStatus:groupRecords(mr,"status","Module Review"),
+courseStatus:groupRecords(cr,"review_status","Course Review"),
+reviewType:[...reviewTypeGroups].map(([label,records])=>({label,value:records.length,records})).sort((a,b)=>b.value-a.value),
+actions:[...actionGroups].map(([label,map])=>({label,value:[...map.values()].reduce((sum,parent)=>sum+(parent.actionplan_progress||[]).filter(x=>(x.status||"Not Set")===label).length,0),records:[...map.values()],doctype:"Course Review"})).sort((a,b)=>b.value-a.value),
+recommendationStatus:[...recGroups].map(([label,records])=>({label,value:records.length,records})).sort((a,b)=>b.value-a.value),
+evidence:[
+{label:"Core evidence complete",value:complete.length,records:complete,doctype:"Module Review"},
+{label:"Core evidence incomplete",value:incomplete.length,records:incomplete,doctype:"Module Review"}
+],
+cycle:[
+{label:"Completed",value:completedReviews.length,records:completedReviews,doctype:"Course Review"},
+{label:"Due within 30 days",value:dueReviews.length,records:dueReviews,doctype:"Course Review"},
+{label:"Upcoming",value:futureReviews.length,records:futureReviews,doctype:"Course Review"},
+{label:"Overdue",value:overdue.length,records:overdue,doctype:"Course Review"},
+{label:"No next review date",value:noNext.length,records:noNext,doctype:"Course Review"}
+],
+coverage:[
+{label:"Module Reviews linked to a Course Review",value:coveredModuleReviews.length,records:coveredModuleReviews,doctype:"Module Review"},
+{label:"Module Reviews without matching Course Review",value:uncoveredModuleReviews.length,records:uncoveredModuleReviews,doctype:"Module Review"},
+{label:"Distinct reviewed modules",value:reviewedModules.size,records:mr,doctype:"Module Review"}
+],
+actionsCompletion:[
+{label:"Completed actions",value:completedActions.length,records:actionRecordSet(completedActions),doctype:"Course Review"},
+{label:"Pending actions",value:pendingActions.length,records:actionRecordSet(pendingActions),doctype:"Course Review"}
+],
+actionAging:agingGroups.map(x=>({label:x.label,value:x.items.length,records:actionRecordSet(x.items),doctype:"Course Review"})),
+missingEvidence:[
+{label:"Missing next review date",value:noNext.length,records:noNext,doctype:"Course Review"},
+{label:stakeholderSupported?"Missing stakeholder feedback":"Stakeholder feedback field unsupported",value:stakeholderSupported?missingStakeholder.length:0,records:missingStakeholder,doctype:"Course Review"},
+{label:benchmarkSupported?"Missing benchmarking evidence":"Benchmarking field unsupported",value:benchmarkSupported?missingBenchmark.length:0,records:missingBenchmark,doctype:"Course Review"}
+],
+followup:[...followupGroups].sort((a,b)=>a[0].localeCompare(b[0])).map(([label,records])=>({label,value:records.filter(x=>/complete|implemented|closed/i.test(String(x.recommendation_implementation_status||x.review_status||x.status||""))).length,records}))
+};
+}
+function renderNewSection(tab){
+const d=state.data||{},today=new Date();today.setHours(0,0,0,0);
+const in90=new Date(today.getTime()+90*86400000);
+const attachType=(rows,doctype)=>(rows||[]).map(row=>({...row,_doctype:doctype}));
+if(tab==="c512"){
+const b=state.c512Server||buildC512(d,today);
+setNewKpi("mr-total",b.kpis.mrTotal);setNewKpi("mr-approved",b.kpis.mrApproved);
+setNewKpi("cr-total",b.kpis.crTotal);setNewKpi("cr-overdue",b.kpis.crOverdue);
+chartAndTable("c512-review-level",b.reviewLevel);
+chartAndTable("c512-schedule",b.schedule);
+chartAndTable("c512-module-status",b.moduleStatus);
+chartAndTable("c512-course-status",b.courseStatus);
+chartAndTable("c512-review-type",b.reviewType);
+chartAndTable("c512-actions",b.actions);
+chartAndTable("c512-recommendation-status",b.recommendationStatus);
+chartAndTable("c512-evidence",b.evidence);
+chartAndTable("c512-cycle-v110",b.cycle);
+chartAndTable("c512-coverage-v110",b.coverage);
+chartAndTable("c512-actions-completion-v110",b.actionsCompletion);
+chartAndTable("c512-action-aging-v110",b.actionAging);
+chartAndTable("c512-missing-evidence-v110",b.missingEvidence);
+chartAndTable("c512-followup-v110",b.followup);
 const recordRows=[
-...mr.map(x=>`<tr><td>${esc(x.name)}</td><td>Module Review</td><td>${esc(x.course||"—")}</td><td>${esc(x.module||"—")}</td><td>${esc(formatDate(x.date_of_review))}</td><td>${esc(x.status||"Not Set")}</td><td>${recordLink("Module Review",x.name)}</td></tr>`),
-...cr.map(x=>`<tr><td>${esc(x.name)}</td><td>Course Review</td><td>${esc(x.course||"—")}</td><td>—</td><td>${esc(formatDate(x.review_date))}</td><td>${esc(x.review_status||"Not Set")}</td><td>${recordLink("Course Review",x.name)}</td></tr>`)
+...b.mr.map(x=>`<tr><td>${esc(x.name)}</td><td>Module Review</td><td>${esc(x.course||"—")}</td><td>${esc(x.module||"—")}</td><td>${esc(formatDate(x.date_of_review))}</td><td>${esc(x.status||"Not Set")}</td><td>${recordLink("Module Review",x.name)}</td></tr>`),
+...b.cr.map(x=>`<tr><td>${esc(x.name)}</td><td>Course Review</td><td>${esc(x.course||"—")}</td><td>—</td><td>${esc(formatDate(x.review_date))}</td><td>${esc(x.review_status||"Not Set")}</td><td>${recordLink("Course Review",x.name)}</td></tr>`)
 ];
 tbody("c512-records",recordRows,7);
 }
@@ -2085,6 +2133,7 @@ setProgress(8+(i/Math.max(tasks.length,1))*68,`Loading ${t.dt}`);
 state.data[t.dt]=await load(t.dt,t.filters);
 if(t.dt==="Survey Response")populateSurveyModuleFilter();
 }
+if(tab==="c512"){setProgress(78,"Computing 5.1.2 analytics");state.c512Server=await fetchC512Model();}
 if(["c54","quality"].includes(tab)){
 const schedules=state.data["Course Schedule"]||[];
 const names=schedules.map(x=>x.name).filter(Boolean);
