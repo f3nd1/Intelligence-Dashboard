@@ -105,6 +105,10 @@ SAFE_FIELDS = {'applicant': ['name',
                'course_applying_for',
                'intake',
                'academic_year',
+               'application_date',
+               'nationality',
+               'country',
+               'agent',
                'creation',
                'modified'],
  'admission': ['name',
@@ -122,6 +126,8 @@ SAFE_FIELDS = {'applicant': ['name',
                'contract_sent_date',
                'contract_signed_by_student_date',
                'student_signed_date',
+               'pre_course_counseling',
+               'docstatus',
                'sales_invoice',
                'creation',
                'modified'],
@@ -308,6 +314,8 @@ FILTER_FIELD_CANDIDATES = {'academic_year': ['academic_year'],
  'program': ['program', 'course', 'course_applying_for', 'course_type'],
  'intake': ['intake', 'student_admission', 'academic_term', 'intake_applying'],
  'status': ['status', 'workflow_state', 'application_status', 'review_status', 'fps_status'],
+ 'nationality': ['nationality', 'country'],
+ 'agent': ['agent', 'custom_agent', 'recruitment_agent'],
  'student': ['student', 'student_id', 'student_applicant']}
 
 CLOSED_VALUES = ['Completed', 'Closed', 'Cancelled', 'Rejected', 'Inactive', 'Archived', 'Done']
@@ -370,7 +378,30 @@ CONFIG = {'overview': {'sources': ['counselling',
                            'message': 'Current verified fields do not provide a consistent pending, follow-up, closure '
                                       'and effectiveness rule across all student-support services.'}]},
  '4.1.1': {'sources': ['applicant', 'admission', 'counselling', 'adjustments', 'management_review', 'quality_action'],
-           'metrics': [{'id': 'c411-counselling',
+           'metrics': [{'id': 'c411-applicants-total',
+                        'label': 'No. of Student Applicants',
+                        'source': 'applicant',
+                        'mode': 'all'},
+                       {'id': 'c411-shortlisted-approved',
+                        'label': 'No. of Shortlisted',
+                        'source': 'applicant',
+                        'mode': 'equals',
+                        'field': ['application_status'],
+                        'value': 'Approved'},
+                       {'id': 'c411-enrolled-admitted',
+                        'label': 'No. of Enrolled Students',
+                        'source': 'applicant',
+                        'mode': 'equals',
+                        'field': ['application_status'],
+                        'value': 'Admitted'},
+                       {'id': 'c411-success-rate',
+                        'label': 'Success Rate',
+                        'source': 'applicant',
+                        'mode': 'ratio_status',
+                        'field': ['application_status'],
+                        'values': ['Admitted'],
+                        'unit': 'percent'},
+                       {'id': 'c411-counselling',
                         'label': 'Counselling declaration records',
                         'source': 'counselling',
                         'mode': 'all'},
@@ -1010,7 +1041,21 @@ QUESTION_REGISTRY = {'overview': [{'id': 'O-01',
                'metric_ids': [],
                'limitations': 'A readable source or existing record is not proof that the control is complete, current '
                               'or effective.'}],
- '4.1.1': [{'id': 'A-01',
+ '4.1.1': [{'id': 'AI-01',
+            'question': 'What is the current conversion from Student Applicant records to admitted students?',
+            'requirement_reference': '4.1.1 admissions monitoring',
+            'support_status': 'Can be implemented now',
+            'answer_mode': 'admission_conversion_summary',
+            'metric_ids': ['c411-applicants-total', 'c411-enrolled-admitted', 'c411-success-rate'],
+            'limitations': 'This follows the supplied Metabase status-based calculation and does not independently verify admission compliance.'},
+           {'id': 'AI-02',
+            'question': 'How many Student Applicant records are currently approved and currently admitted?',
+            'requirement_reference': '4.1.1 admissions monitoring',
+            'support_status': 'Can be implemented now',
+            'answer_mode': 'admission_pipeline_summary',
+            'metric_ids': ['c411-applicants-total', 'c411-shortlisted-approved', 'c411-enrolled-admitted'],
+            'limitations': 'Approved and Admitted are current application statuses, not necessarily sequential lifecycle totals.'},
+           {'id': 'A-01',
             'question': 'Were all Course Counsellors and Recruitment Agents trained and currently reviewed before '
                         'providing counselling?',
             'requirement_reference': '4.1.1.1',
@@ -2201,6 +2246,46 @@ def evaluate_metric(metric, include_rows=False):
             "message": source.get("fetch_error"), "resolved_fields": required_fields,
             "rows": [], "total": 0
         }
+    if metric.get("mode") == "ratio_status":
+        numerator_values = []
+        for item in metric.get("values") or []:
+            numerator_values.append(lower_text(item))
+        numerator_rows = []
+        fieldname = required_fields[0] if required_fields else None
+        for row in rows:
+            if fieldname and lower_text(row.get(fieldname)) in numerator_values:
+                numerator_rows.append(row)
+        denominator = len(rows)
+        value = 0.0
+        if denominator:
+            value = round((float(len(numerator_rows)) / float(denominator)) * 100.0, 2)
+        output_rows = []
+        if include_rows:
+            start = (page - 1) * page_size
+            end = start + page_size
+            output_fields = safe_fields(doctype, SAFE_FIELDS.get(metric.get("source"), ["name"]))
+            for row in numerator_rows[start:end]:
+                item = {}
+                for output_field in output_fields:
+                    item[output_field] = row.get(output_field)
+                output_rows.append(item)
+        return {
+            "id": metric.get("id"),
+            "label": metric.get("label"),
+            "source": metric.get("source"),
+            "doctype": doctype,
+            "value": value,
+            "unit": metric.get("unit") or "percent",
+            "record_count": len(numerator_rows),
+            "denominator": denominator,
+            "status": "available",
+            "resolved_fields": required_fields,
+            "rows": output_rows,
+            "total": len(numerator_rows),
+            "truncated": len(rows) >= row_limit,
+            "calculation_note": "Admitted Student Applicant records divided by all Student Applicant records within the applied filters."
+        }
+
     matched = []
     for row in rows:
         if row_matches(row, metric, required_fields, resolved_conditions):
@@ -2240,6 +2325,171 @@ for configured_metric in CONFIG[subcriterion]["metrics"]:
 metric_lookup = {}
 for metric in metrics:
     metric_lookup[metric.get("id")] = metric
+
+
+def group_count_rows(rows, fieldname, status_value=None):
+    grouped = {}
+    expected_status = lower_text(status_value) if status_value else ""
+    for row in rows or []:
+        if expected_status and lower_text(row.get("application_status")) != expected_status:
+            continue
+        label = clean_text(row.get(fieldname)) or "Not specified"
+        grouped[label] = grouped.get(label, 0) + 1
+    output = []
+    for label in grouped:
+        output.append({"label": label, "value": grouped.get(label) or 0})
+    return output
+
+
+def sort_group_rows(rows, year_mode=False):
+    output = list(rows or [])
+    if year_mode:
+        def year_key(item):
+            label = clean_text(item.get("label"))
+            try:
+                return (0, int(label))
+            except Exception:
+                return (1, label.lower())
+        output.sort(key=year_key)
+    else:
+        output.sort(key=lambda item: lower_text(item.get("label")))
+    return output
+
+
+def build_admission_intelligence():
+    if subcriterion != "4.1.1":
+        return {}
+
+    applicant_source = resolved_sources.get("applicant") or {}
+    if applicant_source.get("status") != "available":
+        return {
+            "status": applicant_source.get("status") or "unavailable",
+            "message": applicant_source.get("message") or "Student Applicant is unavailable.",
+            "kpis": [],
+            "charts": {}
+        }
+
+    applicant_rows = fetch_rows(
+        "applicant",
+        applicant_source,
+        ["application_status", "academic_year", "nationality", "country", "program", "course", "agent", "intake"]
+    )
+
+    admitted_rows = []
+    approved_rows = []
+    applicant_by_name = {}
+    for row in applicant_rows:
+        applicant_name = row.get("name")
+        if applicant_name:
+            applicant_by_name[applicant_name] = row
+        status_value = lower_text(row.get("application_status"))
+        if status_value == "admitted":
+            admitted_rows.append(row)
+        if status_value == "approved":
+            approved_rows.append(row)
+
+    applicant_total = len(applicant_rows)
+    admitted_total = len(admitted_rows)
+    success_rate = 0.0
+    if applicant_total:
+        success_rate = round((float(admitted_total) / float(applicant_total)) * 100.0, 2)
+
+    applicants_by_year = sort_group_rows(group_count_rows(applicant_rows, "academic_year"), True)
+    enrolled_by_year = sort_group_rows(group_count_rows(applicant_rows, "academic_year", "Admitted"), True)
+
+    nationality_field = resolve_field(applicant_source.get("doctype"), ["nationality", "country"])
+    applicants_by_country = []
+    if nationality_field:
+        applicants_by_country = sort_group_rows(group_count_rows(applicant_rows, nationality_field), False)
+
+    program_field = resolve_field(applicant_source.get("doctype"), ["program", "course", "course_applying_for"])
+    programmes = []
+    if program_field:
+        programmes = sort_group_rows(group_count_rows(applicant_rows, program_field), False)
+
+    agent_field = resolve_field(applicant_source.get("doctype"), ["agent", "custom_agent", "recruitment_agent"])
+    agents = []
+    if agent_field:
+        agents = sort_group_rows(group_count_rows(applicant_rows, agent_field), False)
+
+    duration_by_year = {}
+    duration_counts = {}
+    duration_status = "available"
+    duration_message = "Average calendar days from pre-course counselling to student signature for submitted Student Admission UCC records."
+    admission_source = resolved_sources.get("admission") or {}
+    if admission_source.get("status") == "available":
+        admission_doctype = admission_source.get("doctype")
+        counselling_field = resolve_field(admission_doctype, ["pre_course_counseling"])
+        signed_field = resolve_field(admission_doctype, ["student_signed_date", "contract_signed_by_student_date"])
+        applicant_link_field = resolve_field(admission_doctype, ["student_applicant"])
+        docstatus_field = resolve_field(admission_doctype, ["docstatus"])
+        if counselling_field and signed_field and applicant_link_field:
+            duration_rows = fetch_rows(
+                "admission",
+                admission_source,
+                [counselling_field, signed_field, applicant_link_field, docstatus_field],
+                ["academic_year", "nationality", "agent"]
+            )
+            for row in duration_rows:
+                if docstatus_field and frappe.utils.cint(row.get(docstatus_field)) != 1:
+                    continue
+                applicant_row = applicant_by_name.get(row.get(applicant_link_field)) or {}
+                year_label = clean_text(applicant_row.get("academic_year")) or clean_text(row.get("academic_year")) or "Not specified"
+                try:
+                    duration_days = frappe.utils.date_diff(row.get(signed_field), row.get(counselling_field))
+                except Exception:
+                    duration_days = None
+                if duration_days is None or duration_days < 0:
+                    continue
+                duration_by_year[year_label] = duration_by_year.get(year_label, 0.0) + float(duration_days)
+                duration_counts[year_label] = duration_counts.get(year_label, 0) + 1
+        else:
+            duration_status = "unsupported_field"
+            duration_message = "Student Admission UCC requires pre_course_counseling, student_signed_date and student_applicant fields."
+    else:
+        duration_status = admission_source.get("status") or "unavailable"
+        duration_message = admission_source.get("message") or "Student Admission UCC is unavailable."
+
+    duration_chart = []
+    for year_label in duration_by_year:
+        count = duration_counts.get(year_label) or 0
+        average_days = round(duration_by_year.get(year_label, 0.0) / float(count), 2) if count else 0.0
+        duration_chart.append({"label": year_label, "value": average_days, "record_count": count})
+    duration_chart = sort_group_rows(duration_chart, True)
+
+    return {
+        "status": "available",
+        "calculation_basis": "Supplied Metabase SQL, reproduced from Student Applicant and Student Admission UCC.",
+        "kpis": [
+            {"id": "c411-applicants-total", "label": "No. of Student Applicants", "value": applicant_total, "unit": "records"},
+            {"id": "c411-shortlisted-approved", "label": "No. of Shortlisted", "value": len(approved_rows), "unit": "records"},
+            {"id": "c411-enrolled-admitted", "label": "No. of Enrolled Students", "value": admitted_total, "unit": "records"},
+            {"id": "c411-success-rate", "label": "Success Rate", "value": success_rate, "unit": "percent"}
+        ],
+        "charts": {
+            "applicants_by_year": applicants_by_year,
+            "enrolled_by_year": enrolled_by_year,
+            "applicants_by_country": applicants_by_country,
+            "programmes": programmes,
+            "agents": agents,
+            "counselling_to_admission": duration_chart
+        },
+        "chart_status": {
+            "applicants_by_country": "available" if nationality_field else "unsupported_field",
+            "programmes": "available" if program_field else "unsupported_field",
+            "agents": "available" if agent_field else "unsupported_field",
+            "counselling_to_admission": duration_status
+        },
+        "notes": [
+            "No. of Shortlisted follows the supplied Metabase rule: application_status equals Approved.",
+            "No. of Enrolled Students follows the supplied Metabase rule: application_status equals Admitted.",
+            "Number of Students per Agent follows the supplied SQL and counts Student Applicant records, not only admitted students.",
+            duration_message
+        ]
+    }
+
+
+admission_intelligence = build_admission_intelligence()
 
 
 def metric_part(metric_id, fallback_label=None):
@@ -2374,6 +2624,34 @@ def build_question_answer(question):
             + "; no mapped live source: " + frappe.utils.cstr(counts.get("no_mapped_live_source") or 0)
             + "; mapped sources unavailable: " + frappe.utils.cstr(counts.get("no_available_live_source") or 0)
             + ". Source availability is not proof of control effectiveness."
+        )
+
+    elif answer_mode == "admission_conversion_summary":
+        applicant_metric = metric_lookup.get("c411-applicants-total") or {}
+        admitted_metric = metric_lookup.get("c411-enrolled-admitted") or {}
+        rate_metric = metric_lookup.get("c411-success-rate") or {}
+        if applicant_metric.get("status") == "available" and rate_metric.get("status") == "available":
+            status = "available"
+            confidence = "Live"
+            answer = (
+                frappe.utils.cstr(admitted_metric.get("value") or 0)
+                + " admitted out of " + frappe.utils.cstr(applicant_metric.get("value") or 0)
+                + " Student Applicant records, a success rate of "
+                + frappe.utils.cstr(rate_metric.get("value") or 0) + "%."
+            )
+        else:
+            status = "unavailable"
+            confidence = "Unavailable"
+            answer = "Unavailable: Student Applicant status data could not be read."
+
+    elif answer_mode == "admission_pipeline_summary":
+        status = "available" if available_count == len(metric_ids) else "partial"
+        confidence = "Live" if status == "available" else "Partial"
+        answer = (
+            metric_part("c411-applicants-total", "Student Applicants") + "; "
+            + metric_part("c411-shortlisted-approved", "Approved / shortlisted") + "; "
+            + metric_part("c411-enrolled-admitted", "Admitted / enrolled")
+            + ". Approved and Admitted are current statuses and should not be interpreted as sequential historical stages without status-history data."
         )
 
     elif answer_mode == "counselling_summary":
@@ -2596,6 +2874,8 @@ def build_question_answer(question):
 
 
 QUESTION_DRILLDOWN_METRICS = {
+    "AI-01": "c411-enrolled-admitted",
+    "AI-02": "c411-applicants-total",
     "A-02": "c411-unacknowledged",
     "A-04": "c411-conditional",
     "A-05": "c411-late",
@@ -2929,7 +3209,7 @@ result = {
     "ok": True,
     "meta": {
         "api_method": "ucc_analytics_criterion_4",
-        "platform_version": "2.0.1-criterion-4-performance-fix",
+        "platform_version": "2.1.0-admission-intelligence",
         "status": "decision_useful_catalogue",
         "mapping_basis": "verified_existing_sources_plus_policy_named_sources_without_unverified_field_claims",
         "translation_note": "Student Admission UCC and Student Applicant may both display as Shortlisted Applicants; backend names are preserved.",
@@ -2939,6 +3219,7 @@ result = {
         "row_limit": row_limit,
         "query_stats": query_stats
     },
+    "admission_intelligence": admission_intelligence,
     "policy": POLICY_REGISTRY.get(subcriterion),
     "filters": filters,
     "sources": sources,
@@ -2963,7 +3244,8 @@ result = {
         "questions": questions,
         "requirements": requirement_evidence,
         "exceptions": exceptions,
-        "data_quality": data_quality
+        "data_quality": data_quality,
+        "admission_intelligence": admission_intelligence
     },
     "warnings": [
         "Criterion 4 source availability depends on site-installed UCC custom DocTypes and signed-in user permissions.",
