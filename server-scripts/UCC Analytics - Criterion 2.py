@@ -2,20 +2,20 @@
 UCC Intelligence Platform Server Script
 
 Visible name:
-    UCC Analytics - Criterion 7
+    UCC Analytics - Criterion 2
 
 Script type:
     API
 
 API method:
-    ucc_analytics_criterion_7
+    ucc_analytics_criterion_2
 
 Purpose:
-    Return permission-aware, policy-aligned Criterion 7 analytics. The API
-    separates record existence, data readiness, benchmark validity, target
-    validity, measurement, achievement, trend sufficiency, action linkage,
-    effectiveness, dissemination and APSR/PDCA closure. Unsupported controls
-    are reported honestly instead of being converted into false zeroes.
+    Return permission-aware live analytics foundations for EduTrust Criterion 2.
+
+Current status:
+    Live API foundation. The dashboard uses this API. Unsupported fields and
+    unavailable sources are reported explicitly instead of being guessed.
 
 Deployment:
     Allow Guest must remain disabled.
@@ -28,9 +28,8 @@ except Exception:
     payload = {}
 if not isinstance(payload, dict):
     payload = {}
-
 action = payload.get("action") or "summary"
-subcriterion = payload.get("subcriterion") or "7.1.1"
+subcriterion = payload.get("subcriterion") or "2.1.1"
 filters = payload.get("filters") or {}
 if not isinstance(filters, dict):
     filters = {}
@@ -43,10 +42,12 @@ try:
     page = max(1, int(page))
 except Exception:
     page = 1
+
 try:
     page_size = max(1, min(int(page_size), 200))
 except Exception:
     page_size = 50
+
 try:
     row_limit = max(1, min(int(row_limit), 5000))
 except Exception:
@@ -57,1146 +58,928 @@ ALLOWED_ACTIONS = [
     "question_registry", "drilldown"
 ]
 if action not in ALLOWED_ACTIONS:
-    frappe.throw("Unsupported Criterion 7 action.")
+    frappe.throw("Unsupported Criterion 2 action.")
 
+POLICY_REGISTRY = {'2.1.1': {'title': 'Staff Selection and Management',
+           'policy': 'PPD-OEE-HR-2.1.1',
+           'version': '2.2'},
+ '2.1.2': {'title': 'Staff Training and Development',
+           'policy': 'PPD-OEE-HR-2.1.2',
+           'version': '1.2'},
+ '2.2.1': {'title': 'Internal and External Communication',
+           'policy': 'PPD-SES-MG-2.2.1',
+           'version': '1.2'},
+ '2.3.1': {'title': 'Data and Information Management',
+           'policy': 'PPD-OEE-IT-2.3.1',
+           'version': '1.2'},
+ '2.3.2': {'title': 'Knowledge Management', 'policy': 'PPD-OE-IT-2.3.2', 'version': '1.2'},
+ '2.4.1': {'title': 'Feedback Management', 'policy': 'PPD-SGL-SQ-2.4.1', 'version': '2.3'},
+ '2.4.2': {'title': 'Student Satisfaction Survey', 'policy': 'PPD-SGL-SQ-2.4.2', 'version': '2.2'},
+ '2.4.3': {'title': 'Staff Satisfaction Survey', 'policy': 'PPD-SGL-SQ-2.4.3', 'version': '2.2'}}
 
-POLICY_REGISTRY = {'7.1.1': {'title': 'Measurement of Outcomes',
-           'policy': 'PPD-SGL-SQ-7.1.1',
-           'version': '1.2',
-           'effective_date': '15 January 2026',
-           'document_note': 'The controlled procedure is consolidated under 7.1.1. Appendix C retains legacy '
-                            'domain references 7.2.1 to 7.2.4. The rendered file has 33 pages while the '
-                            'footer states 32 pages.'}}
-
-SOURCE_CANDIDATES = {'quality_performance': ['Quality Performance Outcomes'],
- 'quality_goal': ['Quality Goal'],
- 'quality_action': ['Quality Action'],
+SOURCE_CANDIDATES = {'employee': ['Employee'],
+ 'job_applicant': ['Job Applicant'],
+ 'job_requisition': ['Job Requisition'],
+ 'interview_feedback': ['Interview Feedback'],
+ 'employee_onboarding': ['Employee Onboarding'],
+ 'employee_separation': ['Employee Separation'],
+ 'exit_interview': ['Exit Interview', 'Exit Interview Form'],
+ 'appraisal': ['Appraisal', 'Performance Appraisal'],
+ 'training_event': ['Training Event'],
+ 'tna': ['Training Needs Analysis'],
+ 'training_program': ['Training Program'],
+ 'training_result': ['Training Result'],
+ 'training_feedback': ['Training Feedback'],
+ 'training_sponsorship': ['Training Sponsorship Application'],
+ 'stakeholder_registry': ['Stakeholder Registry'],
+ 'stakeholder_engagement': ['Stakeholder Engagement Strategy'],
+ 'material_vetting': ['Material Vetting Form'],
+ 'essential_information': ['Essential Information'],
+ 'document_control': ['Document Control'],
+ 'quality_performance': ['Quality Performance Outcomes'],
  'quality_meeting': ['Quality Meeting'],
- 'management_review': ['Management Review'],
- 'operational_outcomes': ['Operational Outcomes Cost Time Saving']}
+ 'quality_action': ['Quality Action'],
+ 'survey_management': ['Survey Management'],
+ 'survey_tracking': ['Survey Tracking', 'Survey Response'],
+ 'helpdesk_ticket': ['HD Ticket', 'Issue', 'Helpdesk Ticket'],
+ 'employee_grievance': ['Employee Grievance'],
+ 'manpower_planning': ['Manpower Planning and Deployment'],
+ 'salary_structure': ['Salary Structure'],
+ 'salary_component': ['Salary Component'],
+ 'todo': ['ToDo', 'To Do'],
+ 'print_format': ['Print Format'],
+ 'letter_head': ['Letter Head'],
+ 'student_onboarding_survey': ['Student Onboarding Survey'],
+ 'end_course_survey': ['End of Course Survey'],
+ 'staff_onboarding_survey': ['Staff Onboarding Survey'],
+ 'staff_survey': ['Staff Survey'],
+ 'exit_interview_survey': ['Exit Interview Survey']}
 
-SOURCE_DISPLAY_NAMES = {'Quality Meeting': 'Meeting Minutes'}
-
-SAFE_FIELDS = {'quality_performance': ['name',
-                         'outcome',
-                         'outcome_title',
-                         'outcome_category',
-                         'category',
-                         'indicator',
-                         'kpi',
-                         'metric',
+SAFE_FIELDS = {'employee': ['name',
+              'employee_name',
+              'status',
+              'department',
+              'designation',
+              'date_of_joining',
+              'relieving_date',
+              'employment_type',
+              'company',
+              'user_id',
+              'modified'],
+ 'job_applicant': ['name',
+                   'applicant_name',
+                   'status',
+                   'job_title',
+                   'job_opening',
+                   'email_id',
+                   'creation',
+                   'modified'],
+ 'job_requisition': ['name',
+                     'designation',
+                     'department',
+                     'status',
+                     'requested_by',
+                     'expected_by',
+                     'no_of_positions',
+                     'modified'],
+ 'interview_feedback': ['name',
+                        'interview',
+                        'interviewer',
+                        'job_applicant',
+                        'result',
+                        'average_rating',
+                        'modified'],
+ 'employee_onboarding': ['name',
+                         'employee',
+                         'employee_name',
+                         'job_applicant',
+                         'date_of_joining',
+                         'boarding_status',
                          'status',
-                         'benchmark',
-                         'benchmark_value',
-                         'benchmark_type',
-                         'target',
-                         'target_value',
-                         'actual',
-                         'actual_value',
-                         'current_value',
-                         'measurement_date',
-                         'date',
-                         'review_date',
-                         'frequency',
-                         'owner',
-                         'department',
-                         'trend',
-                         'variance',
                          'modified'],
- 'quality_goal': ['name', 'modified'],
+ 'employee_separation': ['name',
+                         'employee',
+                         'employee_name',
+                         'separation_date',
+                         'boarding_status',
+                         'status',
+                         'modified'],
+ 'exit_interview': ['name',
+                    'employee',
+                    'employee_name',
+                    'date',
+                    'status',
+                    'reason_for_leaving',
+                    'modified'],
+ 'appraisal': ['name',
+               'employee',
+               'employee_name',
+               'status',
+               'start_date',
+               'end_date',
+               'appraisal_cycle',
+               'final_score',
+               'modified'],
+ 'training_event': ['name',
+                    'event_name',
+                    'training_program',
+                    'status',
+                    'start_time',
+                    'end_time',
+                    'type',
+                    'trainer_name',
+                    'modified'],
+ 'tna': ['name',
+         'participant_type',
+         'participant_doctype',
+         'participant',
+         'participant_full_name',
+         'employee_id',
+         'employee_full_name',
+         'source_type',
+         'department',
+         'manpower_planning_and_development',
+         'employee_onboarding',
+         'appraisal_link',
+         'academic_year',
+         'assessment_date',
+         'assessed_by',
+         'assessed_by_full_name',
+         'review_date',
+         'reviewed_by',
+         'reviewed_by_full_name',
+         'performance_evaluation',
+         'index_value',
+         'improvement_average',
+         'conclusion',
+         'list_of_trainings',
+         'total_estimated_cost',
+         'appraisal',
+         'amended_from',
+         'modified'],
+ 'training_program': ['name',
+                      'training_program',
+                      'program_name',
+                      'status',
+                      'start_date',
+                      'end_date',
+                      'modified'],
+ 'training_result': ['name', 'employee', 'training_event', 'status', 'result', 'score', 'modified'],
+ 'training_feedback': ['name', 'employee', 'training_event', 'rating', 'status', 'modified'],
+ 'training_sponsorship': ['name',
+                          'employee',
+                          'training_program',
+                          'status',
+                          'amount',
+                          'posting_date',
+                          'modified'],
+ 'stakeholder_registry': ['name',
+                          'stakeholder_name',
+                          'stakeholder_type',
+                          'category',
+                          'status',
+                          'department',
+                          'modified'],
+ 'stakeholder_engagement': ['name',
+                            'stakeholder',
+                            'stakeholder_group',
+                            'engagement_type',
+                            'communication_channel',
+                            'frequency',
+                            'status',
+                            'engagement_date',
+                            'next_engagement_date',
+                            'modified'],
+ 'material_vetting': ['name',
+                      'naming_series',
+                      'material_name',
+                      'type',
+                      'requestor_name',
+                      'full_name',
+                      'department',
+                      'posting_date',
+                      'duration_of_use',
+                      'marketing_channel',
+                      'target_audience',
+                      'geographic_scope',
+                      'version_no',
+                      'material_attachment',
+                      'description_of_request',
+                      'reason_for_request',
+                      'impact_analysis',
+                      'impact_description',
+                      'external_parties',
+                      'vetter',
+                      'vetter_name',
+                      'amendments',
+                      'vetter_table',
+                      'checklist_template',
+                      'list',
+                      'general_comment',
+                      'final_approval_date',
+                      'approval_status',
+                      'approved_by',
+                      'approved_by_full_name',
+                      'approval_remarks',
+                      'modified'],
+ 'essential_information': ['name',
+                           'title',
+                           'information_type',
+                           'status',
+                           'effective_date',
+                           'review_date',
+                           'owner',
+                           'modified'],
+ 'document_control': ['name',
+                      'document_title',
+                      'document_type',
+                      'document_code',
+                      'version',
+                      'status',
+                      'effective_date',
+                      'review_date',
+                      'next_review_date',
+                      'department',
+                      'owner',
+                      'modified'],
+ 'quality_performance': ['name',
+                         'outcome',
+                         'outcome_category',
+                         'indicator',
+                         'status',
+                         'target',
+                         'actual',
+                         'measurement_date',
+                         'owner',
+                         'modified'],
+ 'quality_meeting': ['name',
+                     'meeting_date',
+                     'status',
+                     'review',
+                     'procedure',
+                     'minutes',
+                     'modified'],
  'quality_action': ['name',
                     'status',
                     'custom_status_updates',
                     'date',
                     'custom_proposed_date',
                     'custom_completed_date',
-                    'custom_type_of_innovation',
-                    'custom_innovation_category',
-                    'custom_aggregated_performance_index_api',
-                    'custom_timeadjusted_cost_efficiency_index_tacei',
-                    'custom_cost_efficiency_index_cei',
-                    'custom_total_budget_fee',
-                    'custom_total_actual_spending',
-                    'custom_spending_difference',
-                    'goal',
-                    'review',
-                    'procedure',
+                    'feedback',
                     'modified'],
- 'quality_meeting': ['name', 'meeting_date', 'status', 'review', 'procedure', 'modified'],
- 'management_review': ['name',
-                       'review_date',
-                       'review_period',
-                       'review_type',
-                       'review_status',
-                       'chairperson',
-                       'next_review_date',
+ 'survey_management': ['name',
+                       'survey_name',
+                       'survey_type',
+                       'status',
+                       'start_date',
+                       'end_date',
+                       'audience',
                        'modified'],
- 'operational_outcomes': ['name',
-                          'monitoring_year',
-                          'period_start',
-                          'period_end',
-                          'benchmark_type',
-                          'benchmark_value',
-                          'variance_to_benchmark',
-                          'total_people_saving',
-                          'total_technology_saving',
-                          'total_physical_saving',
-                          'total_gross_saving',
-                          'total_implementation_cost',
-                          'total_maintenance_cost',
-                          'total_net_saving',
-                          'modified']}
+ 'survey_tracking': ['name',
+                     'survey',
+                     'survey_type',
+                     'respondent_type',
+                     'status',
+                     'response_date',
+                     'rating',
+                     'score',
+                     'modified'],
+ 'helpdesk_ticket': ['name',
+                     'subject',
+                     'status',
+                     'priority',
+                     'ticket_type',
+                     'agreement_status',
+                     'opening_date',
+                     'response_by',
+                     'resolution_by',
+                     'resolution_date',
+                     'feedback_rating',
+                     'modified'],
+ 'employee_grievance': ['name',
+                        'employee',
+                        'employee_name',
+                        'status',
+                        'grievance_type',
+                        'posting_date',
+                        'resolution_date',
+                        'modified'],
+ 'manpower_planning': ['name',
+                       'department',
+                       'status',
+                       'year',
+                       'number_of_positions',
+                       'required_positions',
+                       'current_headcount',
+                       'gap',
+                       'owner',
+                       'review_date',
+                       'modified'],
+ 'salary_structure': ['name', 'is_active', 'company', 'payroll_frequency', 'currency', 'modified'],
+ 'salary_component': ['name',
+                      'type',
+                      'depends_on_payment_days',
+                      'is_tax_applicable',
+                      'disabled',
+                      'modified'],
+ 'todo': ['name',
+          'status',
+          'priority',
+          'date',
+          'allocated_to',
+          'reference_type',
+          'reference_name',
+          'description',
+          'modified'],
+ 'print_format': ['name', 'doc_type', 'disabled', 'standard', 'custom_format', 'modified'],
+ 'letter_head': ['name', 'is_default', 'disabled', 'modified'],
+ 'student_onboarding_survey': ['name',
+                               'student',
+                               'status',
+                               'survey_date',
+                               'rating',
+                               'score',
+                               'modified'],
+ 'end_course_survey': ['name',
+                       'student',
+                       'program',
+                       'status',
+                       'survey_date',
+                       'rating',
+                       'score',
+                       'modified'],
+ 'staff_onboarding_survey': ['name',
+                             'employee',
+                             'status',
+                             'survey_date',
+                             'rating',
+                             'score',
+                             'modified'],
+ 'staff_survey': ['name', 'employee', 'status', 'survey_date', 'rating', 'score', 'modified'],
+ 'exit_interview_survey': ['name',
+                           'employee',
+                           'status',
+                           'survey_date',
+                           'rating',
+                           'score',
+                           'modified']}
 
-FILTER_FIELD_CANDIDATES = {'quality_performance': {'status': ['status'],
-                         'year_date': ['measurement_date', 'date', 'review_date'],
-                         'outcome_category': ['outcome_category', 'category'],
-                         'department': ['department']},
- 'quality_goal': {},
- 'quality_action': {'status': ['custom_status_updates', 'status'],
-                    'year_date': ['date', 'custom_proposed_date', 'custom_completed_date']},
- 'quality_meeting': {'status': ['status'], 'year_date': ['meeting_date']},
- 'management_review': {'status': ['review_status'], 'year_date': ['review_date']},
- 'operational_outcomes': {'year_value': ['monitoring_year'], 'year_date': ['period_start', 'period_end']}}
+FILTER_FIELD_CANDIDATES = {'status': ['status', 'boarding_status', 'agreement_status'],
+ 'year': ['year', 'academic_year', 'monitoring_year'],
+ 'review_year': ['year', 'academic_year', 'monitoring_year'],
+ 'department': ['department'],
+ 'employee': ['employee', 'employee_name'],
+ 'survey_type': ['survey_type', 'type'],
+ 'month': ['month']}
 
-CONFIG = {'7.1.1': {'sources': ['quality_performance',
-                       'quality_goal',
-                       'quality_action',
-                       'quality_meeting',
-                       'management_review',
-                       'operational_outcomes'],
-           'metrics': [{'id': 'c711-outcomes',
-                        'label': 'Performance outcome records in scope',
-                        'source': 'quality_performance',
-                        'mode': 'all',
-                        'unit': 'records',
-                        'evidence_level': 'record_existence'},
-                       {'id': 'c711-missing-domain',
-                        'label': 'Outcome records missing domain classification',
-                        'source': 'quality_performance',
-                        'mode': 'falsy',
-                        'field': ['outcome_category', 'category'],
-                        'unit': 'records',
-                        'evidence_level': 'data_completeness'},
-                       {'id': 'c711-missing-indicator',
-                        'label': 'Outcome records missing KPI or indicator',
-                        'source': 'quality_performance',
-                        'mode': 'falsy',
-                        'field': ['indicator', 'kpi', 'metric'],
-                        'unit': 'records',
-                        'evidence_level': 'data_completeness'},
-                       {'id': 'c711-missing-benchmark',
-                        'label': 'Outcome records missing benchmark data',
-                        'source': 'quality_performance',
-                        'mode': 'falsy',
-                        'field': ['benchmark', 'benchmark_value', 'benchmark_type'],
-                        'unit': 'records',
-                        'evidence_level': 'data_completeness'},
-                       {'id': 'c711-missing-target',
-                        'label': 'Outcome records missing target data',
-                        'source': 'quality_performance',
-                        'mode': 'falsy',
-                        'field': ['target', 'target_value'],
-                        'unit': 'records',
-                        'evidence_level': 'data_completeness'},
-                       {'id': 'c711-missing-actual',
-                        'label': 'Outcome records missing actual result',
-                        'source': 'quality_performance',
-                        'mode': 'falsy',
-                        'field': ['actual', 'actual_value', 'current_value'],
-                        'unit': 'records',
-                        'evidence_level': 'data_completeness'},
-                       {'id': 'c711-missing-measurement-date',
-                        'label': 'Outcome records missing measurement date',
-                        'source': 'quality_performance',
-                        'mode': 'falsy',
-                        'field': ['measurement_date', 'date', 'review_date'],
-                        'unit': 'records',
-                        'evidence_level': 'data_completeness'},
-                       {'id': 'c711-missing-owner',
-                        'label': 'Outcome records missing assigned owner',
-                        'source': 'quality_performance',
-                        'mode': 'falsy',
-                        'field': ['owner'],
-                        'unit': 'records',
-                        'evidence_level': 'data_completeness'},
-                       {'id': 'c711-core-field-complete',
-                        'label': 'Outcome records with all currently mapped core fields',
-                        'source': 'quality_performance',
+CONFIG = {'2.1.1': {'sources': ['employee',
+                       'job_requisition',
+                       'job_applicant',
+                       'interview_feedback',
+                       'employee_onboarding',
+                       'appraisal',
+                       'employee_separation',
+                       'exit_interview',
+                       'manpower_planning',
+                       'salary_structure',
+                       'salary_component'],
+           'metrics': [{'id': 'c211-employees',
+                        'label': 'Employees in scope',
+                        'source': 'employee',
+                        'mode': 'all'},
+                       {'id': 'c211-active-employees',
+                        'label': 'Active employees',
+                        'source': 'employee',
+                        'mode': 'equals',
+                        'field': ['status'],
+                        'value': 'Active'},
+                       {'id': 'c211-requisitions',
+                        'label': 'Job requisitions',
+                        'source': 'job_requisition',
+                        'mode': 'all'},
+                       {'id': 'c211-open-requisitions',
+                        'label': 'Open job requisitions',
+                        'source': 'job_requisition',
+                        'mode': 'in',
+                        'field': ['status'],
+                        'values': ['Open', 'Pending', 'Approved']},
+                       {'id': 'c211-applicants',
+                        'label': 'Job applicants',
+                        'source': 'job_applicant',
+                        'mode': 'all'},
+                       {'id': 'c211-selected-applicants',
+                        'label': 'Selected or accepted applicants',
+                        'source': 'job_applicant',
+                        'mode': 'in',
+                        'field': ['status'],
+                        'values': ['Accepted', 'Selected', 'Offer Accepted', 'Approved']},
+                       {'id': 'c211-interviews',
+                        'label': 'Interview feedback records',
+                        'source': 'interview_feedback',
+                        'mode': 'all'},
+                       {'id': 'c211-onboardings',
+                        'label': 'Employee onboarding records',
+                        'source': 'employee_onboarding',
+                        'mode': 'all'},
+                       {'id': 'c211-completed-onboardings',
+                        'label': 'Completed employee onboardings',
+                        'source': 'employee_onboarding',
+                        'mode': 'in',
+                        'field': ['boarding_status', 'status'],
+                        'values': ['Completed', 'Closed']},
+                       {'id': 'c211-appraisals',
+                        'label': 'Performance appraisal records',
+                        'source': 'appraisal',
+                        'mode': 'all'},
+                       {'id': 'c211-separations',
+                        'label': 'Employee separation records',
+                        'source': 'employee_separation',
+                        'mode': 'all'},
+                       {'id': 'c211-exit-interviews',
+                        'label': 'Exit interview records',
+                        'source': 'exit_interview',
+                        'mode': 'all'},
+                       {'id': 'c211-competency-threshold',
+                        'label': 'Competency-based interview threshold compliance',
+                        'source': 'interview_feedback',
+                        'mode': 'unsupported',
+                        'message': 'The approved interview scoring threshold fields were not '
+                                   'supplied.'},
+                       {'id': 'c211-manpower-plans',
+                        'label': 'Manpower planning records',
+                        'source': 'manpower_planning',
+                        'mode': 'all'},
+                       {'id': 'c211-salary-structures',
+                        'label': 'Salary structures',
+                        'source': 'salary_structure',
+                        'mode': 'all'},
+                       {'id': 'c211-salary-components',
+                        'label': 'Salary components',
+                        'source': 'salary_component',
+                        'mode': 'all'}]},
+ '2.1.2': {'sources': ['employee',
+                       'appraisal',
+                       'training_event',
+                       'tna',
+                       'training_program',
+                       'training_result',
+                       'training_feedback',
+                       'training_sponsorship'],
+           'metrics': [{'id': 'c212-training-events',
+                        'label': 'Training events',
+                        'source': 'training_event',
+                        'mode': 'all'},
+                       {'id': 'c212-completed-events',
+                        'label': 'Completed training events',
+                        'source': 'training_event',
+                        'mode': 'in',
+                        'field': ['status'],
+                        'values': ['Completed', 'Closed']},
+                       {'id': 'c212-tna',
+                        'label': 'Training needs assessments',
+                        'source': 'tna',
+                        'mode': 'all'},
+                       {'id': 'c212-approved-tna',
+                        'label': 'Reviewed training needs analyses',
+                        'source': 'tna',
+                        'mode': 'truthy',
+                        'field': ['reviewed_by', 'review_date']},
+                       {'id': 'c212-programs',
+                        'label': 'Training programmes',
+                        'source': 'training_program',
+                        'mode': 'all'},
+                       {'id': 'c212-results',
+                        'label': 'Training result records',
+                        'source': 'training_result',
+                        'mode': 'all'},
+                       {'id': 'c212-completed-results',
+                        'label': 'Completed or passed training results',
+                        'source': 'training_result',
+                        'mode': 'in',
+                        'field': ['status', 'result'],
+                        'values': ['Completed', 'Passed', 'Pass']},
+                       {'id': 'c212-feedback',
+                        'label': 'Training feedback records',
+                        'source': 'training_feedback',
+                        'mode': 'all'},
+                       {'id': 'c212-feedback-rating',
+                        'label': 'Average training feedback rating',
+                        'source': 'training_feedback',
+                        'mode': 'average_fields',
+                        'fields': [['rating', 'score']],
+                        'unit': 'rating'},
+                       {'id': 'c212-sponsorship',
+                        'label': 'Training sponsorship applications',
+                        'source': 'training_sponsorship',
+                        'mode': 'all'},
+                       {'id': 'c212-appraisals',
+                        'label': 'Appraisals available for training needs',
+                        'source': 'appraisal',
+                        'mode': 'all'},
+                       {'id': 'c212-training-coverage',
+                        'label': 'Employee training completion coverage',
+                        'source': 'employee',
+                        'mode': 'unsupported',
+                        'message': 'Employee-to-training attendance child-table relationships were '
+                                   'not supplied.'}]},
+ '2.2.1': {'sources': ['stakeholder_registry',
+                       'stakeholder_engagement',
+                       'material_vetting',
+                       'essential_information'],
+           'metrics': [{'id': 'c221-stakeholders',
+                        'label': 'Stakeholders in the registry',
+                        'source': 'stakeholder_registry',
+                        'mode': 'all'},
+                       {'id': 'c221-engagements',
+                        'label': 'Stakeholder engagement records',
+                        'source': 'stakeholder_engagement',
+                        'mode': 'all'},
+                       {'id': 'c221-materials',
+                        'label': 'Communication materials submitted',
+                        'source': 'material_vetting',
+                        'mode': 'all'},
+                       {'id': 'c221-approved-materials',
+                        'label': 'Approved communication materials',
+                        'source': 'material_vetting',
+                        'mode': 'in',
+                        'field': ['approval_status', 'workflow_state'],
+                        'values': ['Approved', 'Final Approval', 'Conditionally Approved']},
+                       {'id': 'c221-pending-materials',
+                        'label': 'Pending communication approvals',
+                        'source': 'material_vetting',
+                        'mode': 'in',
+                        'field': ['approval_status', 'workflow_state'],
+                        'values': ['Pending', 'In Progress', 'Requires Amendments', 'Waiting to Vet', 'Waiting for Approval', 'Draft']},
+                       {'id': 'c221-essential-info',
+                        'label': 'Essential Information records',
+                        'source': 'essential_information',
+                        'mode': 'all'},
+                       {'id': 'c221-overdue-info-review',
+                        'label': 'Essential Information overdue for review',
+                        'source': 'essential_information',
+                        'mode': 'date_before_today',
+                        'field': ['review_date', 'next_review_date']},
+                       {'id': 'c221-channel-coverage',
+                        'label': 'Approved channel and frequency coverage',
+                        'source': 'stakeholder_engagement',
                         'mode': 'all_required',
-                        'fields': [['outcome_category', 'category'],
-                                   ['indicator', 'kpi', 'metric'],
-                                   ['benchmark', 'benchmark_value', 'benchmark_type'],
-                                   ['target', 'target_value'],
-                                   ['actual', 'actual_value', 'current_value'],
-                                   ['measurement_date', 'date', 'review_date'],
-                                   ['owner']],
-                        'unit': 'records',
-                        'evidence_level': 'partial_completeness'},
-                       {'id': 'c711-domain-coverage',
-                        'label': 'Required outcome-domain coverage',
+                        'fields': [['communication_channel', 'channel'],
+                                   ['frequency', 'engagement_frequency']]}]},
+ '2.3.1': {'sources': ['document_control',
+                       'quality_performance',
+                       'quality_meeting',
+                       'quality_action'],
+           'metrics': [{'id': 'c231-documents',
+                        'label': 'Controlled documents and records',
+                        'source': 'document_control',
+                        'mode': 'all'},
+                       {'id': 'c231-current-documents',
+                        'label': 'Current or approved documents',
+                        'source': 'document_control',
+                        'mode': 'in',
+                        'field': ['status'],
+                        'values': ['Current', 'Approved', 'Active']},
+                       {'id': 'c231-overdue-reviews',
+                        'label': 'Documents overdue for review',
+                        'source': 'document_control',
+                        'mode': 'date_before_today',
+                        'field': ['next_review_date', 'review_date']},
+                       {'id': 'c231-performance-outcomes',
+                        'label': 'Quality Performance Outcomes',
                         'source': 'quality_performance',
-                        'mode': 'required_value_coverage',
-                        'field': ['outcome_category', 'category'],
-                        'required_values': {'Student and Graduate Outcomes': ['student and graduate',
-                                                                              'student & graduate'],
-                                            'Service Quality Outcomes': ['service quality'],
-                                            'Operational Outcomes': ['operational'],
-                                            'People Development Outcomes': ['people development']},
-                        'unit': 'domains',
-                        'evidence_level': 'coverage'},
-                       {'id': 'c711-quality-goals',
-                        'label': 'Quality Goal records available',
-                        'source': 'quality_goal',
-                        'mode': 'all',
-                        'unit': 'records',
-                        'evidence_level': 'record_existence'},
-                       {'id': 'c711-quality-actions',
-                        'label': 'Quality Actions in scope',
-                        'source': 'quality_action',
-                        'mode': 'all',
-                        'unit': 'records',
-                        'evidence_level': 'record_existence'},
-                       {'id': 'c711-open-actions',
-                        'label': 'Open Quality Actions in scope',
-                        'source': 'quality_action',
-                        'mode': 'not_in',
-                        'field': ['custom_status_updates', 'status'],
-                        'values': ['Completed', 'Closed'],
-                        'unit': 'records',
-                        'evidence_level': 'process_status'},
-                       {'id': 'c711-quality-meetings',
-                        'label': 'Quality Meeting records in scope',
+                        'mode': 'all'},
+                       {'id': 'c231-quality-meetings',
+                        'label': 'Quality Meetings',
                         'source': 'quality_meeting',
-                        'mode': 'all',
-                        'unit': 'records',
-                        'evidence_level': 'record_existence'},
-                       {'id': 'c711-management-reviews',
-                        'label': 'Management Review records in scope',
-                        'source': 'management_review',
-                        'mode': 'all',
-                        'unit': 'records',
-                        'evidence_level': 'record_existence'},
-                       {'id': 'c711-net-saving',
-                        'label': 'Stored operational net saving',
-                        'source': 'operational_outcomes',
-                        'mode': 'sum',
-                        'field': ['total_net_saving'],
-                        'unit': 'SGD',
-                        'evidence_level': 'stored_calculation'},
-                       {'id': 'c711-benchmark-variance',
-                        'label': 'Stored operational benchmark variance',
-                        'source': 'operational_outcomes',
-                        'mode': 'sum',
-                        'field': ['variance_to_benchmark'],
-                        'unit': 'SGD',
-                        'evidence_level': 'stored_calculation'},
-                       {'id': 'c711-indicator-coverage',
-                        'label': 'Required named-indicator coverage',
+                        'mode': 'all'},
+                       {'id': 'c231-quality-actions',
+                        'label': 'Data and information Quality Actions',
+                        'source': 'quality_action',
+                        'mode': 'all'},
+                       {'id': 'c231-data-quality',
+                        'label': 'Automated data-quality exceptions',
                         'source': 'quality_performance',
                         'mode': 'unsupported',
-                        'message': 'An approved indicator registry, active status and duplicate-control rule are '
-                                   'required.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-artemia-compliance',
-                        'label': 'ARTEMIA selection-compliance rate',
-                        'source': 'quality_performance',
+                        'message': 'The approved data-quality validation result fields were not '
+                                   'supplied.'}]},
+ '2.3.2': {'sources': ['document_control',
+                       'quality_meeting',
+                       'quality_action',
+                       'print_format',
+                       'letter_head'],
+           'metrics': [{'id': 'c232-documents',
+                        'label': 'Knowledge documents in scope',
+                        'source': 'document_control',
+                        'mode': 'all'},
+                       {'id': 'c232-approved',
+                        'label': 'Approved or current knowledge documents',
+                        'source': 'document_control',
+                        'mode': 'in',
+                        'field': ['status'],
+                        'values': ['Approved', 'Current', 'Active']},
+                       {'id': 'c232-obsolete',
+                        'label': 'Obsolete or archived documents',
+                        'source': 'document_control',
+                        'mode': 'in',
+                        'field': ['status'],
+                        'values': ['Obsolete', 'Archived', 'Superseded']},
+                       {'id': 'c232-overdue',
+                        'label': 'Knowledge documents overdue for review',
+                        'source': 'document_control',
+                        'mode': 'date_before_today',
+                        'field': ['next_review_date', 'review_date']},
+                       {'id': 'c232-meetings',
+                        'label': 'Quality Meetings recording knowledge updates',
+                        'source': 'quality_meeting',
+                        'mode': 'all'},
+                       {'id': 'c232-actions',
+                        'label': 'Knowledge-improvement Quality Actions',
+                        'source': 'quality_action',
+                        'mode': 'all'},
+                       {'id': 'c232-disposal',
+                        'label': 'Record disposal completion',
+                        'source': 'document_control',
                         'mode': 'unsupported',
-                        'message': 'The supplied metadata does not contain verified fields for all seven ARTEMIA '
-                                   'selection criteria.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-benchmark-validation',
-                        'label': 'Benchmark validation rate',
-                        'source': 'quality_performance',
+                        'message': 'Record disposal and retention fields were not supplied.'},
+                       {'id': 'c232-print-formats',
+                        'label': 'Controlled print formats',
+                        'source': 'print_format',
+                        'mode': 'all'},
+                       {'id': 'c232-letter-heads',
+                        'label': 'Controlled letter heads',
+                        'source': 'letter_head',
+                        'mode': 'all'}]},
+ '2.4.1': {'sources': ['survey_management',
+                       'survey_tracking',
+                       'helpdesk_ticket',
+                       'employee_grievance',
+                       'quality_action',
+                       'todo'],
+           'metrics': [{'id': 'c241-surveys',
+                        'label': 'Survey and feedback instruments',
+                        'source': 'survey_management',
+                        'mode': 'all'},
+                       {'id': 'c241-responses',
+                        'label': 'Survey tracking records',
+                        'source': 'survey_tracking',
+                        'mode': 'all'},
+                       {'id': 'c241-tickets',
+                        'label': 'Feedback tickets',
+                        'source': 'helpdesk_ticket',
+                        'mode': 'all'},
+                       {'id': 'c241-open-tickets',
+                        'label': 'Open feedback tickets',
+                        'source': 'helpdesk_ticket',
+                        'mode': 'not_in',
+                        'field': ['status'],
+                        'values': ['Closed', 'Resolved']},
+                       {'id': 'c241-closed-tickets',
+                        'label': 'Closed or resolved feedback tickets',
+                        'source': 'helpdesk_ticket',
+                        'mode': 'in',
+                        'field': ['status'],
+                        'values': ['Closed', 'Resolved']},
+                       {'id': 'c241-sla-failed',
+                        'label': 'Feedback tickets with failed SLA',
+                        'source': 'helpdesk_ticket',
+                        'mode': 'equals',
+                        'field': ['agreement_status'],
+                        'value': 'Failed'},
+                       {'id': 'c241-grievances',
+                        'label': 'Employee grievance records',
+                        'source': 'employee_grievance',
+                        'mode': 'all'},
+                       {'id': 'c241-quality-actions',
+                        'label': 'Feedback-related Quality Actions',
+                        'source': 'quality_action',
+                        'mode': 'truthy',
+                        'field': ['feedback']},
+                       {'id': 'c241-priority-matrix',
+                        'label': 'Feedback priority matrix compliance',
+                        'source': 'helpdesk_ticket',
                         'mode': 'unsupported',
-                        'message': 'Verified fields for benchmark origin, source evidence, relevance, credibility, '
-                                   'currency and applicability were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-proxy-rationale',
-                        'label': 'Proxy benchmark substitution rationale',
-                        'source': 'quality_performance',
+                        'message': 'Urgency and impact score fields were not supplied.'},
+                       {'id': 'c241-todos',
+                        'label': 'Feedback follow-up tasks',
+                        'source': 'todo',
+                        'mode': 'all'},
+                       {'id': 'c241-open-todos',
+                        'label': 'Open feedback follow-up tasks',
+                        'source': 'todo',
+                        'mode': 'not_in',
+                        'field': ['status'],
+                        'values': ['Closed', 'Cancelled']}]},
+ '2.4.2': {'sources': ['survey_management',
+                       'survey_tracking',
+                       'student_onboarding_survey',
+                       'end_course_survey'],
+           'metrics': [{'id': 'c242-surveys',
+                        'label': 'Student satisfaction survey instruments',
+                        'source': 'survey_management',
+                        'mode': 'conditions',
+                        'conditions': [{'field': ['survey_type', 'type', 'survey_name'],
+                                        'op': 'contains',
+                                        'value': 'student'}]},
+                       {'id': 'c242-responses',
+                        'label': 'Student satisfaction responses',
+                        'source': 'survey_tracking',
+                        'mode': 'conditions',
+                        'conditions': [{'field': ['respondent_type', 'survey_type', 'type'],
+                                        'op': 'contains',
+                                        'value': 'student'}]},
+                       {'id': 'c242-completed',
+                        'label': 'Completed student survey responses',
+                        'source': 'survey_tracking',
+                        'mode': 'conditions',
+                        'conditions': [{'field': ['respondent_type', 'survey_type', 'type'],
+                                        'op': 'contains',
+                                        'value': 'student'},
+                                       {'field': ['status'],
+                                        'op': 'in',
+                                        'values': ['Completed', 'Submitted']}]},
+                       {'id': 'c242-rating',
+                        'label': 'Average student satisfaction score',
+                        'source': 'survey_tracking',
+                        'mode': 'average_fields',
+                        'fields': [['rating', 'score']],
+                        'conditions': [{'field': ['respondent_type', 'survey_type', 'type'],
+                                        'op': 'contains',
+                                        'value': 'student'}],
+                        'unit': 'rating'},
+                       {'id': 'c242-coverage',
+                        'label': 'Student survey coverage rate',
+                        'source': 'survey_tracking',
                         'mode': 'unsupported',
-                        'message': 'A verified proxy-benchmark flag and substitution-rationale field were not '
-                                   'supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-target-validity',
-                        'label': 'Target establishment validity rate',
-                        'source': 'quality_performance',
+                        'message': 'The eligible-population denominator and survey-cycle '
+                                   'relationship were not supplied.'},
+                       {'id': 'c242-onboarding-surveys',
+                        'label': 'Student onboarding survey records',
+                        'source': 'student_onboarding_survey',
+                        'mode': 'all'},
+                       {'id': 'c242-course-surveys',
+                        'label': 'End-of-course survey records',
+                        'source': 'end_course_survey',
+                        'mode': 'all'}]},
+ '2.4.3': {'sources': ['survey_management',
+                       'survey_tracking',
+                       'employee',
+                       'staff_onboarding_survey',
+                       'staff_survey',
+                       'exit_interview_survey'],
+           'metrics': [{'id': 'c243-surveys',
+                        'label': 'Staff satisfaction survey instruments',
+                        'source': 'survey_management',
+                        'mode': 'conditions',
+                        'conditions': [{'field': ['survey_type', 'type', 'survey_name'],
+                                        'op': 'contains',
+                                        'value': 'staff'}]},
+                       {'id': 'c243-responses',
+                        'label': 'Staff satisfaction responses',
+                        'source': 'survey_tracking',
+                        'mode': 'conditions',
+                        'conditions': [{'field': ['respondent_type', 'survey_type', 'type'],
+                                        'op': 'contains',
+                                        'value': 'staff'}]},
+                       {'id': 'c243-completed',
+                        'label': 'Completed staff survey responses',
+                        'source': 'survey_tracking',
+                        'mode': 'conditions',
+                        'conditions': [{'field': ['respondent_type', 'survey_type', 'type'],
+                                        'op': 'contains',
+                                        'value': 'staff'},
+                                       {'field': ['status'],
+                                        'op': 'in',
+                                        'values': ['Completed', 'Submitted']}]},
+                       {'id': 'c243-rating',
+                        'label': 'Average staff satisfaction score',
+                        'source': 'survey_tracking',
+                        'mode': 'average_fields',
+                        'fields': [['rating', 'score']],
+                        'conditions': [{'field': ['respondent_type', 'survey_type', 'type'],
+                                        'op': 'contains',
+                                        'value': 'staff'}],
+                        'unit': 'rating'},
+                       {'id': 'c243-active-staff',
+                        'label': 'Active staff population',
+                        'source': 'employee',
+                        'mode': 'equals',
+                        'field': ['status'],
+                        'value': 'Active'},
+                       {'id': 'c243-coverage',
+                        'label': 'Staff survey coverage rate',
+                        'source': 'survey_tracking',
                         'mode': 'unsupported',
-                        'message': 'Verified fields for benchmark linkage, calculation method, direction, approval and '
-                                   'review cycle were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-target-review',
-                        'label': 'Targets due for review or adjustment',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'Verified target review history and adjustment-cycle fields were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-measurement-completion',
-                        'label': 'Measurement completion rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'A due-measurement population, required frequency and approved '
-                                   'calculation/source-evidence fields were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-target-achievement',
-                        'label': 'Correct-direction target achievement rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'Indicator direction, unit compatibility, period, population and range rules were '
-                                   'not supplied. A universal greater-than-or-equal comparison is prohibited.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-below-target',
-                        'label': 'Below-target outcome queue',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'The approved direction or range rule is unavailable, so below-target status cannot '
-                                   'be calculated defensibly.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-action-linkage',
-                        'label': 'Below-target outcomes with linked Quality Actions',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'No verified relationship field linking a Quality Action to a specific outcome gap '
-                                   'was supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-root-cause',
-                        'label': 'Outcome gaps with completed root cause analysis',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'No verified outcome-gap root-cause field or child table was supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-action-effectiveness',
-                        'label': 'Corrective-action effectiveness rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'Completed status does not prove effectiveness. Post-action measurement and '
-                                   'effectiveness criteria were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-three-year-trend',
-                        'label': 'Three-year trend coverage rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'A verified trend-history child table with three consecutive years and '
-                                   'interim-treatment evidence was not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-trend-anomaly',
-                        'label': 'Trend direction and anomaly queue',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'Approved trend direction, method and anomaly thresholds were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-dissemination',
-                        'label': 'Outcome dissemination completion rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'A verified dissemination log, stakeholder groups, channel, format and frequency '
-                                   'fields were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-apsr-monthly',
-                        'label': 'Monthly departmental APSR completion rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'A verified APSR record or Quality Calendar mapping for department-month reviews '
-                                   'was not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-apsr-biannual',
-                        'label': 'Biannual cross-department APSR completion rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'A verified tactical APSR record and required evidence fields were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-apsr-annual',
-                        'label': 'Annual strategic APSR completion rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'A verified annual APSR record linked to Management Review was not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-apsr-components',
-                        'label': 'APSR four-component completeness rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'Verified Approach, Processes, Systems and Review checklist fields were not '
-                                   'supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-pdca-closure',
-                        'label': 'Criterion 7 PDCA closure rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'Verified linked evidence for Plan, Do, Check, Act and effectiveness was not '
-                                   'supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-attrition',
-                        'label': 'Student Attrition Rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'An approved cohort denominator, premature-exit rules and student-level source '
-                                   'mapping were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-progression',
-                        'label': 'Progression Rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'Approved horizontal and vertical progression rules, eligible population and source '
-                                   'mapping were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-graduation',
-                        'label': 'Graduation Rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'The cohort due to complete, adjusted timeframe rules and completion source mapping '
-                                   'were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-quality-passes',
-                        'label': 'Quality of Passes distribution',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'Examination Board-approved grade records, grade-band definitions and comparability '
-                                   'rules were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-employment',
-                        'label': 'Graduate Employment Rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'Graduate survey source, eligible population, response basis and employment '
-                                   'classification fields were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-teaching-satisfaction',
-                        'label': 'Teaching-quality satisfaction rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'Survey question mapping, satisfaction threshold, valid-response denominator and '
-                                   'response-coverage source were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-complaint-sla',
-                        'label': 'Complaint-resolution SLA compliance rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'Complaint source, SLA start/stop events, working-day rule, pause conditions and '
-                                   'exclusions were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-overall-satisfaction',
-                        'label': 'Overall student-satisfaction rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'Approved overall-satisfaction item and valid-response denominator were not '
-                                   'supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-liquidity',
-                        'label': 'Liquidity Ratio',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'Approved finance source fields for current assets and current liabilities at the '
-                                   'same reporting date were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-debt-equity',
-                        'label': 'Debt-Equity Ratio',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'Approved finance source fields for total liabilities and shareholders equity at '
-                                   'the same reporting date were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-cost-time-investment',
-                        'label': 'Cost savings, time savings and investments',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'The current operational source stores some savings fields but does not provide an '
-                                   'approved Criterion 7 population and separate validated units for all three '
-                                   'measures.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-staff-satisfaction',
-                        'label': 'Overall Staff Satisfaction Rate',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'Staff survey source, satisfaction threshold, eligible population and '
-                                   'response-coverage fields were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'},
-                       {'id': 'c711-training-hours',
-                        'label': 'Average Training Hours per Staff',
-                        'source': 'quality_performance',
-                        'mode': 'unsupported',
-                        'message': 'Training records, completed-hour rules and the active staff denominator including '
-                                   'part-time and academic staff were not supplied.',
-                        'unit': 'records',
-                        'evidence_level': 'unsupported'}]}}
+                        'message': 'The approved survey-cycle denominator and respondent matching '
+                                   'rules were not supplied.'},
+                       {'id': 'c243-onboarding-surveys',
+                        'label': 'Staff onboarding survey records',
+                        'source': 'staff_onboarding_survey',
+                        'mode': 'all'},
+                       {'id': 'c243-staff-surveys',
+                        'label': 'Staff survey records',
+                        'source': 'staff_survey',
+                        'mode': 'all'},
+                       {'id': 'c243-exit-surveys',
+                        'label': 'Exit interview survey records',
+                        'source': 'exit_interview_survey',
+                        'mode': 'all'}]}}
 
-QUESTION_REGISTRY = {'7.1.1': [{'id': 'q711-01',
-            'question': 'Which performance outcome records are available for Criterion 7 review?',
-            'metric_id': 'c711-outcomes',
-            'purpose': 'Establish the record population',
-            'requirement_reference': '7.1.1.1 and ARTEMIA Assessment',
-            'applicable_population': 'All readable Quality Performance Outcomes records within the selected filters',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Confirm the review population and investigate unexpected omissions',
-            'support_status': 'Can be implemented now',
-            'limitation': '',
-            'calculation_note': 'Count of readable outcome records. Record existence does not prove compliance.',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-02',
-            'question': 'Which outcome records lack a defined outcome domain?',
-            'metric_id': 'c711-missing-domain',
-            'purpose': 'Identify incomplete classification',
-            'requirement_reference': '7.1.1.1 and four outcome domains',
-            'applicable_population': 'All readable outcome records',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Assign the correct domain or remove an invalid record',
-            'support_status': 'Can be implemented now',
-            'limitation': '',
-            'calculation_note': 'Count records where the mapped category field is blank.',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-03',
-            'question': 'Which outcome records lack a KPI or indicator?',
-            'metric_id': 'c711-missing-indicator',
-            'purpose': 'Identify outcomes that cannot be measured',
-            'requirement_reference': '7.1.1.1 and ARTEMIA measurability',
-            'applicable_population': 'All readable outcome records',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Define a valid indicator and approved calculation basis',
-            'support_status': 'Can be implemented now',
-            'limitation': '',
-            'calculation_note': 'Count records where all mapped indicator fields are blank.',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-04',
-            'question': 'Which outcome records lack benchmark information?',
-            'metric_id': 'c711-missing-benchmark',
-            'purpose': 'Identify missing comparison basis',
-            'requirement_reference': '7.1.1.1(b)',
-            'applicable_population': 'All readable outcome records requiring a benchmark',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Obtain and validate an internal, external or approved proxy benchmark',
-            'support_status': 'Can be implemented now',
-            'limitation': '',
-            'calculation_note': 'Count records where all currently mapped benchmark fields are blank. Validation is '
-                                'assessed separately.',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-05',
-            'question': 'Which outcome records lack a measurable target?',
-            'metric_id': 'c711-missing-target',
-            'purpose': 'Identify missing target data',
-            'requirement_reference': '7.1.1.1(c)',
-            'applicable_population': 'All readable active outcome records requiring a target',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Establish a benchmark-based target and approval trail',
-            'support_status': 'Can be implemented now',
-            'limitation': '',
-            'calculation_note': 'Count records where all currently mapped target fields are blank.',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-06',
-            'question': 'Which outcome records lack an actual result?',
-            'metric_id': 'c711-missing-actual',
-            'purpose': 'Identify missing measurement results',
-            'requirement_reference': '7.1.1.1(d)',
-            'applicable_population': 'All readable outcome records',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Complete the required measurement or document why it cannot be assessed',
-            'support_status': 'Can be implemented now',
-            'limitation': '',
-            'calculation_note': 'Count records where all currently mapped actual-value fields are blank.',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-07',
-            'question': 'Which outcome records lack a measurement or review date?',
-            'metric_id': 'c711-missing-measurement-date',
-            'purpose': 'Identify incomplete reporting-period evidence',
-            'requirement_reference': '7.1.1.1(d)',
-            'applicable_population': 'All readable outcome records',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Record the applicable measurement date and reporting period',
-            'support_status': 'Can be implemented now',
-            'limitation': '',
-            'calculation_note': 'Count records where all currently mapped measurement-date fields are blank.',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-08',
-            'question': 'Which outcome records lack an accountable owner?',
-            'metric_id': 'c711-missing-owner',
-            'purpose': 'Identify accountability gaps',
-            'requirement_reference': 'Responsibilities and 7.1.1.1',
-            'applicable_population': 'All readable outcome records',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Assign an accountable owner',
-            'support_status': 'Can be implemented now',
-            'limitation': '',
-            'calculation_note': 'Count records where the owner field is blank.',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-09',
-            'question': 'How many outcome records contain all currently mapped core fields?',
-            'metric_id': 'c711-core-field-complete',
-            'purpose': 'Assess current data readiness without overstating compliance',
-            'requirement_reference': '7.1.1.1',
-            'applicable_population': 'All readable outcome records',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Prioritise incomplete records before management review',
-            'support_status': 'Can be implemented now',
-            'limitation': 'This is a partial mapped-field check and does not prove ARTEMIA, benchmark or target validity.',
-            'calculation_note': 'Count records with category, indicator, benchmark, target, actual, date and owner '
-                                'populated.',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-10',
-            'question': 'Are all four required outcome domains represented in the register?',
-            'metric_id': 'c711-domain-coverage',
-            'purpose': 'Check domain coverage',
-            'requirement_reference': '7.1.1.1 and Appendix C',
-            'applicable_population': 'The four required domains',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Create or correct outcome records for missing domains',
-            'support_status': 'Can be implemented with revised mapping',
-            'limitation': 'Coverage depends on consistent category text and does not prove named-indicator coverage.',
-            'calculation_note': 'Count distinct required domains represented by the mapped category field. Denominator is '
-                                'four domains.',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-11',
-            'question': 'Which required named indicators lack an active approved outcome record?',
-            'metric_id': 'c711-indicator-coverage',
-            'purpose': 'Check required indicator coverage',
-            'requirement_reference': 'Appendix C and Appendix D',
-            'applicable_population': 'The 13 named institutional indicators',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Create, approve or correct missing indicator records',
-            'support_status': 'Requires an additional field',
-            'limitation': 'An approved indicator registry, active status and duplicate-control rule are required.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-12',
-            'question': 'Which outcome records satisfy all ARTEMIA selection criteria?',
-            'metric_id': 'c711-artemia-compliance',
-            'purpose': 'Validate outcome selection governance',
-            'requirement_reference': 'ARTEMIA Assessment',
-            'applicable_population': 'All active in-scope outcome records',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Approve, revise or retire outcomes based on complete ARTEMIA evidence',
-            'support_status': 'Requires an additional field',
-            'limitation': 'The supplied metadata does not contain verified fields for all seven ARTEMIA selection criteria.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-13',
-            'question': 'Which benchmarks have complete validation evidence?',
-            'metric_id': 'c711-benchmark-validation',
-            'purpose': 'Validate benchmark quality',
-            'requirement_reference': '7.1.1.1(b), Appendix E',
-            'applicable_population': 'All outcomes requiring a benchmark',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Approve, replace or revalidate benchmarks',
-            'support_status': 'Requires an additional field',
-            'limitation': 'Verified fields for benchmark origin, source evidence, relevance, credibility, currency and '
-                          'applicability were not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-14',
-            'question': 'Which internal or proxy benchmarks lack a documented substitution rationale?',
-            'metric_id': 'c711-proxy-rationale',
-            'purpose': 'Control benchmark substitution',
-            'requirement_reference': 'Appendix E benchmark application rules',
-            'applicable_population': 'Outcomes using internal or proxy benchmarks because external data is unavailable',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Document the rationale or obtain a suitable external benchmark',
-            'support_status': 'Requires an additional field',
-            'limitation': 'A verified proxy-benchmark flag and substitution-rationale field were not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-15',
-            'question': 'Which targets have a valid benchmark, method, direction and review cycle?',
-            'metric_id': 'c711-target-validity',
-            'purpose': 'Validate target-setting governance',
-            'requirement_reference': '7.1.1.1(c), Appendix E',
-            'applicable_population': 'All active outcomes requiring a target',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Approve, revise or withdraw invalid targets',
-            'support_status': 'Requires an additional field',
-            'limitation': 'Verified fields for benchmark linkage, calculation method, direction, approval and review cycle '
-                          'were not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-16',
-            'question': 'Which targets are overdue for review or adjustment?',
-            'metric_id': 'c711-target-review',
-            'purpose': 'Monitor target review cycles',
-            'requirement_reference': 'Appendix E target review requirements',
-            'applicable_population': 'All active targets due for quarterly, annual or biennial review under the approved '
-                                     'rule',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Complete review and record approval or justification',
-            'support_status': 'Requires an additional field',
-            'limitation': 'Verified target review history and adjustment-cycle fields were not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-17',
-            'question': 'Which due measurements are complete, overdue or cannot be assessed?',
-            'metric_id': 'c711-measurement-completion',
-            'purpose': 'Monitor measurement completion',
-            'requirement_reference': '7.1.1.1(d)',
-            'applicable_population': 'Outcomes due for measurement in the selected period',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Complete overdue measurements and resolve missing source evidence',
-            'support_status': 'Requires an additional field',
-            'limitation': 'A due-measurement population, required frequency and approved calculation/source-evidence fields '
-                          'were not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-18',
-            'question': 'Which outcomes meet their approved target after applying the correct direction or range rule?',
-            'metric_id': 'c711-target-achievement',
-            'purpose': 'Assess target achievement defensibly',
-            'requirement_reference': '7.1.1.1(d)',
-            'applicable_population': 'Outcomes with valid actual, target, unit, period, population and direction',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Indicator-specific higher, lower, range or distribution rule',
-            'management_decision': 'Confirm achievement or require action',
-            'support_status': 'Requires an additional field',
-            'limitation': 'Indicator direction, unit compatibility, period, population and range rules were not supplied. A '
-                          'universal greater-than-or-equal comparison is prohibited.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-19',
-            'question': 'Which outcomes are below expectation after applying the approved comparison rule?',
-            'metric_id': 'c711-below-target',
-            'purpose': 'Identify performance gaps',
-            'requirement_reference': '7.1.1.1(d)',
-            'applicable_population': 'Outcomes with valid comparison data',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Indicator-specific',
-            'management_decision': 'Initiate gap analysis and corrective or preventive action',
-            'support_status': 'Requires an additional field',
-            'limitation': 'The approved direction or range rule is unavailable, so below-target status cannot be calculated '
-                          'defensibly.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-20',
-            'question': 'Which below-target outcomes lack a linked Quality Action?',
-            'metric_id': 'c711-action-linkage',
-            'purpose': 'Ensure action linkage',
-            'requirement_reference': '7.1.1.1(d) and Appendix A',
-            'applicable_population': 'All below-target outcomes requiring action',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Create and approve a linked Quality Action',
-            'support_status': 'Requires an additional field',
-            'limitation': 'No verified relationship field linking a Quality Action to a specific outcome gap was supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-21',
-            'question': 'Which performance gaps lack documented root cause analysis?',
-            'metric_id': 'c711-root-cause',
-            'purpose': 'Ensure gap investigation',
-            'requirement_reference': 'ARTEMIA Execution and Mitigation',
-            'applicable_population': 'All confirmed performance gaps requiring investigation',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Complete root cause analysis before finalising action',
-            'support_status': 'Requires an additional field',
-            'limitation': 'No verified outcome-gap root-cause field or child table was supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-22',
-            'question': 'Which linked corrective actions are completed but not verified effective?',
-            'metric_id': 'c711-action-effectiveness',
-            'purpose': 'Verify improvement effectiveness',
-            'requirement_reference': '7.1.1.1(e), Appendix A',
-            'applicable_population': 'Actions linked to outcome gaps and due for effectiveness verification',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Verify, reopen or revise ineffective actions',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'Completed status does not prove effectiveness. Post-action measurement and effectiveness '
-                          'criteria were not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-23',
-            'question': 'Which outcomes have a valid three-year trend or an approved interim treatment?',
-            'metric_id': 'c711-three-year-trend',
-            'purpose': 'Validate trend sufficiency',
-            'requirement_reference': '7.1.1.1(e), Appendix D and E',
-            'applicable_population': 'All active outcomes requiring trend analysis',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Obtain missing periods or approve and disclose interim treatment',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'A verified trend-history child table with three consecutive years and interim-treatment evidence '
-                          'was not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-24',
-            'question': 'Which outcome trends are declining, unstable or cannot be assessed?',
-            'metric_id': 'c711-trend-anomaly',
-            'purpose': 'Direct management attention to adverse patterns',
-            'requirement_reference': 'Appendix D trend requirements',
-            'applicable_population': 'Outcomes with sufficient validated time-series data',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Indicator-specific',
-            'management_decision': 'Investigate causes and adjust strategies',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'Approved trend direction, method and anomaly thresholds were not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-25',
-            'question': 'Which outcomes lack complete stakeholder dissemination evidence?',
-            'metric_id': 'c711-dissemination',
-            'purpose': 'Verify transparent stakeholder access',
-            'requirement_reference': '7.1.1.2',
-            'applicable_population': 'Outcomes due for dissemination in the selected period',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Complete dissemination and capture stakeholder feedback',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'A verified dissemination log, stakeholder groups, channel, format and frequency fields were not '
-                          'supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-26',
-            'question': 'Which monthly departmental APSR reviews are missing, late or incomplete?',
-            'metric_id': 'c711-apsr-monthly',
-            'purpose': 'Monitor operational APSR',
-            'requirement_reference': '7.1.1.3 APSR Review Requirements',
-            'applicable_population': 'Required department-month reviews in the Quality Calendar',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Complete overdue reviews and raise actions',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'A verified APSR record or Quality Calendar mapping for department-month reviews was not '
-                          'supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-27',
-            'question': 'Were the required biannual cross-department APSR reviews completed with evidence and actions?',
-            'metric_id': 'c711-apsr-biannual',
-            'purpose': 'Monitor tactical APSR',
-            'requirement_reference': '7.1.1.3 APSR Review Requirements',
-            'applicable_population': 'Two required tactical reviews per reporting year',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Complete the review and record findings and actions',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'A verified tactical APSR record and required evidence fields were not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-28',
-            'question': 'Was the annual strategic APSR review completed during Management Review?',
-            'metric_id': 'c711-apsr-annual',
-            'purpose': 'Monitor strategic APSR',
-            'requirement_reference': '7.1.1.3 APSR Review Requirements',
-            'applicable_population': 'One annual strategic review per reporting year',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Complete or evidence the strategic review and Principal approval',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'A verified annual APSR record linked to Management Review was not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-29',
-            'question': 'Did each APSR review assess Approach, Processes, Systems and Review?',
-            'metric_id': 'c711-apsr-components',
-            'purpose': 'Verify APSR method completeness',
-            'requirement_reference': '7.1.1.3 APSR Method',
-            'applicable_population': 'All completed APSR reviews',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Complete missing components before closure',
-            'support_status': 'Requires an additional field',
-            'limitation': 'Verified Approach, Processes, Systems and Review checklist fields were not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-30',
-            'question': 'Which Criterion 7 improvement cycles have not closed the PDCA loop?',
-            'metric_id': 'c711-pdca-closure',
-            'purpose': 'Verify closed-loop improvement',
-            'requirement_reference': '7.1.1.3 and PDCA Alignment',
-            'applicable_population': 'Criterion 7 findings and actions due for closure',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Complete Act-stage changes and verify effectiveness',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'Verified linked evidence for Plan, Do, Check, Act and effectiveness was not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-31',
-            'question': 'What is the Student Attrition Rate by approved programme, cohort and reporting period?',
-            'metric_id': 'c711-attrition',
-            'purpose': 'Measure the required named institutional indicator',
-            'requirement_reference': 'Appendix C and D: Student and Graduate Outcomes',
-            'applicable_population': 'Approved population defined for the indicator',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Indicator-specific',
-            'management_decision': 'Review retention risk and interventions',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'An approved cohort denominator, premature-exit rules and student-level source mapping were not '
-                          'supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-32',
-            'question': 'What is the Progression Rate by approved programme, cohort and level?',
-            'metric_id': 'c711-progression',
-            'purpose': 'Measure the required named institutional indicator',
-            'requirement_reference': 'Appendix C and D: Student and Graduate Outcomes',
-            'applicable_population': 'Approved population defined for the indicator',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Indicator-specific',
-            'management_decision': 'Review progression barriers and support',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'Approved horizontal and vertical progression rules, eligible population and source mapping were '
-                          'not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-33',
-            'question': 'What is the Graduation Rate for cohorts due to complete?',
-            'metric_id': 'c711-graduation',
-            'purpose': 'Measure the required named institutional indicator',
-            'requirement_reference': 'Appendix C and D: Student and Graduate Outcomes',
-            'applicable_population': 'Approved population defined for the indicator',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Indicator-specific',
-            'management_decision': 'Review completion performance',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'The cohort due to complete, adjusted timeframe rules and completion source mapping were not '
-                          'supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-34',
-            'question': 'What is the distribution and trend of Quality of Passes?',
-            'metric_id': 'c711-quality-passes',
-            'purpose': 'Measure the required named institutional indicator',
-            'requirement_reference': 'Appendix C and D: Student and Graduate Outcomes',
-            'applicable_population': 'Approved population defined for the indicator',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Indicator-specific',
-            'management_decision': 'Review grade quality and assessment consistency',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'Examination Board-approved grade records, grade-band definitions and comparability rules were '
-                          'not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-35',
-            'question': 'What is the Graduate Employment Rate within the approved post-completion period?',
-            'metric_id': 'c711-employment',
-            'purpose': 'Measure the required named institutional indicator',
-            'requirement_reference': 'Appendix C and D: Student and Graduate Outcomes',
-            'applicable_population': 'Approved population defined for the indicator',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Indicator-specific',
-            'management_decision': 'Review programme relevance and employability',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'Graduate survey source, eligible population, response basis and employment classification fields '
-                          'were not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-36',
-            'question': 'What is the Student Satisfaction Rate for teaching quality, with response coverage?',
-            'metric_id': 'c711-teaching-satisfaction',
-            'purpose': 'Measure the required named institutional indicator',
-            'requirement_reference': 'Appendix C and D: Service Quality Outcomes',
-            'applicable_population': 'Approved population defined for the indicator',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Indicator-specific',
-            'management_decision': 'Review teaching quality',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'Survey question mapping, satisfaction threshold, valid-response denominator and '
-                          'response-coverage source were not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-37',
-            'question': 'What is the Complaint Resolution SLA compliance rate?',
-            'metric_id': 'c711-complaint-sla',
-            'purpose': 'Measure the required named institutional indicator',
-            'requirement_reference': 'Appendix C and D: Service Quality Outcomes',
-            'applicable_population': 'Approved population defined for the indicator',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Indicator-specific',
-            'management_decision': 'Review complaint-handling timeliness',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'Complaint source, SLA start/stop events, working-day rule, pause conditions and exclusions were '
-                          'not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-38',
-            'question': 'What is the Overall Student Satisfaction Rate, with response coverage?',
-            'metric_id': 'c711-overall-satisfaction',
-            'purpose': 'Measure the required named institutional indicator',
-            'requirement_reference': 'Appendix C and D: Service Quality Outcomes',
-            'applicable_population': 'Approved population defined for the indicator',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Indicator-specific',
-            'management_decision': 'Review the student experience',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'Approved overall-satisfaction item and valid-response denominator were not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-39',
-            'question': 'What is the Liquidity Ratio for the approved reporting date?',
-            'metric_id': 'c711-liquidity',
-            'purpose': 'Measure the required named institutional indicator',
-            'requirement_reference': 'Appendix C and D: Operational Outcomes',
-            'applicable_population': 'Approved population defined for the indicator',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Indicator-specific',
-            'management_decision': 'Review short-term financial resilience',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'Approved finance source fields for current assets and current liabilities at the same reporting '
-                          'date were not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-40',
-            'question': 'What is the Debt-Equity Ratio for the approved reporting date?',
-            'metric_id': 'c711-debt-equity',
-            'purpose': 'Measure the required named institutional indicator',
-            'requirement_reference': 'Appendix C and D: Operational Outcomes',
-            'applicable_population': 'Approved population defined for the indicator',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Indicator-specific',
-            'management_decision': 'Review leverage and long-term sustainability',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'Approved finance source fields for total liabilities and shareholders equity at the same '
-                          'reporting date were not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-41',
-            'question': 'What cost savings, time savings and resource investments were achieved, reported separately?',
-            'metric_id': 'c711-cost-time-investment',
-            'purpose': 'Measure the required named institutional indicator',
-            'requirement_reference': 'Appendix C and D: Operational Outcomes',
-            'applicable_population': 'Approved population defined for the indicator',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Indicator-specific',
-            'management_decision': 'Review operational efficiency and investment',
-            'support_status': 'Can be implemented with revised mapping',
-            'limitation': 'The current operational source stores some savings fields but does not provide an approved '
-                          'Criterion 7 population and separate validated units for all three measures.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-42',
-            'question': 'What is the Overall Staff Satisfaction Rate, with response coverage?',
-            'metric_id': 'c711-staff-satisfaction',
-            'purpose': 'Measure the required named institutional indicator',
-            'requirement_reference': 'Appendix C and D: People Development Outcomes',
-            'applicable_population': 'Approved population defined for the indicator',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Indicator-specific',
-            'management_decision': 'Review engagement and workplace conditions',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'Staff survey source, satisfaction threshold, eligible population and response-coverage fields '
-                          'were not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-43',
-            'question': 'What are the average completed training hours per in-scope staff member?',
-            'metric_id': 'c711-training-hours',
-            'purpose': 'Measure the required named institutional indicator',
-            'requirement_reference': 'Appendix C and D: People Development Outcomes',
-            'applicable_population': 'Approved population defined for the indicator',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Indicator-specific',
-            'management_decision': 'Review workforce development',
-            'support_status': 'Requires a new DocType or child-table query',
-            'limitation': 'Training records, completed-hour rules and the active staff denominator including part-time and '
-                          'academic staff were not supplied.',
-            'calculation_note': '',
-            'source_key': 'quality_performance'},
-           {'id': 'q711-44',
-            'question': 'Are Quality Goal records available to support KPI and Quality Objective Plan governance?',
-            'metric_id': 'c711-quality-goals',
-            'purpose': 'Confirm the verified KPI source is accessible',
-            'requirement_reference': 'Definitions: KPI and Quality Objective Plan refer to Quality Goal',
-            'applicable_population': 'Readable Quality Goal records',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Map verified fields before using Quality Goal data as performance evidence',
-            'support_status': 'Can be implemented now',
-            'limitation': 'Record existence alone does not prove KPI definition, approval or alignment.',
-            'calculation_note': 'Permission-aware count of readable Quality Goal records.',
-            'source_key': 'quality_goal'},
-           {'id': 'q711-45',
-            'question': 'Is Criterion 7 review and dissemination evidence specifically linked in Quality Meeting and '
-                        'Management Review records?',
-            'metric_id': None,
-            'purpose': 'Verify review evidence linkage',
-            'requirement_reference': '7.1.1.2 and 7.1.1.3',
-            'applicable_population': 'Criterion 7 review and dissemination events',
-            'reporting_period': 'Selected reporting period',
-            'target_direction': 'Not applicable',
-            'management_decision': 'Add or verify Criterion 7 linkage fields before counting meetings as evidence',
-            'support_status': 'Requires an additional field',
-            'limitation': 'Current meeting and review counts cannot establish Criterion 7 content, period, stakeholders or '
-                          'APSR completeness.',
-            'calculation_note': '',
-            'source_key': None}]}
+QUESTION_REGISTRY = {'2.1.1': [{'id': 'q211-1', 'question': 'How many employees are active?', 'metric_id': 'c211-active-employees'},
+           {'id': 'q211-2', 'question': 'How many job requisitions are open?', 'metric_id': 'c211-open-requisitions'},
+           {'id': 'q211-3',
+            'question': 'How many applicants are selected or accepted?',
+            'metric_id': 'c211-selected-applicants'},
+           {'id': 'q211-4',
+            'question': 'How many employee onboardings are completed?',
+            'metric_id': 'c211-completed-onboardings'}],
+ '2.1.2': [{'id': 'q212-1',
+            'question': 'How many training events are completed?',
+            'metric_id': 'c212-completed-events'},
+           {'id': 'q212-2',
+            'question': 'How many training needs analyses have been reviewed?',
+            'metric_id': 'c212-approved-tna'},
+           {'id': 'q212-3',
+            'question': 'What is the average training feedback rating?',
+            'metric_id': 'c212-feedback-rating'},
+           {'id': 'q212-4',
+            'question': 'How many training results are completed or passed?',
+            'metric_id': 'c212-completed-results'}],
+ '2.2.1': [{'id': 'q221-1', 'question': 'How many stakeholders are recorded?', 'metric_id': 'c221-stakeholders'},
+           {'id': 'q221-2',
+            'question': 'How many communication materials are approved?',
+            'metric_id': 'c221-approved-materials'},
+           {'id': 'q221-3',
+            'question': 'How many communication approvals are pending?',
+            'metric_id': 'c221-pending-materials'},
+           {'id': 'q221-4',
+            'question': 'How many Essential Information records are overdue for review?',
+            'metric_id': 'c221-overdue-info-review'}],
+ '2.3.1': [{'id': 'q231-1',
+            'question': 'How many controlled documents are current or approved?',
+            'metric_id': 'c231-current-documents'},
+           {'id': 'q231-2', 'question': 'How many document reviews are overdue?', 'metric_id': 'c231-overdue-reviews'},
+           {'id': 'q231-3',
+            'question': 'How many Quality Performance Outcomes are recorded?',
+            'metric_id': 'c231-performance-outcomes'},
+           {'id': 'q231-4',
+            'question': 'How many data-related Quality Actions are in scope?',
+            'metric_id': 'c231-quality-actions'}],
+ '2.3.2': [{'id': 'q232-1',
+            'question': 'How many knowledge documents are approved or current?',
+            'metric_id': 'c232-approved'},
+           {'id': 'q232-2', 'question': 'How many documents are obsolete or archived?', 'metric_id': 'c232-obsolete'},
+           {'id': 'q232-3',
+            'question': 'How many knowledge documents are overdue for review?',
+            'metric_id': 'c232-overdue'},
+           {'id': 'q232-4',
+            'question': 'How many knowledge-improvement Quality Actions are in scope?',
+            'metric_id': 'c232-actions'}],
+ '2.4.1': [{'id': 'q241-1', 'question': 'How many feedback tickets are open?', 'metric_id': 'c241-open-tickets'},
+           {'id': 'q241-2',
+            'question': 'How many feedback tickets are closed or resolved?',
+            'metric_id': 'c241-closed-tickets'},
+           {'id': 'q241-3', 'question': 'How many feedback tickets failed SLA?', 'metric_id': 'c241-sla-failed'},
+           {'id': 'q241-4',
+            'question': 'How many feedback-related Quality Actions are recorded?',
+            'metric_id': 'c241-quality-actions'}],
+ '2.4.2': [{'id': 'q242-1',
+            'question': 'How many student satisfaction responses are recorded?',
+            'metric_id': 'c242-responses'},
+           {'id': 'q242-2', 'question': 'How many student responses are completed?', 'metric_id': 'c242-completed'},
+           {'id': 'q242-3', 'question': 'What is the average student satisfaction score?', 'metric_id': 'c242-rating'}],
+ '2.4.3': [{'id': 'q243-1',
+            'question': 'How many staff satisfaction responses are recorded?',
+            'metric_id': 'c243-responses'},
+           {'id': 'q243-2', 'question': 'How many staff responses are completed?', 'metric_id': 'c243-completed'},
+           {'id': 'q243-3', 'question': 'What is the average staff satisfaction score?', 'metric_id': 'c243-rating'}]}
 
-EXCEPTION_METRIC_IDS = ['c711-missing-domain',
- 'c711-missing-indicator',
- 'c711-missing-benchmark',
- 'c711-missing-target',
- 'c711-missing-actual',
- 'c711-missing-measurement-date',
- 'c711-missing-owner',
- 'c711-indicator-coverage',
- 'c711-benchmark-validation',
- 'c711-target-validity',
- 'c711-measurement-completion',
- 'c711-below-target',
- 'c711-action-linkage',
- 'c711-action-effectiveness',
- 'c711-three-year-trend',
- 'c711-dissemination',
- 'c711-apsr-monthly',
- 'c711-apsr-biannual',
- 'c711-apsr-annual',
- 'c711-pdca-closure']
+EXCEPTION_METRIC_IDS = ['c211-open-requisitions',
+ 'c211-competency-threshold',
+ 'c212-training-coverage',
+ 'c221-pending-materials',
+ 'c221-overdue-info-review',
+ 'c231-overdue-reviews',
+ 'c231-data-quality',
+ 'c232-obsolete',
+ 'c232-overdue',
+ 'c232-disposal',
+ 'c241-open-tickets',
+ 'c241-sla-failed',
+ 'c241-priority-matrix',
+ 'c242-coverage',
+ 'c243-coverage']
 
-STANDARD_FIELDS = ["name", "owner", "creation", "modified", "modified_by", "docstatus", "idx"]
-
+STANDARD_FIELDS = [
+    "name", "owner", "creation", "modified", "modified_by", "docstatus", "idx"
+]
 
 def clean_text(value):
     if value is None:
         return ""
     return str(value).strip()
 
-
 def lower_text(value):
     return clean_text(value).lower()
-
 
 def is_truthy(value):
     if value in [None, "", 0, "0", False]:
@@ -1205,39 +988,112 @@ def is_truthy(value):
         return False
     return True
 
-
 def to_number(value):
     try:
         if value in [None, ""]:
             return None
-        return float(clean_text(value).replace(",", "").replace("SGD", "").replace("$", ""))
+        return float(value)
     except Exception:
         return None
 
-
 def is_permission_error(error):
     text = lower_text(error)
-    return "permission" in text or "not permitted" in text or "not allowed" in text or "403" in text
+    return (
+        "permission" in text
+        or "not permitted" in text
+        or "not allowed" in text
+    )
 
+def resolve_source(alias):
+    candidates = SOURCE_CANDIDATES.get(alias) or []
+    attempts = []
 
-def display_doctype(doctype):
-    return SOURCE_DISPLAY_NAMES.get(doctype) or doctype or "Source"
+    for candidate_index in range(len(candidates)):
+        doctype = candidates[candidate_index]
+        attempt = {
+            "doctype": doctype,
+            "status": "checking",
+            "stage": "metadata",
+            "message": ""
+        }
 
+        try:
+            frappe.get_meta(doctype)
+            attempt["metadata"] = "available"
+        except Exception as error:
+            attempt["status"] = "unavailable"
+            attempt["message"] = clean_text(error)
+            attempts.append(attempt)
+            continue
 
+        try:
+            # A permission-aware get_list is the runtime source probe. If a
+            # candidate is stale or its table is unavailable, continue to the
+            # next approved candidate instead of stopping the whole section.
+            rows = frappe.get_list(
+                doctype,
+                fields=["name"],
+                limit_start=0,
+                limit_page_length=row_limit,
+                order_by="modified desc"
+            ) or []
+            attempt["stage"] = "list"
+            attempt["status"] = "available"
+            attempt["message"] = "Readable by the signed-in user."
+            attempts.append(attempt)
+            return {
+                "key": alias,
+                "doctype": doctype,
+                "candidates": candidates,
+                "status": "available",
+                "count": len(rows),
+                "truncated": len(rows) >= row_limit,
+                "probe": "frappe.get_list",
+                "fallback_used": candidate_index > 0,
+                "resolution_attempts": attempts
+            }
+        except Exception as error:
+            message = clean_text(error)
+            attempt["stage"] = "list"
+            attempt["status"] = "permission_denied" if is_permission_error(error) else "unavailable"
+            attempt["message"] = message
+            attempts.append(attempt)
+            if is_permission_error(error):
+                return {
+                    "key": alias,
+                    "doctype": doctype,
+                    "candidates": candidates,
+                    "status": "permission_denied",
+                    "count": 0,
+                    "message": message,
+                    "probe": "frappe.get_list",
+                    "fallback_used": False,
+                    "resolution_attempts": attempts
+                }
+            continue
+
+    return {
+        "key": alias,
+        "doctype": None,
+        "candidates": candidates,
+        "status": "unavailable",
+        "count": 0,
+        "message": "No approved candidate DocType could be resolved. Open Source Mapping Report for the candidate-level errors.",
+        "metadata_errors": attempts,
+        "resolution_attempts": attempts,
+        "fallback_used": False
+    }
 def get_meta(doctype):
     try:
         return frappe.get_meta(doctype)
     except Exception:
         return None
 
-
 def field_exists(meta, fieldname):
     if not fieldname:
         return False
     if fieldname in STANDARD_FIELDS:
         return True
-    if not meta:
-        return False
     try:
         for meta_field in meta.fields or []:
             if meta_field.fieldname == fieldname:
@@ -1249,7 +1105,6 @@ def field_exists(meta, fieldname):
     except Exception:
         return False
 
-
 def resolve_field(doctype, candidates):
     meta = get_meta(doctype)
     if not meta:
@@ -1258,7 +1113,6 @@ def resolve_field(doctype, candidates):
         if field_exists(meta, fieldname):
             return fieldname
     return ""
-
 
 def resolve_field_groups(doctype, groups):
     resolved = []
@@ -1269,533 +1123,434 @@ def resolve_field_groups(doctype, groups):
             resolved.append(fieldname)
         else:
             missing.append(candidates)
-    return {"resolved": resolved, "missing": missing}
+    return resolved, missing
 
+def applied_filters(doctype):
+    meta = get_meta(doctype)
+    output = {}
+    if not meta:
+        return output
+    for filter_key in FILTER_FIELD_CANDIDATES:
+        requested = filters.get(filter_key)
+        if requested in [None, "", "All", "all"]:
+            continue
+        for candidate in FILTER_FIELD_CANDIDATES.get(filter_key) or []:
+            if field_exists(meta, candidate):
+                output[candidate] = requested
+                break
+    return output
 
 def safe_fields(doctype, fields):
     meta = get_meta(doctype)
     output = []
     if not meta:
         return output
-    for fieldname in fields or []:
+    for fieldname in fields:
         if fieldname not in output and field_exists(meta, fieldname):
             output.append(fieldname)
     if "name" not in output:
         output.insert(0, "name")
     return output
 
-
-def resolve_source(alias):
-    candidates = SOURCE_CANDIDATES.get(alias) or []
-    attempts = []
-    for candidate_index in range(len(candidates)):
-        doctype = candidates[candidate_index]
-        attempt = {"doctype": doctype, "display_doctype": display_doctype(doctype), "status": "checking", "stage": "existence", "message": ""}
-        try:
-            if not frappe.db.exists("DocType", doctype):
-                attempt["status"] = "unavailable"
-                attempt["message"] = "DocType is not installed on this site."
-                attempts.append(attempt)
-                continue
-        except Exception as error:
-            attempt["status"] = "unavailable"
-            attempt["message"] = clean_text(error)
-            attempts.append(attempt)
-            continue
-        try:
-            frappe.get_meta(doctype)
-            attempt["stage"] = "metadata"
-        except Exception as error:
-            attempt["status"] = "unavailable"
-            attempt["stage"] = "metadata"
-            attempt["message"] = clean_text(error)
-            attempts.append(attempt)
-            continue
-        try:
-            frappe.get_list(doctype, fields=["name"], limit_start=0, limit_page_length=1, order_by="modified desc")
-            attempt["status"] = "available"
-            attempt["stage"] = "list"
-            attempt["message"] = "Readable by the signed-in user. Source count is not inferred from the probe."
-            attempts.append(attempt)
-            return {
-                "key": alias, "doctype": doctype, "display_doctype": display_doctype(doctype),
-                "candidates": candidates, "status": "available", "count": None,
-                "count_note": "Availability probe only. Use metrics for filtered counts.",
-                "probe": "frappe.get_list", "fallback_used": candidate_index > 0,
-                "resolution_attempts": attempts,
-            }
-        except Exception as error:
-            message = clean_text(error)
-            attempt["stage"] = "list"
-            attempt["status"] = "permission_denied" if is_permission_error(error) else "unavailable"
-            attempt["message"] = message
-            attempts.append(attempt)
-            if is_permission_error(error):
-                return {
-                    "key": alias, "doctype": doctype, "display_doctype": display_doctype(doctype),
-                    "candidates": candidates, "status": "permission_denied", "count": None,
-                    "message": message, "probe": "frappe.get_list", "fallback_used": False,
-                    "resolution_attempts": attempts,
-                }
-    expected = candidates[0] if candidates else None
-    return {
-        "key": alias, "doctype": expected, "display_doctype": display_doctype(expected),
-        "candidates": candidates, "status": "unavailable", "count": None,
-        "message": "No approved backend DocType could be resolved.",
-        "resolution_attempts": attempts, "fallback_used": False,
-    }
-
-
-def source_filter_details(alias, doctype):
-    applied = {}
-    resolved = []
-    unresolved = []
-    field_map = FILTER_FIELD_CANDIDATES.get(alias) or {}
-    requested_status = filters.get("status")
-    if requested_status not in [None, "", "All", "all"]:
-        status_field = resolve_field(doctype, field_map.get("status") or [])
-        if status_field:
-            applied[status_field] = requested_status
-            resolved.append({"filter": "status", "field": status_field, "value": requested_status})
-        else:
-            unresolved.append({"filter": "status", "reason": "No verified status field is mapped for this source."})
-    requested_year = filters.get("review_year") or filters.get("year") or filters.get("monitoring_year")
-    requested_month = filters.get("month")
-    if requested_year:
-        year_field = resolve_field(doctype, field_map.get("year_value") or [])
-        if year_field:
-            applied[year_field] = requested_year
-            resolved.append({"filter": "year", "field": year_field, "value": requested_year})
-        else:
-            date_field = resolve_field(doctype, field_map.get("year_date") or [])
-            if date_field:
-                start_date = clean_text(requested_year) + "-01-01"
-                end_date = clean_text(requested_year) + "-12-31"
-                if requested_month:
-                    try:
-                        month_number = int(requested_month)
-                        if month_number >= 1 and month_number <= 12:
-                            start_date = "%s-%02d-01" % (clean_text(requested_year), month_number)
-                            if month_number == 12:
-                                end_date = "%s-12-31" % clean_text(requested_year)
-                            else:
-                                end_date = frappe.utils.add_days("%s-%02d-01" % (clean_text(requested_year), month_number + 1), -1)
-                    except Exception:
-                        pass
-                applied[date_field] = ["between", [start_date, end_date]]
-                resolved.append({"filter": "year", "field": date_field, "value": requested_year})
-                if requested_month:
-                    resolved.append({"filter": "month", "field": date_field, "value": requested_month})
-            else:
-                unresolved.append({"filter": "year", "reason": "No verified year or date field is mapped for this source."})
-    elif requested_month:
-        unresolved.append({"filter": "month", "reason": "A year is required before a month filter can be applied."})
-    requested_category = filters.get("outcome_category")
-    if requested_category not in [None, "", "All", "all"]:
-        category_field = resolve_field(doctype, field_map.get("outcome_category") or [])
-        if category_field:
-            applied[category_field] = requested_category
-            resolved.append({"filter": "outcome_category", "field": category_field, "value": requested_category})
-        else:
-            unresolved.append({"filter": "outcome_category", "reason": "This source has no verified outcome-category field."})
-    requested_department = filters.get("department")
-    if requested_department not in [None, "", "All", "all"]:
-        department_field = resolve_field(doctype, field_map.get("department") or [])
-        if department_field:
-            applied[department_field] = requested_department
-            resolved.append({"filter": "department", "field": department_field, "value": requested_department})
-        else:
-            unresolved.append({"filter": "department", "reason": "This source has no verified department field."})
-    return {"applied": applied, "resolved": resolved, "unresolved": unresolved}
-
-
-filter_diagnostics = {}
-fetch_diagnostics = {}
-
-
 def fetch_rows(source, requested_fields=None):
     doctype = source.get("doctype")
-    alias = source.get("key")
     if source.get("status") != "available" or not doctype:
-        return {"status": source.get("status") or "unavailable", "rows": [], "message": source.get("message") or "Source is unavailable.", "truncated": False}
+        return []
     fields_to_fetch = safe_fields(doctype, ["name"] + (requested_fields or []))
-    filter_result = source_filter_details(alias, doctype)
-    filter_diagnostics[alias] = {
-        "source": alias, "doctype": doctype, "display_doctype": display_doctype(doctype),
-        "applied": filter_result.get("resolved") or [], "unresolved": filter_result.get("unresolved") or [],
-    }
     try:
         rows = frappe.get_list(
-            doctype, fields=fields_to_fetch, filters=filter_result.get("applied") or {},
-            limit_page_length=row_limit + 1, order_by="modified desc"
+            doctype,
+            fields=fields_to_fetch,
+            filters=applied_filters(doctype),
+            limit_page_length=row_limit + 1,
+            order_by="modified desc"
         ) or []
         truncated = len(rows) > row_limit
         if truncated:
             rows = rows[:row_limit]
-        result = {"status": "available", "rows": rows, "message": "", "truncated": truncated}
-        fetch_diagnostics[alias] = result
-        return result
+        source["truncated"] = truncated
+        source["count"] = len(rows)
+        source.pop("fetch_error", None)
+        source.pop("fetch_status", None)
+        return rows
     except Exception as error:
-        status = "permission_denied" if is_permission_error(error) else "query_error"
-        result = {"status": status, "rows": [], "message": clean_text(error), "truncated": False}
-        fetch_diagnostics[alias] = result
-        return result
+        source["fetch_error"] = clean_text(error)
+        source["fetch_status"] = "permission_denied" if is_permission_error(error) else "query_error"
+        return []
 
 
-def compare(row, fieldname, mode, expected=None, values=None):
+def compare(row, fieldname, op, expected=None, values=None, days=None):
     value = row.get(fieldname) if fieldname else None
-    if mode == "truthy":
+    if op == "truthy":
         return is_truthy(value)
-    if mode == "falsy":
+    if op == "falsy":
         return not is_truthy(value)
-    if mode == "not_in":
-        blocked = []
-        for item in values or []:
-            blocked.append(lower_text(item))
-        return lower_text(value) not in blocked
-    if mode == "in":
-        allowed = []
-        for item in values or []:
-            allowed.append(lower_text(item))
+    if op == "equals":
+        return lower_text(value) == lower_text(expected)
+    if op == "not_equals":
+        return lower_text(value) != lower_text(expected)
+    if op == "in":
+        allowed = [lower_text(item) for item in (values or [])]
         return lower_text(value) in allowed
+    if op == "not_in":
+        blocked = [lower_text(item) for item in (values or [])]
+        return lower_text(value) not in blocked
+    if op == "contains":
+        return lower_text(expected) in lower_text(value)
+    if op in ["gt", "gte", "lt", "lte"]:
+        left = to_number(value)
+        right = to_number(expected)
+        if left is None or right is None:
+            return False
+        if op == "gt":
+            return left > right
+        if op == "gte":
+            return left >= right
+        if op == "lt":
+            return left < right
+        return left <= right
+    if op == "date_next_days":
+        if not value:
+            return False
+        try:
+            date_value = frappe.utils.getdate(value)
+            today = frappe.utils.getdate(frappe.utils.today())
+            end_date = frappe.utils.getdate(
+                frappe.utils.add_days(today, int(days or 0))
+            )
+            return date_value >= today and date_value <= end_date
+        except Exception:
+            return False
+    if op == "date_before_today":
+        if not value:
+            return False
+        try:
+            return frappe.utils.getdate(value) < frappe.utils.getdate(frappe.utils.today())
+        except Exception:
+            return False
     return False
 
-
-def base_metric(metric, source=None):
-    doctype = source.get("doctype") if source else None
-    return {
-        "id": metric.get("id"), "label": metric.get("label"), "source": metric.get("source"),
-        "doctype": doctype, "display_doctype": display_doctype(doctype),
-        "value": None, "record_count": 0, "total": 0, "denominator": None,
-        "unit": metric.get("unit") or "records", "status": "unavailable", "message": "",
-        "resolved_fields": [], "resolved_field_groups": [], "rows": [], "truncated": False,
-        "evidence_level": metric.get("evidence_level") or "unknown",
-    }
-
-
-def evaluate_metric(metric, include_rows=False):
-    mode = metric.get("mode")
-    if mode in ["unsupported", "document_only"]:
-        output = base_metric(metric, None)
-        output["status"] = mode
-        output["message"] = metric.get("message") or "Structured evidence is not currently available."
-        return output
-    source = resolved_sources.get(metric.get("source")) or {}
-    output = base_metric(metric, source)
-    if source.get("status") != "available":
-        output["status"] = source.get("status") or "unavailable"
-        output["message"] = source.get("message") or "Required source is unavailable."
-        return output
-    resolved_fields = []
+def metric_required_fields(metric, doctype):
+    fields = []
     missing = []
-    if metric.get("field"):
-        fieldname = resolve_field(source.get("doctype"), metric.get("field") or [])
-        if fieldname:
-            resolved_fields.append(fieldname)
-        else:
-            missing.append(metric.get("field") or [])
-    group_result = resolve_field_groups(source.get("doctype"), metric.get("fields") or [])
-    for fieldname in group_result.get("resolved") or []:
-        if fieldname not in resolved_fields:
-            resolved_fields.append(fieldname)
-    missing.extend(group_result.get("missing") or [])
-    if missing:
-        output["status"] = "unsupported_field"
-        output["message"] = "Required field mapping is not installed or has not been verified."
-        output["missing_field_candidates"] = missing
-        output["resolved_fields"] = resolved_fields
-        return output
-    fetch_result = fetch_rows(source, resolved_fields)
-    if fetch_result.get("status") != "available":
-        output["status"] = fetch_result.get("status")
-        output["message"] = fetch_result.get("message") or "The source query failed."
-        return output
-    rows = fetch_result.get("rows") or []
-    matched = []
-    value = 0
-    denominator = None
-    missing_values = []
-    covered_values = []
-    if mode == "all":
-        matched = rows
-        value = len(rows)
-    elif mode in ["truthy", "falsy", "not_in", "in"]:
-        for row in rows:
-            if compare(row, resolved_fields[0] if resolved_fields else "", mode, values=metric.get("values")):
-                matched.append(row)
-        value = len(matched)
-    elif mode == "all_required":
-        for row in rows:
-            accepted = True
-            for fieldname in resolved_fields:
-                if not is_truthy(row.get(fieldname)):
-                    accepted = False
-                    break
-            if accepted:
-                matched.append(row)
-        value = len(matched)
-        denominator = len(rows)
-    elif mode == "sum":
-        total_value = 0
-        for row in rows:
-            number = to_number(row.get(resolved_fields[0])) if resolved_fields else None
-            if number is not None:
-                total_value = total_value + number
-                matched.append(row)
-        value = round(total_value, 2)
-    elif mode == "required_value_coverage":
-        required_values = metric.get("required_values") or {}
-        observed = []
-        for row in rows:
-            text = lower_text(row.get(resolved_fields[0])) if resolved_fields else ""
-            if text:
-                observed.append(text)
-        for label in required_values:
-            aliases = required_values.get(label) or []
-            found = False
-            for observed_value in observed:
-                for alias in aliases:
-                    if lower_text(alias) in observed_value:
-                        found = True
-                        break
-                if found:
-                    break
-            if found:
-                covered_values.append(label)
-            else:
-                missing_values.append(label)
-        value = len(covered_values)
-        denominator = len(required_values)
-        matched = rows
-    status = "partial_truncated" if fetch_result.get("truncated") else "available"
-    output_rows = []
-    if include_rows:
-        start = (page - 1) * page_size
-        end = start + page_size
-        allowed = safe_fields(source.get("doctype"), SAFE_FIELDS.get(metric.get("source"), ["name"]))
-        for row in matched[start:end]:
-            item = {}
-            for fieldname in allowed:
-                item[fieldname] = row.get(fieldname)
-            output_rows.append(item)
-    output.update({
-        "value": value, "record_count": len(matched), "total": len(matched), "denominator": denominator,
-        "status": status, "message": "Result is limited by row_limit." if fetch_result.get("truncated") else "",
-        "resolved_fields": resolved_fields, "resolved_field_groups": group_result.get("resolved") or [],
-        "rows": output_rows, "truncated": bool(fetch_result.get("truncated")),
-        "missing_values": missing_values, "covered_values": covered_values,
-    })
-    return output
 
+    if metric.get("field"):
+        fieldname = resolve_field(doctype, metric.get("field"))
+        if fieldname:
+            fields.append(fieldname)
+        else:
+            missing.append(metric.get("field"))
+
+    if metric.get("compare_field"):
+        fieldname = resolve_field(doctype, metric.get("compare_field"))
+        if fieldname:
+            fields.append(fieldname)
+        else:
+            missing.append(metric.get("compare_field"))
+
+    field_group_result = resolve_field_groups(
+        doctype,
+        metric.get("fields") or []
+    )
+    resolved_groups = field_group_result[0]
+    missing_groups = field_group_result[1]
+    fields.extend(resolved_groups)
+    missing.extend(missing_groups)
+
+    resolved_conditions = []
+    for condition in metric.get("conditions") or []:
+        fieldname = resolve_field(doctype, condition.get("field") or [])
+        if not fieldname:
+            missing.append(condition.get("field") or [])
+            continue
+        item = {}
+        for key in condition:
+            item[key] = condition.get(key)
+        item["resolved_field"] = fieldname
+        resolved_conditions.append(item)
+        if fieldname not in fields:
+            fields.append(fieldname)
+
+    return fields, missing, resolved_conditions
+
+def row_matches(row, metric, resolved_fields, resolved_conditions):
+    mode = metric.get("mode")
+    if mode == "all":
+        return True
+    if mode in ["truthy", "falsy", "equals", "in", "not_in", "date_next_days", "date_before_today", "gt", "gte", "lt", "lte"]:
+        if not resolved_fields:
+            return False
+        return compare(
+            row,
+            resolved_fields[0],
+            mode,
+            expected=metric.get("value"),
+            values=metric.get("values"),
+            days=metric.get("days")
+        )
+    if mode == "all_required":
+        for fieldname in resolved_fields:
+            if not is_truthy(row.get(fieldname)):
+                return False
+        return True
+    if mode == "conditions":
+        for condition in resolved_conditions:
+            if not compare(
+                row,
+                condition.get("resolved_field"),
+                condition.get("op"),
+                expected=condition.get("value"),
+                values=condition.get("values"),
+                days=condition.get("days")
+            ):
+                return False
+        return True
+    if mode == "field_compare":
+        if len(resolved_fields) < 2:
+            return False
+        left = to_number(row.get(resolved_fields[0]))
+        right = to_number(row.get(resolved_fields[1]))
+        if left is None or right is None:
+            return False
+        operator = metric.get("operator") or "gte"
+        if operator == "gt":
+            return left > right
+        if operator == "gte":
+            return left >= right
+        if operator == "lt":
+            return left < right
+        if operator == "lte":
+            return left <= right
+        return left == right
+    if mode in ["average_fields", "sum"]:
+        for condition in resolved_conditions:
+            if not compare(
+                row,
+                condition.get("resolved_field"),
+                condition.get("op"),
+                expected=condition.get("value"),
+                values=condition.get("values"),
+                days=condition.get("days")
+            ):
+                return False
+        if mode == "sum":
+            return bool(resolved_fields and to_number(row.get(resolved_fields[0])) is not None)
+        for fieldname in resolved_fields:
+            if to_number(row.get(fieldname)) is not None:
+                return True
+        return False
+    return False
 
 if subcriterion not in CONFIG:
-    frappe.throw("Unsupported Criterion 7 subcriterion.")
+    frappe.throw("Unsupported Criterion 2 subcriterion.")
 
 resolved_sources = {}
 for alias in CONFIG[subcriterion]["sources"]:
     resolved_sources[alias] = resolve_source(alias)
 
+def evaluate_metric(metric, include_rows=False):
+    if metric.get("mode") == "unsupported":
+        return {
+            "id": metric.get("id"),
+            "label": metric.get("label"),
+            "source": metric.get("source"),
+            "doctype": None,
+            "value": None,
+            "status": "unsupported",
+            "message": metric.get("message"),
+            "rows": []
+        }
+
+    source = resolved_sources.get(metric.get("source")) or {}
+    if source.get("status") != "available":
+        return {
+            "id": metric.get("id"),
+            "label": metric.get("label"),
+            "source": metric.get("source"),
+            "doctype": source.get("doctype"),
+            "value": None,
+            "status": source.get("status") or "unavailable",
+            "message": source.get("message"),
+            "rows": []
+        }
+
+    doctype = source.get("doctype")
+    required_field_result = metric_required_fields(metric, doctype)
+    resolved_fields = required_field_result[0]
+    missing = required_field_result[1]
+    resolved_conditions = required_field_result[2]
+
+    if metric.get("mode") != "all" and missing:
+        return {
+            "id": metric.get("id"),
+            "label": metric.get("label"),
+            "source": metric.get("source"),
+            "doctype": doctype,
+            "value": None,
+            "status": "unsupported_field",
+            "message": "Required field is not installed.",
+            "missing_field_candidates": missing,
+            "rows": []
+        }
+
+    requested = list(resolved_fields)
+    for fieldname in SAFE_FIELDS.get(metric.get("source"), []):
+        if include_rows and fieldname not in requested:
+            requested.append(fieldname)
+
+    rows = fetch_rows(source, requested)
+    if source.get("fetch_error"):
+        return {
+            "id": metric.get("id"), "label": metric.get("label"),
+            "source": metric.get("source"), "doctype": doctype,
+            "value": None, "unit": metric.get("unit") or "records",
+            "record_count": 0, "status": source.get("fetch_status") or "query_error",
+            "message": source.get("fetch_error"), "resolved_fields": resolved_fields,
+            "rows": [], "total": 0
+        }
+    matched = []
+    for row in rows:
+        if row_matches(row, metric, resolved_fields, resolved_conditions):
+            matched.append(row)
+
+    mode = metric.get("mode")
+    value = len(matched)
+    record_count = len(matched)
+
+    if mode == "average_fields":
+        numbers = []
+        for row in matched:
+            for fieldname in resolved_fields:
+                number = to_number(row.get(fieldname))
+                if number is not None:
+                    numbers.append(number)
+        value = round(sum(numbers) / len(numbers), 2) if numbers else 0
+        record_count = len(matched)
+
+    if mode == "sum":
+        total = 0
+        for row in matched:
+            number = to_number(row.get(resolved_fields[0]))
+            if number is not None:
+                total = total + number
+        value = round(total, 2)
+
+    output_rows = []
+    if include_rows:
+        start = (page - 1) * page_size
+        end = start + page_size
+        safe_output_fields = safe_fields(
+            doctype,
+            SAFE_FIELDS.get(metric.get("source"), ["name"])
+        )
+        for row in matched[start:end]:
+            item = {}
+            for fieldname in safe_output_fields:
+                item[fieldname] = row.get(fieldname)
+            output_rows.append(item)
+
+    return {
+        "id": metric.get("id"),
+        "label": metric.get("label"),
+        "source": metric.get("source"),
+        "doctype": doctype,
+        "value": value,
+        "unit": metric.get("unit") or "records",
+        "record_count": record_count,
+        "status": "available",
+        "resolved_fields": resolved_fields,
+        "rows": output_rows,
+        "total": len(matched)
+    }
+
 metrics = []
 for configured_metric in CONFIG[subcriterion]["metrics"]:
     metrics.append(evaluate_metric(configured_metric, False))
-metric_by_id = {}
-for metric in metrics:
-    metric_by_id[metric.get("id")] = metric
-
-approved_metric_ids = []
-for definition in QUESTION_REGISTRY.get(subcriterion) or []:
-    if definition.get("metric_id") and definition.get("metric_id") not in approved_metric_ids:
-        approved_metric_ids.append(definition.get("metric_id"))
-supporting_metrics = []
-for metric in metrics:
-    if metric.get("id") not in approved_metric_ids:
-        supporting_metrics.append(metric)
-
-
-def format_metric_answer(metric):
-    if not metric:
-        return "Cannot assess from current ERPNext data."
-    if metric.get("status") not in ["available", "partial_truncated"]:
-        return "Cannot assess from current ERPNext data: " + clean_text(metric.get("message") or metric.get("status"))
-    value = metric.get("value")
-    unit = metric.get("unit") or "records"
-    denominator = metric.get("denominator")
-    if unit == "SGD":
-        answer = "SGD " + str(value) + " is the stored total for the readable records under the current filters."
-    elif denominator is not None:
-        answer = str(value) + " of " + str(denominator) + " " + unit + " meet the mapped rule."
-    else:
-        answer = str(value) + " " + unit + " match the current filters."
-    if metric.get("missing_values"):
-        answer = answer + " Missing: " + ", ".join(metric.get("missing_values")) + "."
-    evidence_level = metric.get("evidence_level")
-    if evidence_level == "record_existence":
-        answer = answer + " This confirms record existence only, not compliance or effectiveness."
-    elif evidence_level == "partial_completeness":
-        answer = answer + " This is a partial mapped-field readiness check, not full policy compliance."
-    elif evidence_level == "stored_calculation":
-        answer = answer + " The stored calculation was not independently recalculated by this API."
-    if metric.get("truncated"):
-        answer = answer + " The result is truncated at row_limit and must not be treated as the complete population."
-    return answer
-
 
 questions = []
-for definition in QUESTION_REGISTRY.get(subcriterion) or []:
-    selected_metric = metric_by_id.get(definition.get("metric_id")) if definition.get("metric_id") else None
-    if selected_metric:
-        answer = format_metric_answer(selected_metric)
-        status = selected_metric.get("status")
-        if status == "available" and definition.get("support_status") == "Can be implemented now":
-            confidence = "Live"
-        elif status == "document_only":
-            confidence = "Document only"
-        elif status in ["available", "partial_truncated"]:
-            confidence = "Partial"
+for question in QUESTION_REGISTRY.get(subcriterion) or []:
+    selected_metric = None
+    for metric in metrics:
+        if metric.get("id") == question.get("metric_id"):
+            selected_metric = metric
+            break
+
+    if selected_metric and selected_metric.get("status") == "available":
+        unit = selected_metric.get("unit") or "records"
+        if unit == "rating":
+            answer = (
+                str(selected_metric.get("value"))
+                + " is the live average rating from "
+                + str(selected_metric.get("record_count") or 0)
+                + " matching record(s)."
+            )
+        elif unit == "SGD":
+            answer = "SGD " + str(selected_metric.get("value")) + " matches the current filters."
+        elif unit == "percent":
+            answer = str(selected_metric.get("value")) + "% matches the current filters."
         else:
-            confidence = "Unavailable"
-        doctype = selected_metric.get("doctype")
-        display_name = selected_metric.get("display_doctype")
-        source_key = selected_metric.get("source")
-        record_count = selected_metric.get("record_count") or 0
-        resolved_fields = selected_metric.get("resolved_fields") or []
-        unit = selected_metric.get("unit")
+            answer = str(selected_metric.get("value") or 0) + " record(s) match the current filters."
+        status = "available"
+        confidence = "Live"
     else:
-        answer = "Cannot assess from current ERPNext data: " + clean_text(definition.get("limitation") or "additional structured evidence is required")
-        status = "document_only" if definition.get("support_status") == "Document evidence only" else "unsupported"
-        confidence = "Document only" if status == "document_only" else "Unavailable"
-        source_key = definition.get("source_key")
-        source = resolved_sources.get(source_key) or {}
-        candidates = SOURCE_CANDIDATES.get(source_key) or []
-        doctype = source.get("doctype") or (candidates[0] if candidates else None)
-        display_name = display_doctype(doctype)
-        record_count = 0
-        resolved_fields = []
-        unit = None
+        answer = "Unavailable: " + clean_text(
+            (selected_metric or {}).get("message")
+            or (selected_metric or {}).get("status")
+            or "required source or field is unavailable"
+        )
+        status = (selected_metric or {}).get("status") or "unavailable"
+        confidence = "Unavailable"
+
     questions.append({
-        "id": definition.get("id"), "criterion": subcriterion, "question": definition.get("question"),
-        "answer": answer, "metric_id": definition.get("metric_id"), "record_count": record_count,
-        "source": source_key, "doctype": doctype, "display_doctype": display_name,
-        "resolved_fields": resolved_fields, "status": status, "confidence": confidence, "unit": unit,
-        "support_status": definition.get("support_status"),
-        "primary_management_purpose": definition.get("purpose"),
-        "requirement_reference": definition.get("requirement_reference"),
-        "applicable_population": definition.get("applicable_population"),
-        "reporting_period": definition.get("reporting_period"),
-        "target_direction": definition.get("target_direction"),
-        "calculation_note": definition.get("calculation_note"),
-        "management_decision": definition.get("management_decision"),
-        "limitation": definition.get("limitation") or "",
+        "id": question.get("id"),
+        "criterion": subcriterion,
+        "question": question.get("question"),
+        "answer": answer,
+        "metric_id": question.get("metric_id"),
+        "status": status,
+        "confidence": confidence,
+        "doctype": (selected_metric or {}).get("doctype")
     })
 
 sources = []
-source_mapping = []
 for alias in CONFIG[subcriterion]["sources"]:
-    source = resolved_sources.get(alias)
-    sources.append(source)
-    source_mapping.append({
-        "key": alias, "backend_doctype": source.get("doctype"), "display_label": source.get("display_doctype"),
-        "candidates": source.get("candidates") or [], "status": source.get("status"), "message": source.get("message") or "",
-    })
-
-resolved_filters = []
-unresolved_filters = []
-for alias in filter_diagnostics:
-    diagnostic = filter_diagnostics.get(alias) or {}
-    for item in diagnostic.get("applied") or []:
-        entry = {"source": alias}
-        for key in item:
-            entry[key] = item.get(key)
-        resolved_filters.append(entry)
-    for item in diagnostic.get("unresolved") or []:
-        entry = {"source": alias}
-        for key in item:
-            entry[key] = item.get(key)
-        unresolved_filters.append(entry)
-
-requirements = []
-for definition in QUESTION_REGISTRY.get(subcriterion) or []:
-    requirements.append({
-        "id": definition.get("id"), "criterion": subcriterion,
-        "requirement_reference": definition.get("requirement_reference"),
-        "management_question": definition.get("question"),
-        "applicable_population": definition.get("applicable_population"),
-        "reporting_period": definition.get("reporting_period"),
-        "target_direction": definition.get("target_direction"),
-        "calculation_note": definition.get("calculation_note"),
-        "management_decision": definition.get("management_decision"),
-        "support_status": definition.get("support_status"),
-        "source": definition.get("source_key"), "metric_id": definition.get("metric_id"),
-        "evidence_gap": definition.get("limitation") or "",
-    })
+    sources.append(resolved_sources.get(alias))
 
 data_quality = []
 for source in sources:
     if source.get("status") != "available":
         data_quality.append({
-            "criterion": subcriterion, "check": "Source availability", "source": source.get("display_doctype"),
-            "backend_doctype": source.get("doctype"), "status": source.get("status"),
-            "detail": source.get("message") or "Source is unavailable.",
+            "criterion": subcriterion,
+            "check": "Source availability",
+            "source": source.get("doctype") or " / ".join(source.get("candidates") or []),
+            "status": source.get("status"),
+            "detail": source.get("message") or "Source is unavailable."
         })
+
 for metric in metrics:
-    if metric.get("status") not in ["available"]:
+    if metric.get("status") != "available":
         data_quality.append({
-            "criterion": subcriterion, "check": metric.get("label"),
-            "source": metric.get("display_doctype") or metric.get("source"), "backend_doctype": metric.get("doctype"),
-            "status": metric.get("status"), "detail": metric.get("message") or "Metric requires attention.",
+            "criterion": subcriterion,
+            "check": metric.get("label"),
+            "source": metric.get("doctype") or metric.get("source"),
+            "status": metric.get("status"),
+            "detail": metric.get("message") or "Metric is unavailable."
         })
-for item in unresolved_filters:
-    data_quality.append({
-        "criterion": subcriterion, "check": "Filter mapping", "source": item.get("source"),
-        "status": "unsupported_filter", "detail": clean_text(item.get("filter")) + ": " + clean_text(item.get("reason")),
-    })
 
 exceptions = []
 for metric in metrics:
     if metric.get("id") in EXCEPTION_METRIC_IDS:
         exceptions.append(metric)
 
-readiness = []
-for source in sources:
-    readiness.append({
-        "type": "source", "key": source.get("key"), "label": source.get("display_doctype"),
-        "backend_doctype": source.get("doctype"), "status": source.get("status"),
-        "message": source.get("message") or source.get("count_note") or "",
-    })
-for question in questions:
-    readiness.append({
-        "type": "question", "key": question.get("id"), "label": question.get("question"),
-        "status": question.get("status"), "support_status": question.get("support_status"),
-        "message": question.get("limitation") or "",
-    })
-
 available_sources = 0
 for source in sources:
     if source.get("status") == "available":
         available_sources = available_sources + 1
+
 available_metrics = 0
 for metric in metrics:
     if metric.get("status") == "available":
         available_metrics = available_metrics + 1
-available_questions = 0
-for question in questions:
-    if question.get("status") == "available":
-        available_questions = available_questions + 1
-
-criterion_overview = []
-for metric in exceptions:
-    criterion_overview.append({
-        "criterion": subcriterion, "metric_id": metric.get("id"), "label": metric.get("label"),
-        "value": metric.get("value"), "status": metric.get("status"), "doctype": metric.get("doctype"),
-        "display_doctype": metric.get("display_doctype"), "truncated": metric.get("truncated"),
-    })
-for question in questions:
-    if question.get("status") != "available":
-        criterion_overview.append({
-            "criterion": subcriterion, "question_id": question.get("id"), "label": question.get("question"),
-            "value": None, "status": question.get("status"), "support_status": question.get("support_status"),
-            "display_doctype": question.get("display_doctype"),
-        })
 
 def standardise_response_contract(result, criterion_name, api_method, action_name, subcriterion_name, row_limit_value):
     """Normalise every Criterion API to the shared frontend contract."""
@@ -2005,57 +1760,68 @@ def standardise_response_contract(result, criterion_name, api_method, action_nam
 result = {
     "ok": True,
     "meta": {
-        "api_method": "ucc_analytics_criterion_7", "platform_version": "2.0.0-policy-aligned",
-        "status": "policy_aligned_foundation", "generated_at": frappe.utils.now(),
-        "action": action, "subcriterion": subcriterion, "row_limit": row_limit,
+        "api_method": "ucc_analytics_criterion_2",
+        "platform_version": "1.9.5",
+        "status": "live_foundation",
+        "generated_at": frappe.utils.now(),
+        "action": action,
+        "subcriterion": subcriterion,
+        "row_limit": row_limit
     },
-    "policy": POLICY_REGISTRY.get(subcriterion), "filters": filters,
-    "resolved_filters": resolved_filters, "unresolved_filters": unresolved_filters,
-    "sources": sources, "source_mapping": source_mapping,
-    "metrics": metrics, "supporting_metrics": supporting_metrics,
-    "questions": questions, "exceptions": exceptions, "data_quality": data_quality,
-    "requirements": requirements, "readiness": readiness, "criterion_overview": criterion_overview,
-    "source_summary": {"total": len(sources), "available": available_sources, "issues": len(sources) - available_sources},
-    "metric_summary": {"total": len(metrics), "available": available_metrics, "issues": len(metrics) - available_metrics},
-    "question_summary": {"total": len(questions), "available": available_questions, "issues": len(questions) - available_questions},
+    "policy": POLICY_REGISTRY.get(subcriterion),
+    "filters": filters,
+    "sources": sources,
+    "metrics": metrics,
+    "questions": questions,
+    "exceptions": exceptions,
+    "data_quality": data_quality,
+    "source_summary": {
+        "total": len(sources),
+        "available": available_sources,
+        "issues": len(sources) - available_sources
+    },
+    "metric_summary": {
+        "total": len(metrics),
+        "available": available_metrics,
+        "issues": len(metrics) - available_metrics
+    },
     "data": {
-        "sources": sources, "source_mapping": source_mapping, "metrics": metrics,
-        "supporting_metrics": supporting_metrics, "questions": questions, "exceptions": exceptions,
-        "data_quality": data_quality, "requirements": requirements, "readiness": readiness,
-        "criterion_overview": criterion_overview,
+        "sources": sources,
+        "metrics": metrics,
+        "questions": questions,
+        "exceptions": exceptions,
+        "data_quality": data_quality
     },
-    "warnings": [
-        "The current controlled procedure is consolidated under 7.1.1. Appendix C references 7.2.1 to 7.2.4 are treated as legacy domain labels, not separate current subcriteria.",
-        "The rendered procedure contains 33 pages while its footer states 32 pages. Verify and correct the controlled master.",
-        "Only the exact backend DocType Quality Performance Outcomes is queried. The unverified singular candidate is not used.",
-        "Quality Goal is treated as the procedure-defined KPI and Quality Objective Plan source, but its detailed field mapping remains unverified.",
-        "A populated actual and target are not compared until indicator direction, unit, period, population and comparison rule are verified.",
-        "Quality Action, Quality Meeting and Management Review record counts are supporting metrics only and do not prove Criterion 7 linkage, dissemination, APSR completion or effectiveness.",
-        "Operational Outcomes Cost Time Saving is retained as a supporting source only. Stored totals are not treated as overall Criterion 7 effectiveness.",
-        "Missing data, permission failures, query errors and truncated populations are never converted into a valid zero.",
-    ],
+    "warnings": ['Criterion 2 spans HR, communication, information, knowledge and feedback sources.',
+ 'Custom DocTypes are resolved only from approved policy-referenced candidates.',
+ 'Survey coverage and HR competency metrics remain unsupported until denominator and child-table '
+ 'rules are supplied.']
 }
 
-result = standardise_response_contract(result, "Criterion 7", "ucc_analytics_criterion_7", action, subcriterion, row_limit)
+result = standardise_response_contract(result, "Criterion 2", "ucc_analytics_criterion_2", action, subcriterion, row_limit)
 
 if action == "policy_registry":
     result["registry"] = POLICY_REGISTRY
-elif action == "requirement_registry":
-    result["registry"] = requirements
-elif action == "question_registry":
-    result["registry"] = QUESTION_REGISTRY
-elif action == "source_status":
+
+if action == "source_status":
     result["source_status"] = sources
-elif action == "drilldown":
+
+if action == "requirement_registry":
+    result["registry"] = result.get("requirements") or []
+
+if action == "question_registry":
+    result["registry"] = QUESTION_REGISTRY
+
+if action == "drilldown":
     selected_config = None
     for configured_metric in CONFIG[subcriterion]["metrics"]:
         if configured_metric.get("id") == metric_id:
             selected_config = configured_metric
             break
     if not selected_config:
-        frappe.throw("Unknown Criterion 7 metric.")
+        frappe.throw("Unknown Criterion 2 metric.")
     result["drilldown"] = evaluate_metric(selected_config, True)
 
-result = standardise_response_contract(result, "Criterion 7", "ucc_analytics_criterion_7", action, subcriterion, row_limit)
+result = standardise_response_contract(result, "Criterion 2", "ucc_analytics_criterion_2", action, subcriterion, row_limit)
 
 frappe.response["message"] = result
