@@ -1994,3 +1994,94 @@
     .ucc-platform .ucc-plugin-decision,.ucc-platform .ucc-plugin-network{grid-template-columns:1fr}
 }
 @media(max-width:520px){.ucc-platform .ucc-criterion-dashboard .control-grid{grid-template-columns:1fr!important}}
+
+
+/* ============================================================
+   UCC ADMISSION INTELLIGENCE, CRITERION 4.1.1
+   ============================================================ */
+.ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-shared-kpis{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+}
+.ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-admission-kpi{
+  min-height:132px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:20px;
+}
+.ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-admission-kpi strong{
+  font-size:clamp(30px,4vw,48px);
+  letter-spacing:-.035em;
+  color:#26345b;
+}
+.ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-live-expanded-grid{
+  align-items:stretch;
+}
+.ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-live-generated-card{
+  min-height:390px;
+}
+.ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-admission-svg{
+  width:100%;
+  min-height:270px;
+  overflow:hidden;
+}
+.ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-admission-svg svg{
+  width:100%;
+  height:auto;
+  min-height:270px;
+  overflow:visible;
+}
+.ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-admission-svg .grid{
+  stroke:#e7eaf0;
+  stroke-width:1;
+}
+.ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-admission-svg .axis{
+  stroke:#b8c0cf;
+  stroke-width:1.2;
+}
+.ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-admission-svg .series{
+  fill:none;
+  stroke:#2f80ed;
+  stroke-width:3;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-admission-svg .point{
+  fill:#fff;
+  stroke:#2f80ed;
+  stroke-width:3;
+}
+.ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-admission-svg .column{
+  fill:#4f9be8;
+}
+.ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-admission-svg text{
+  fill:#465063;
+  font-size:12px;
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-admission-svg .value{
+  fill:#26345b;
+  font-size:13px;
+  font-weight:800;
+}
+.ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-admission-svg .axis-label{
+  fill:#667085;
+  font-size:11px;
+}
+.ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-admission-svg .x-label{
+  fill:#475467;
+  font-size:11px;
+}
+@media(max-width:950px){
+  .ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-shared-kpis{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:620px){
+  .ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-shared-kpis{
+    grid-template-columns:1fr;
+  }
+  .ucc-platform [data-dashboard-panel="criterion_4"].ucc-admission-intelligence .ucc-live-generated-card{
+    min-height:340px;
+  }
+}
