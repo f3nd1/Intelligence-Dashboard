@@ -1279,7 +1279,7 @@ result = {
     "ok": True,
     "meta": {
         "api_method": "ucc_analytics_criterion_4",
-        "platform_version": "1.9.10",
+        "platform_version": "1.9.8",
         "mapping_basis": "canonical_doctype_names_plus_user_confirmed_fields",
         "translation_note": "Student Admission UCC and Student Applicant may both display as Shortlisted Applicants",
         "generated_at": frappe.utils.now(),
